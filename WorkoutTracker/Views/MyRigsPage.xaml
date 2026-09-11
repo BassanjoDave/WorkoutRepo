@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.MyRigsPage"
+             x:DataType="vm:MyRigsViewModel"
+             Title="My Rigs">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+
+            <Label Text="Machines you've added. Each one unlocks exercises and workouts tailored to it, plus its manual and shopping links when available."
+                   Style="{StaticResource MetaLabel}" />
+
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Rigs}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RigCardViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
+                                <Label Text="{Binding Manufacturer}" Style="{StaticResource MetaLabel}" />
+                                <Label Text="{Binding Description}" FontSize="12" IsVisible="{Binding Description, Converter={StaticResource StringToBoolConverter}}" />
+                                <Label FontSize="12">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding ExerciseCount}" FontAttributes="Bold" />
+                                            <Span Text=" exercises · " />
+                                            <Span Text="{Binding RoutineCount}" FontAttributes="Bold" />
+                                            <Span Text=" workouts tailored to this rig" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <FlexLayout Wrap="Wrap">
+                                    <Button Text="View in Library" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                            Command="{Binding ViewInLibraryCommand}" Margin="0,0,8,8" />
+                                    <Button Text="View PDF" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                            Command="{Binding ViewPdfCommand}" IsVisible="{Binding HasPdf}" Margin="0,0,8,8" />
+                                    <Button Text="Shop" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                            Command="{Binding ShopCommand}" IsVisible="{Binding HasAffiliate}" Margin="0,0,8,8" />
+                                    <Button Text="Remove" Style="{StaticResource GhostButton}" FontSize="11"
+                                            Command="{Binding RemoveCommand}" Margin="0,0,8,8" />
+                                </FlexLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Button Text="+ Add a Rig" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding AddRigCommand}" />
+
+            <Button Text="Go to Library" Style="{StaticResource GhostButton}"
+                    Command="{Binding GoToLibraryCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

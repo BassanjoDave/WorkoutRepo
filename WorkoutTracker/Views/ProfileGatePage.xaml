@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ProfileGatePage"
+             x:DataType="vm:ProfileGateViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+    <VerticalStackLayout Padding="32,40,32,20" Spacing="26">
+        <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+            <Label Text="Switch account" Style="{StaticResource HeadingLabel}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding CanCancel}" />
+            <Label Text="Pick a profile below, or sign in with a different account."
+                   Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding CanCancel}" />
+
+            <Label Text="Sign in to continue" Style="{StaticResource HeadingLabel}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowSignInHeading}" />
+            <Label Text="Who's working out?" Style="{StaticResource HeadingLabel}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowUnlockedHeading}" />
+            <Label Text="Pick a profile to continue" Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowUnlockedHeading}" />
+        </VerticalStackLayout>
+
+        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="{StaticResource ColorAccent}" />
+
+        <!-- Only appears when biometric unlock is turned on (Profile settings) and
+             there's a still-resumable session to unlock — sits above the normal
+             sign-in form as the fast path, not a replacement for it. -->
+        <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowBiometricUnlock}">
+            <Button Text="Unlock with Face ID / Touch ID" Style="{StaticResource AccentFilledButton}"
+                    Command="{Binding UnlockWithBiometricsCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}" />
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10" Margin="0,4" VerticalOptions="Center">
+                <BoxView Grid.Column="0" HeightRequest="1" BackgroundColor="{StaticResource ColorDivider}" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="OR" Style="{StaticResource MetaLabel}" />
+                <BoxView Grid.Column="2" HeightRequest="1" BackgroundColor="{StaticResource ColorDivider}" VerticalOptions="Center" />
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Sign-in form: Google, or email (sign in / create account) — the only way in
+             on a fresh launch, where the tile list below only appears once one of these
+             actually succeeds. In switch mode (CanCancel) this stays visible alongside
+             the tile list too, so "Switch" can bring a different account onto this
+             device, not just pick among ones already here (see ShowSignIn in
+             ProfileGateViewModel). -->
+        <VerticalStackLayout Spacing="14" IsVisible="{Binding ShowSignIn}">
+            <Button Text="Sign in with Google" Style="{StaticResource AccentFilledButton}"
+                    Command="{Binding SignInWithGoogleCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10" Margin="0,4" VerticalOptions="Center">
+                <BoxView Grid.Column="0" HeightRequest="1" BackgroundColor="{StaticResource ColorDivider}" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="OR" Style="{StaticResource MetaLabel}" />
+                <BoxView Grid.Column="2" HeightRequest="1" BackgroundColor="{StaticResource ColorDivider}" VerticalOptions="Center" />
+            </Grid>
+
+            <Border Style="{StaticResource InputBorder}">
+                <Entry Placeholder="Email" Text="{Binding Email}" Keyboard="Email" ReturnType="Next" />
+            </Border>
+            <Border Style="{StaticResource InputBorder}">
+                <Entry Placeholder="Password" Text="{Binding Password}" IsPassword="True" ReturnType="Go" />
+            </Border>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Sign in" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding SignInWithEmailCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}" />
+                <Button Grid.Column="1" Text="Create account" Style="{StaticResource PrimaryOutlineButton}"
+                        Command="{Binding SignUpWithEmailCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+
+            <Button Text="Forgot password?" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding ForgotPasswordCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}"
+                    HorizontalOptions="Center" />
+
+            <ActivityIndicator IsRunning="{Binding IsSigningIn}" IsVisible="{Binding IsSigningIn}" Color="{StaticResource ColorAccent}" />
+            <Label Text="Finds an account already linked to this sign-in on another device, or creates a new one."
+                   Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Profile tiles: only after a successful sign-in this launch — picking
+             between members already known on this device (a "who's using it right
+             now" switch), not a way to skip signing in. -->
+        <CollectionView ItemsSource="{Binding Members}" IsVisible="{Binding IsUnlocked}">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="3" HorizontalItemSpacing="10" VerticalItemSpacing="16" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:MemberTileViewModel">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <VerticalStackLayout.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding .}" />
+                        </VerticalStackLayout.GestureRecognizers>
+                        <Border StrokeShape="RoundRectangle 30" Stroke="Transparent"
+                                BackgroundColor="{Binding AvatarColor}"
+                                WidthRequest="60" HeightRequest="60">
+                            <Label Text="{Binding Initial}"
+                                   Style="{StaticResource HeadingLabel}"
+                                   TextColor="{StaticResource ColorBg}"
+                                   FontSize="22"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Text="{Binding Name}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorText}"
+                               HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" WidthRequest="70" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Text="Invite and delete-member flows are built in the account/member-management pass."
+               Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" IsVisible="{Binding IsUnlocked}" />
+
+        <Button Text="Cancel" Style="{StaticResource GhostButton}"
+                Command="{Binding CancelCommand}" IsVisible="{Binding CanCancel}" HorizontalOptions="Center" />
+
+        <Button Text="Developer Settings" Style="{StaticResource GhostButton}" FontSize="11"
+                Clicked="OnDevSettingsClicked" HorizontalOptions="Center" />
+    </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

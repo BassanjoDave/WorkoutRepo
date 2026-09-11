@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<template id="__bundler_thumbnail" data-bg-color="#0e0e11">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0e0e11"></rect>
+    <g fill="none" stroke="#9184d9" stroke-width="34" stroke-linecap="round">
+      <path d="M300 400h600"></path>
+      <path d="M300 330v140M370 300v200M830 300v200M900 330v140"></path>
+    </g>
+  </svg>
+</template>
+
+<helmet>
+  <link rel="stylesheet" href="./ds/nocturne-styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css">
+  <script src="./image-slot.js"></script>
+  <style>
+    body{margin:0;background:var(--color-bg);font-family:var(--font-body)}
+    .om-scroll::-webkit-scrollbar{display:none}
+    @media print {
+      body * { visibility: hidden; }
+      .om-print-log, .om-print-log * { visibility: visible; }
+      .om-print-log { position: absolute; top: 0; left: 0; width: 100%; background: #fff; color: #000; }
+      .om-print-log table { color: #000; }
+    }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;background:radial-gradient(ellipse at 50% -10%, var(--color-accent-900), var(--color-bg) 60%)">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" title="Workout" hint-size="390px,844px">
+  <div style="position:relative;width:100%;height:100%;background:var(--color-bg);color:var(--color-text);display:flex;flex-direction:column;overflow:hidden;font-family:var(--font-body)">
+
+    <!-- ===== PROFILE GATE ===== -->
+    <sc-if value="{{ showProfileGate }}">
+      <div style="position:absolute;inset:0;z-index:50;background:var(--color-bg);display:flex;flex-direction:column;padding:32px 20px;overflow-y:auto">
+        <div style="text-align:center;margin-bottom:26px">
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">Who's working out?</div>
+          <div style="font-size:12px;color:var(--color-neutral-500);margin-top:4px">Pick a profile to continue</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 10px">
+          <sc-for list="{{ profileCards }}" as="p" hint-placeholder-count="2">
+            <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px">
+              <div onClick="{{ p.select }}" style="cursor:pointer;width:60px;height:60px;border-radius:50%;background:{{ p.color }};display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;font-size:22px;color:var(--color-bg)">{{ p.initial }}</div>
+              <div style="font-size:12px;text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</div>
+              <button onClick="{{ p.remove }}" style="position:absolute;top:-4px;right:10px;background:var(--color-surface);border:1px solid var(--color-divider);color:var(--color-neutral-400);border-radius:50%;width:18px;height:18px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer"><i class="ph ph-x"></i></button>
+            </div>
+          </sc-for>
+          <div onClick="{{ openNewProfileDraft }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <div style="width:60px;height:60px;border-radius:50%;border:1px dashed var(--color-divider);display:flex;align-items:center;justify-content:center;color:var(--color-neutral-400)"><i class="ph ph-plus" style="font-size:20px"></i></div>
+            <div style="font-size:12px;color:var(--color-neutral-500)">Add Profile</div>
+          </div>
+        </div>
+        <sc-if value="{{ newProfileDraft }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:28px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);display:flex;flex-direction:column;gap:12px">
+            <input value="{{ newProfileDraft.name }}" onChange="{{ setNewProfileName }}" placeholder="Name" style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:14px;color:var(--color-text);font-family:var(--font-body)"/>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ avatarColorOptions }}" as="c" hint-placeholder-count="6">
+                <div onClick="{{ c.select }}" style="cursor:pointer;width:28px;height:28px;border-radius:50%;background:{{ c.value }};border:2px solid {{ c.border }}"></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ cancelNewProfileDraft }}" style="flex:1;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:10px;font-size:13px;font-family:var(--font-heading)">Cancel</button>
+              <button onClick="{{ submitNewProfileDraft }}" style="flex:1;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:10px;font-size:13px;font-family:var(--font-heading);font-weight:600">Create</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== HEADER ===== -->
+    <sc-if value="{{ isTabsMode }}">
+      <div style="flex:none;padding:8px 18px 10px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;letter-spacing:-0.01em">{{ tabTitle }}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <sc-if value="{{ isWorkoutsTab }}">
+            <div style="display:flex;gap:6px">
+              <button onClick="{{ openBuilderFreshHiit }}" style="display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:6px 12px;font-size:13px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)" style-active="background:color-mix(in srgb, var(--color-text) 14%, transparent)"><i class="ph ph-timer"></i>New HIIT</button>
+              <button onClick="{{ openBuilderFresh }}" style="display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--color-accent);color:var(--color-accent);border-radius:var(--radius-md);padding:6px 12px;font-size:13px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-accent) 12%, transparent)" style-active="background:color-mix(in srgb, var(--color-accent) 22%, transparent)"><i class="ph ph-plus"></i>New</button>
+            </div>
+          </sc-if>
+          <button onClick="{{ openProfileGate }}" style="flex:none;width:30px;height:30px;border-radius:50%;background:{{ activeProfileColor }};border:none;color:var(--color-bg);font-family:var(--font-heading);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer" style-hover="filter:brightness(1.1)">{{ activeProfileInitial }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== SCROLLABLE BODY ===== -->
+    <div class="om-scroll" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:0 18px 18px;-ms-overflow-style:none;scrollbar-width:none">
+
+      <!-- ---------- HOME TAB ---------- -->
+      <sc-if value="{{ isHomeTab }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ weekStrip }}" as="d" hint-placeholder-count="7">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;border-radius:var(--radius-md);background:{{ d.bg }}">
+                <div style="font-size:10px;color:var(--color-neutral-500);text-transform:uppercase;letter-spacing:0.05em">{{ d.label }}</div>
+                <div style="width:7px;height:7px;border-radius:50%;background:{{ d.dotColor }}"></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-surface)">
+            <i class="ph-fill ph-flame" style="color:var(--color-accent);font-size:20px"></i>
+            <div style="font-size:13px"><span style="font-family:var(--font-heading);font-weight:600">{{ streakCount }} day streak</span><span style="color:var(--color-neutral-500)"> · {{ historyCount }} workouts logged</span></div>
+          </div>
+
+          <sc-if value="{{ todaySlots }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ todaySlots }}" as="slot" hint-placeholder-count="1">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Today's Workout — {{ slot.label }}</div>
+                <div style="border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);padding:18px;display:flex;flex-direction:column;gap:12px">
+                  <div>
+                    <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ slot.name }}</div>
+                    <div style="font-size:12px;color:var(--color-neutral-500);margin-top:2px">{{ slot.countLabel }}</div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <sc-for list="{{ slot.exercises }}" as="ex" hint-placeholder-count="4">
+                      <span style="font-size:11px;padding:3px 9px;border-radius:20px;background:var(--color-accent-800);color:var(--color-accent-100)">{{ ex.name }}</span>
+                    </sc-for>
+                  </div>
+                  <button onClick="{{ slot.start }}" style="margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;background:{{ slot.startBg }};color:{{ slot.startColor }};border:{{ slot.startBorder }};border-radius:var(--radius-md);padding:12px;font-size:15px;font-family:var(--font-heading);font-weight:600" style-hover="background:{{ slot.startHoverBg }}" style-active="background:{{ slot.startActiveBg }}"><i class="{{ slot.startIcon }}"></i>{{ slot.startLabel }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ noTodaySlot }}">
+            <div style="border-radius:var(--radius-lg);background:var(--color-surface);padding:28px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+              <i class="ph ph-moon-stars" style="font-size:28px;color:var(--color-neutral-500)"></i>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:16px">Rest day</div>
+              <div style="font-size:12px;color:var(--color-neutral-500);max-width:220px">Nothing scheduled for today. Browse your routines if you feel like training anyway.</div>
+              <button onClick="{{ goWorkoutsTab }}" style="margin-top:6px;background:transparent;border:1px solid var(--color-accent);color:var(--color-accent);border-radius:var(--radius-md);padding:8px 16px;font-size:13px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-accent) 12%, transparent)" style-active="background:color-mix(in srgb, var(--color-accent) 22%, transparent)">Browse Workouts</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ---------- WORKOUTS TAB ---------- -->
+      <sc-if value="{{ isWorkoutsTabContent }}">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ workoutFilters }}" as="f" hint-placeholder-count="3">
+              <button onClick="{{ f.select }}" style="font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.color }}" style-hover="background:{{ f.hoverBg }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ visFilterChips }}" as="vf" hint-placeholder-count="3">
+              <button onClick="{{ vf.toggle }}" style="font-size:11px;padding:6px 12px;border-radius:20px;border:1px dashed {{ vf.border }};background:{{ vf.bg }};color:{{ vf.color }}" style-hover="background:{{ vf.hoverBg }}">{{ vf.label }}</button>
+            </sc-for>
+          </div>
+          <sc-for list="{{ sortedRoutines }}" as="r" hint-placeholder-count="6">
+            <div onClick="{{ r.open }}" style="cursor:pointer;border-radius:var(--radius-md);background:var(--color-surface);padding:14px;display:flex;flex-direction:column;gap:6px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:15px">{{ r.name }}</div>
+                <i class="ph ph-caret-right" style="color:var(--color-neutral-500)"></i>
+              </div>
+              <sc-if value="{{ r.sourceName }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11px;color:var(--color-neutral-500)">Adapted from {{ r.sourceName }}</div>
+              </sc-if>
+              <div style="font-size:12px;color:var(--color-neutral-500)">{{ r.exCountLabel }}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-if value="{{ r.isHiit }}"><span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--color-accent-700);color:var(--color-accent-100)">HIIT</span></sc-if>
+                <sc-if value="{{ r.custom }}"><span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--color-accent-800);color:var(--color-accent-100)">Custom</span></sc-if>
+                <sc-if value="{{ r.ownerBadge }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--color-neutral-800);color:var(--color-neutral-300)">{{ r.ownerBadge }}</span></sc-if>
+                <sc-for list="{{ r.scheduleTags }}" as="tg" hint-placeholder-count="0">
+                  <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--color-neutral-800);color:var(--color-neutral-200)">{{ tg }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ---------- LIBRARY TAB ---------- -->
+      <sc-if value="{{ isLibraryTab }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ visFilterChips }}" as="vf" hint-placeholder-count="3">
+              <button onClick="{{ vf.toggle }}" style="flex:none;font-size:11px;font-family:var(--font-heading);font-weight:500;padding:6px 12px;border-radius:20px;border:1px dashed {{ vf.border }};background:{{ vf.bg }};color:{{ vf.color }}" style-hover="background:{{ vf.hoverBg }}">{{ vf.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.select }}" style="flex:none;font-size:12px;font-family:var(--font-heading);font-weight:500;padding:7px 13px;border-radius:20px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }}" style-hover="background:{{ c.hoverBg }}">{{ c.name }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ equipmentTypes }}" as="eq" hint-placeholder-count="6">
+              <button onClick="{{ eq.select }}" style="flex:none;font-size:11px;font-family:var(--font-heading);font-weight:500;padding:6px 12px;border-radius:20px;border:1px dashed {{ eq.border }};background:{{ eq.bg }};color:{{ eq.color }}" style-hover="background:{{ eq.hoverBg }}">{{ eq.name }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ openNewExercise }}" style="align-self:flex-start;display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--color-accent);color:var(--color-accent);border-radius:var(--radius-md);padding:7px 13px;font-size:12px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-accent) 12%, transparent)" style-active="background:color-mix(in srgb, var(--color-accent) 22%, transparent)"><i class="ph ph-plus"></i>Add Custom Exercise</button>
+          <sc-if value="{{ libraryCategoryIsCardio }}">
+            <button onClick="{{ openBuilderFreshHiit }}" style="display:flex;align-items:center;gap:12px;text-align:left;border:1px dashed var(--color-accent);background:transparent;color:var(--color-text);border-radius:var(--radius-md);padding:14px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)">
+              <i class="ph ph-timer" style="font-size:22px;color:var(--color-accent)"></i>
+              <div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:14px">Build a HIIT Timer Workout</div>
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">Timed intervals with voice cues, beeps &amp; cycles</div>
+              </div>
+            </button>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ filteredExercises }}" as="ex" hint-placeholder-count="4">
+              <div onClick="{{ ex.open }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-md);background:var(--color-surface)" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+                <div style="flex:none;width:40px;height:40px;border-radius:var(--radius-sm);background:repeating-linear-gradient(45deg,var(--color-neutral-800),var(--color-neutral-800) 4px,var(--color-neutral-900) 4px,var(--color-neutral-900) 8px)"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px">{{ ex.name }}<sc-if value="{{ ex.ownerBadge }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;padding:1px 7px;border-radius:20px;background:var(--color-neutral-800);color:var(--color-neutral-300)">{{ ex.ownerBadge }}</span></sc-if></div>
+                  <div style="font-size:11px;color:var(--color-neutral-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ex.muscles }}</div>
+                </div>
+                <i class="ph ph-caret-right" style="color:var(--color-neutral-500);flex:none"></i>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ---------- HISTORY TAB ---------- -->
+      <sc-if value="{{ isHistoryTab }}">
+        <div style="display:flex;flex-direction:column;gap:16px;height:100%">
+          <div style="display:flex;gap:6px;align-items:center;justify-content:space-between">
+            <div style="display:flex;gap:6px">
+              <button onClick="{{ showCalendarView }}" style="font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid {{ isCalendarView ? 'var(--color-accent)' : 'var(--color-divider)' }};background:{{ isCalendarView ? 'var(--color-accent-800)' : 'transparent' }};color:{{ isCalendarView ? 'var(--color-accent-100)' : 'var(--color-text)' }}" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">Overview</button>
+              <button onClick="{{ showLogView }}" style="font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid {{ isLogView ? 'var(--color-accent)' : 'var(--color-divider)' }};background:{{ isLogView ? 'var(--color-accent-800)' : 'transparent' }};color:{{ isLogView ? 'var(--color-accent-100)' : 'var(--color-text)' }}" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">Log</button>
+            </div>
+            <sc-if value="{{ isLogView }}">
+              <div style="position:relative">
+                <button onClick="{{ toggleExportMenu }}" style="display:flex;align-items:center;gap:5px;font-size:12px;padding:6px 11px;border-radius:20px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text)" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-export"></i>Export</button>
+                <sc-if value="{{ exportMenuOpen }}">
+                  <div style="position:absolute;right:0;top:calc(100% + 6px);z-index:5;min-width:180px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-divider);box-shadow:0 8px 24px rgba(0,0,0,0.35);padding:6px;display:flex;flex-direction:column;gap:2px">
+                    <button onClick="{{ exportCSV }}" style="display:flex;align-items:center;gap:9px;text-align:left;background:none;border:none;color:var(--color-text);font-size:12.5px;padding:9px 10px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-table" style="width:16px;color:var(--color-neutral-500)"></i>Download CSV</button>
+                    <button onClick="{{ exportCopy }}" style="display:flex;align-items:center;gap:9px;text-align:left;background:none;border:none;color:var(--color-text);font-size:12.5px;padding:9px 10px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-copy" style="width:16px;color:var(--color-neutral-500)"></i>Copy to Clipboard</button>
+                    <button onClick="{{ exportPrint }}" style="display:flex;align-items:center;gap:9px;text-align:left;background:none;border:none;color:var(--color-text);font-size:12.5px;padding:9px 10px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-printer" style="width:16px;color:var(--color-neutral-500)"></i>Print</button>
+                    <sc-if value="{{ canShare }}">
+                      <button onClick="{{ exportShare }}" style="display:flex;align-items:center;gap:9px;text-align:left;background:none;border:none;color:var(--color-text);font-size:12.5px;padding:9px 10px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-share-network" style="width:16px;color:var(--color-neutral-500)"></i>Share…</button>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ isCalendarView }}">
+          <div style="border-radius:var(--radius-lg);background:var(--color-surface);padding:14px">
+            <div style="font-size:12px;color:var(--color-neutral-500);margin-bottom:10px">{{ monthLabel }}</div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:9px;color:var(--color-neutral-600);text-align:center;margin-bottom:4px">
+              <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+              <sc-for list="{{ calendarCells }}" as="cell" hint-placeholder-count="35">
+                <div style="aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;background:{{ cell.bg }};color:{{ cell.color }}">{{ cell.day }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Recent Sessions</div>
+            <sc-for list="{{ historyList }}" as="h" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-md);background:var(--color-surface)">
+                <i class="ph-fill ph-check-circle" style="color:var(--color-accent);font-size:20px"></i>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:500">{{ h.routineName }}</div>
+                  <div style="font-size:11px;color:var(--color-neutral-500)">{{ h.dateLabel }} · {{ h.exCount }} exercises</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ isLogView }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <input value="{{ logSearch }}" onChange="{{ setLogSearch }}" placeholder="Search exercise or workout…" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text)"/>
+              <div style="display:flex;gap:8px;align-items:center">
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:10px;color:var(--color-neutral-500)">From</span>
+                  <input type="date" value="{{ logDateFrom }}" onChange="{{ setLogDateFrom }}" style="width:100%;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--color-text)"/>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:10px;color:var(--color-neutral-500)">To</span>
+                  <input type="date" value="{{ logDateTo }}" onChange="{{ setLogDateTo }}" style="width:100%;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--color-text)"/>
+                </div>
+                <button onClick="{{ clearLogFilters }}" style="align-self:flex-end;background:none;border:1px solid var(--color-divider);color:var(--color-neutral-400);border-radius:6px;padding:6px 10px;font-size:11px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">Clear</button>
+              </div>
+            </div>
+            <div class="om-scroll om-print-log" style="overflow:auto;border-radius:var(--radius-md);background:var(--color-surface);max-height:340px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead>
+                  <tr style="position:sticky;top:0;background:var(--color-surface);z-index:1">
+                    <sc-for list="{{ logColumns }}" as="col" hint-placeholder-count="7">
+                      <th onClick="{{ col.select }}" style="cursor:pointer;text-align:left;padding:9px 10px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-500);border-bottom:1px solid var(--color-divider);white-space:nowrap" style-hover="color:var(--color-text)">{{ col.label }} {{ col.arrow }}</th>
+                    </sc-for>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ logRows }}" as="row" hint-placeholder-count="6">
+                    <tr>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider);white-space:nowrap">{{ row.dateLabel }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider)">{{ row.ampm }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider)">{{ row.exerciseName }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider)">{{ row.set }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider)">{{ row.reps }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider)">{{ row.weight }}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid var(--color-divider);color:var(--color-neutral-500);white-space:nowrap">{{ row.routineName }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+              <sc-if value="{{ logEmpty }}">
+                <div style="padding:24px;text-align:center;font-size:12px;color:var(--color-neutral-500)">No logged sets match these filters.</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ exportToast }}">
+              <div style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--color-accent);color:var(--color-bg);font-size:12px;font-weight:600;padding:9px 16px;border-radius:20px;z-index:20;box-shadow:0 6px 18px rgba(0,0,0,0.3)">{{ exportToast }}</div>
+            </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ---------- PROFILE TAB ---------- -->
+      <sc-if value="{{ isProfileTab }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:52px;height:52px;border-radius:50%;background:{{ activeProfileColor }};display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;font-size:22px;color:var(--color-bg)">{{ activeProfileInitial }}</div>
+            <div style="flex:1">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:16px">{{ activeProfileName }}</div>
+              <div style="font-size:12px;color:var(--color-neutral-500)">Bowflex Revolution® home gym</div>
+            </div>
+            <button onClick="{{ openProfileGate }}" style="background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:8px 12px;font-size:12px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">Switch</button>
+          </div>
+
+          <div>
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:8px">Units</div>
+            <div style="display:inline-flex;overflow:hidden;border:1px solid var(--color-divider);border-radius:var(--radius-md)">
+              <div style="padding:7px 16px;font-size:13px;background:var(--color-accent-800);color:var(--color-accent-100)">lbs</div>
+              <div style="padding:7px 16px;font-size:13px;color:var(--color-neutral-500);border-left:1px solid var(--color-divider)">kg</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Weekly Schedule</div>
+              <button onClick="{{ openScheduleEditor }}" style="background:none;border:none;color:var(--color-accent);font-size:12px;font-family:var(--font-heading);padding:4px 6px;border-radius:6px;margin:-4px -6px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)">Edit</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;border-radius:var(--radius-md);background:var(--color-surface);padding:10px">
+              <sc-for list="{{ scheduleRows }}" as="row" hint-placeholder-count="7">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0">
+                  <div style="width:34px;color:var(--color-neutral-500);flex:none">{{ row.day }}</div>
+                  <div style="flex:1;color:{{ row.color }}">{{ row.summary }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.6">Routines and exercise data sourced from your Bowflex Revolution® Owner's Manual.</div>
+        </div>
+      </sc-if>
+
+    </div>
+
+    <!-- ===== TAB BAR ===== -->
+    <sc-if value="{{ isTabsMode }}">
+      <div style="flex:none;display:flex;border-top:1px solid var(--color-divider);padding:8px 6px 22px;background:var(--color-bg)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.select }}" style="flex:1;background:none;border:none;border-radius:10px;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:{{ t.color }}" style-hover="background:{{ t.hoverBg }}">
+            <i class="{{ t.icon }}" style="font-size:22px"></i>
+            <span style="font-size:9.5px;font-family:var(--font-heading);font-weight:500">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- ===== ACTIVE WORKOUT MODE ===== -->
+    <sc-if value="{{ isWorkoutMode }}">
+      <div style="position:absolute;inset:0;background:var(--color-bg);display:flex;flex-direction:column;z-index:20">
+        <div style="flex:none;display:flex;align-items:center;gap:10px;padding:58px 16px 10px">
+          <button onClick="{{ exitWorkout }}" style="background:none;border:none;color:var(--color-neutral-400);display:flex;padding:6px;border-radius:8px;margin:-6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-x" style="font-size:20px"></i></button>
+          <div style="flex:1;font-family:var(--font-heading);font-weight:600;font-size:16px">{{ session.routineName }}</div>
+        </div>
+        <div class="om-scroll" style="flex:1;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ session.rows }}" as="row" hint-placeholder-count="5">
+            <div style="border-radius:var(--radius-md);background:var(--color-surface);padding:12px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button onClick="{{ row.toggleDone }}" style="background:none;border:none;padding:2px;border-radius:8px;margin:-2px;display:flex" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="{{ row.doneIcon }}" style="font-size:19px;color:{{ row.doneColor }}"></i></button>
+                  <div style="font-size:14px;font-weight:500">{{ row.name }}</div>
+                </div>
+                <div style="font-size:11px;color:var(--color-neutral-500)">target {{ row.target }}</div>
+              </div>
+              <sc-if value="{{ row.notCardio }}">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <sc-for list="{{ row.sets }}" as="s" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+                      <span style="color:var(--color-neutral-500)">Sets</span>
+                      <input type="number" value="{{ s.count }}" onChange="{{ s.setCount }}" style="width:40px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                      <span style="color:var(--color-neutral-600)">×</span>
+                      <input type="number" value="{{ s.reps }}" onChange="{{ s.setReps }}" placeholder="reps" style="width:50px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                      <span style="color:var(--color-neutral-600)">@</span>
+                      <input type="number" value="{{ s.weight }}" onChange="{{ s.setWeight }}" placeholder="lbs" style="width:56px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                      <sc-if value="{{ s.canRemove }}">
+                        <button onClick="{{ s.remove }}" style="background:none;border:none;color:var(--color-neutral-500);padding:4px;border-radius:6px;margin-left:2px;display:flex" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-trash" style="font-size:14px"></i></button>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ row.addSet }}" style="align-self:flex-start;background:none;border:none;color:var(--color-accent);font-size:11px;font-family:var(--font-heading);display:flex;align-items:center;gap:3px;padding:4px 6px;border-radius:6px;margin:-4px -6px 0" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)"><i class="ph ph-plus"></i>Add set</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ row.isVib }}">
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+                  <div style="display:flex;gap:8px">
+                    <div style="flex:1">
+                      <span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Position / stance</span>
+                      <select value="{{ row.stance }}" onChange="{{ row.setStance }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:6px;font-size:12px">
+                        <option value="">— select —</option>
+                        <sc-for list="{{ row.stanceOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                      </select>
+                    </div>
+                    <div style="flex:1">
+                      <span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Mode</span>
+                      <select value="{{ row.mode }}" onChange="{{ row.setMode }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:6px;font-size:12px">
+                        <option value="">— select —</option>
+                        <sc-for list="{{ row.modeOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Duration (s)</span><input type="number" value="{{ row.duration }}" onChange="{{ row.setDuration }}" placeholder="45" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                    <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Freq (Hz)</span><input type="number" value="{{ row.freq }}" onChange="{{ row.setFreq }}" placeholder="25" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                    <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Level</span><input type="number" value="{{ row.level }}" onChange="{{ row.setLevel }}" placeholder="1-30" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ row.isCardio }}">
+                <div style="display:flex;gap:8px;font-size:12px">
+                  <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Resistance</span><input type="number" value="{{ row.resistance }}" onChange="{{ row.setResistance }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                  <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Time (min)</span><input type="number" value="{{ row.time }}" onChange="{{ row.setTimeVal }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                  <div style="flex:1"><span style="color:var(--color-neutral-500);display:block;margin-bottom:3px">Distance (mi)</span><input type="number" value="{{ row.distance }}" onChange="{{ row.setDistanceVal }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:none;padding:12px 16px 22px">
+          <button onClick="{{ finishWorkout }}" style="width:100%;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:13px;font-size:15px;font-family:var(--font-heading);font-weight:600" style-hover="background:var(--color-accent-600)" style-active="background:var(--color-accent-400)">{{ session.finishLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ resolveModal }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:40;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px">
+        <div style="width:100%;max-height:80%;overflow-y:auto;background:var(--color-surface);border-radius:var(--radius-lg);padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:15px">Confirm your sets</div>
+          <div style="font-size:12px;color:var(--color-neutral-500)">Fill in the sets, reps and weight you used before finishing.</div>
+          <sc-for list="{{ resolveModal.items }}" as="it" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--color-divider)">
+              <div style="font-size:13px;font-family:var(--font-heading);font-weight:600">{{ it.label }}</div>
+              <div style="display:flex;gap:8px">
+                <label style="flex:1;display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-500)">Sets</span>
+                  <input type="number" value="{{ it.sets }}" onChange="{{ it.setSets }}" placeholder="—" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:8px;font-size:13px;text-align:center"/>
+                </label>
+                <label style="flex:1;display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-500)">Reps</span>
+                  <input value="{{ it.reps }}" onChange="{{ it.setReps }}" placeholder="—" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:8px;font-size:13px;text-align:center"/>
+                </label>
+                <sc-if value="{{ it.hasWeight }}">
+                  <label style="flex:1;display:flex;flex-direction:column;gap:4px">
+                    <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-500)">Lbs</span>
+                    <input type="number" value="{{ it.weight }}" onChange="{{ it.setWeight }}" placeholder="—" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:8px;font-size:13px;text-align:center"/>
+                  </label>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button onClick="{{ cancelResolveModal }}" style="flex:1;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:11px;font-size:13px;font-family:var(--font-heading)">Cancel</button>
+            <button onClick="{{ confirmResolveModal }}" style="flex:1;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:11px;font-size:13px;font-family:var(--font-heading);font-weight:600">Confirm & Finish</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    </sc-if>
+
+    <!-- ===== BUILDER MODE ===== -->
+    <sc-if value="{{ isBuilderMode }}">
+      <div style="position:absolute;inset:0;background:var(--color-bg);display:flex;flex-direction:column;z-index:20">
+        <div style="flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px">
+          <button onClick="{{ closeBuilder }}" style="background:none;border:none;color:var(--color-neutral-400);display:flex;padding:6px;border-radius:8px;margin:-6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-x" style="font-size:20px"></i></button>
+          <div style="flex:1;font-family:var(--font-heading);font-weight:600;font-size:16px">{{ builder.builderTitle }}</div>
+          <button onClick="{{ saveBuilder }}" style="background:none;border:none;color:var(--color-accent);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:6px 8px;border-radius:8px;margin:-6px -8px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)">Save</button>
+        </div>
+        <sc-if value="{{ builder.saveError }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:0 16px 8px;padding:8px 12px;border-radius:var(--radius-md);background:color-mix(in srgb, #e5484d 15%, var(--color-surface));color:#ff8a8a;font-size:12px">{{ builder.saveError }}</div>
+        </sc-if>
+        <div class="om-scroll" style="flex:1;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:16px">
+
+          <sc-if value="{{ builderStepKind }}">
+            <div style="font-size:12px;color:var(--color-neutral-500)">What kind of workout is this?</div>
+            <button onClick="{{ builder.pickStandard }}" style="border-radius:var(--radius-md);background:var(--color-surface);padding:14px;text-align:left;border:none;color:var(--color-text);display:flex;align-items:center;gap:12px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+              <i class="ph ph-barbell" style="font-size:22px;color:var(--color-accent)"></i>
+              <div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:14px">Standard Workout</div>
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">Exercises with sets, reps &amp; weight (or cardio)</div>
+              </div>
+            </button>
+            <button onClick="{{ builder.pickHiit }}" style="border-radius:var(--radius-md);background:var(--color-surface);padding:14px;text-align:left;border:none;color:var(--color-text);display:flex;align-items:center;gap:12px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+              <i class="ph ph-timer" style="font-size:22px;color:var(--color-accent)"></i>
+              <div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:14px">HIIT Timer Workout</div>
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">Timed sections with voice cues &amp; beeps</div>
+              </div>
+            </button>
+          </sc-if>
+
+          <sc-if value="{{ builderStepSource }}">
+            <div style="font-size:12px;color:var(--color-neutral-500)">Start this workout from scratch, or clone an existing routine to modify.</div>
+            <button onClick="{{ builder.pickScratch }}" style="border-radius:var(--radius-md);background:var(--color-surface);padding:14px;text-align:left;border:none;color:var(--color-text)" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:14px">Start from scratch</div>
+              <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">Pick any exercises from the library</div>
+            </button>
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Or clone a routine</div>
+            <sc-for list="{{ routines }}" as="r" hint-placeholder-count="6">
+              <div onClick="{{ r.pickAsSource }}" style="cursor:pointer;border-radius:var(--radius-md);background:var(--color-surface);padding:12px;display:flex;align-items:center;justify-content:space-between" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+                <div style="font-size:13px;font-weight:500">{{ r.name }}</div>
+                <i class="ph ph-caret-right" style="color:var(--color-neutral-500)"></i>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ builderStepEdit }}">
+            <input value="{{ builder.name }}" onChange="{{ builder.setName }}" placeholder="Workout name" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:10px 12px;font-size:15px;color:var(--color-text);font-family:var(--font-heading)"/>
+            <div style="display:inline-flex;overflow:hidden;border:1px solid var(--color-divider);border-radius:var(--radius-md);align-self:flex-start">
+              <button onClick="{{ builder.setVisJustMe }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;background:{{ builder.visJustMeBg }};color:{{ builder.visJustMeColor }}">Just Me</button>
+              <button onClick="{{ builder.setVisPublic }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;border-left:1px solid var(--color-divider);background:{{ builder.visPublicBg }};color:{{ builder.visPublicColor }}">Public</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Exercises</div>
+              <sc-for list="{{ builder.exRows }}" as="row" hint-placeholder-count="4">
+                <div style="border-radius:var(--radius-md);background:var(--color-surface);padding:10px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;font-size:13px;font-weight:500">{{ row.name }}</div>
+                    <button onClick="{{ row.up }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-arrow-up"></i></button>
+                    <button onClick="{{ row.down }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-arrow-down"></i></button>
+                    <button onClick="{{ row.remove }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-trash"></i></button>
+                  </div>
+                  <sc-if value="{{ row.notCardio }}">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <sc-for list="{{ row.groups }}" as="g" hint-placeholder-count="1">
+                        <div style="display:flex;align-items:center;gap:8px;font-size:11px;flex-wrap:wrap">
+                          <span style="color:var(--color-neutral-500)">Sets</span>
+                          <input type="number" value="{{ g.sets }}" onChange="{{ g.setSets }}" placeholder="—" style="width:44px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                          <span style="color:var(--color-neutral-500)">Reps</span>
+                          <input value="{{ g.reps }}" onChange="{{ g.setReps }}" placeholder="10-12" style="width:56px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                          <sc-if value="{{ g.hasWeight }}">
+                            <span style="color:var(--color-neutral-500)">Weight</span>
+                            <input type="number" value="{{ g.weight }}" onChange="{{ g.setWeight }}" placeholder="lbs" style="width:56px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/>
+                          </sc-if>
+                          <sc-if value="{{ g.canRemove }}">
+                            <button onClick="{{ g.remove }}" style="background:none;border:none;color:var(--color-neutral-500);padding:4px;border-radius:6px;margin-left:2px;display:flex" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-trash" style="font-size:14px"></i></button>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                      <button onClick="{{ row.addGroup }}" style="align-self:flex-start;background:none;border:none;color:var(--color-accent);font-size:11px;font-family:var(--font-heading);display:flex;align-items:center;gap:3px;padding:4px 6px;border-radius:6px;margin:-4px 0 0 -6px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)"><i class="ph ph-plus"></i>Add new set</button>
+                    </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.isVib }}">
+                    <div style="display:flex;flex-direction:column;gap:8px;font-size:11px">
+                      <div style="display:flex;gap:8px">
+                        <div style="flex:1">
+                          <div style="color:var(--color-neutral-500);margin-bottom:3px">Position / stance</div>
+                          <select value="{{ row.stance }}" onChange="{{ row.setStance }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:6px;font-size:12px">
+                            <option value="">— select —</option>
+                            <sc-for list="{{ row.stanceOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                          </select>
+                        </div>
+                        <div style="flex:1">
+                          <div style="color:var(--color-neutral-500);margin-bottom:3px">Mode</div>
+                          <select value="{{ row.mode }}" onChange="{{ row.setMode }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:6px;font-size:12px">
+                            <option value="">— select —</option>
+                            <sc-for list="{{ row.modeOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                          </select>
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:8px">
+                        <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Duration (s)</div><input type="number" value="{{ row.duration }}" onChange="{{ row.setDuration }}" placeholder="45" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                        <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Frequency (Hz)</div><input type="number" value="{{ row.freq }}" onChange="{{ row.setFreq }}" placeholder="25" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                        <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Level</div><input type="number" value="{{ row.level }}" onChange="{{ row.setLevel }}" placeholder="1-30" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.isCardio }}">
+                    <div style="display:flex;gap:8px;font-size:11px">
+                      <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Resistance</div><input type="number" value="{{ row.resistance }}" onChange="{{ row.setResistance }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                      <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Time (min)</div><input type="number" value="{{ row.time }}" onChange="{{ row.setTime }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                      <div style="flex:1"><div style="color:var(--color-neutral-500);margin-bottom:3px">Distance (mi)</div><input type="number" value="{{ row.distance }}" onChange="{{ row.setDistance }}" style="width:100%;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:5px 6px;font-size:12px"/></div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <button onClick="{{ builder.openPicker }}" style="align-self:flex-start;display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--color-accent);color:var(--color-accent);border-radius:var(--radius-md);padding:7px 13px;font-size:12px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-accent) 12%, transparent)" style-active="background:color-mix(in srgb, var(--color-accent) 22%, transparent)"><i class="ph ph-plus"></i>Add exercise</button>
+              <button onClick="{{ openNewExerciseFromBuilder }}" style="align-self:flex-start;background:transparent;border:none;color:var(--color-neutral-400);font-size:11px;font-family:var(--font-heading);display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;margin:-4px 0 0 -6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">Or create a custom exercise</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Schedule (tap to assign)</div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                <sc-for list="{{ builder.dayCells }}" as="dc" hint-placeholder-count="14">
+                  <button onClick="{{ dc.toggle }}" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:8px;border:1px solid {{ dc.border }};background:{{ dc.bg }};color:{{ dc.color }}" style-hover="background:{{ dc.hoverBg }}">
+                    <span style="font-size:9px">{{ dc.day }}</span>
+                    <span style="font-size:9px;color:var(--color-neutral-500)">{{ dc.slot }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ builderStepHiitEdit }}">
+            <input value="{{ builder.name }}" onChange="{{ builder.setName }}" placeholder="Workout name" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:10px 12px;font-size:15px;color:var(--color-text);font-family:var(--font-heading)"/>
+            <div style="display:inline-flex;overflow:hidden;border:1px solid var(--color-divider);border-radius:var(--radius-md);align-self:flex-start">
+              <button onClick="{{ builder.setVisJustMe }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;background:{{ builder.visJustMeBg }};color:{{ builder.visJustMeColor }}">Just Me</button>
+              <button onClick="{{ builder.setVisPublic }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;border-left:1px solid var(--color-divider);background:{{ builder.visPublicBg }};color:{{ builder.visPublicColor }}">Public</button>
+            </div>
+
+            <div style="display:flex;gap:12px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:11px;color:var(--color-neutral-500)">Cycles</span>
+                <input type="number" min="1" value="{{ builder.cycles }}" onChange="{{ builder.setCycles }}" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:8px 10px;font-size:13px;color:var(--color-text)"/>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:11px;color:var(--color-neutral-500)">Rest between cycles (sec)</span>
+                <input type="number" min="0" value="{{ builder.restBetweenCycles }}" onChange="{{ builder.setRestBetweenCycles }}" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:8px 10px;font-size:13px;color:var(--color-text)"/>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Sections</div>
+              <sc-for list="{{ builder.sectionRows }}" as="sec" hint-placeholder-count="3">
+                <div style="border-radius:var(--radius-md);background:var(--color-surface);padding:10px;display:flex;align-items:center;gap:8px">
+                  <div style="flex:1">
+                    <div style="font-size:13px;font-weight:500">{{ sec.title }} <span style="color:var(--color-neutral-500);font-weight:400">· {{ sec.seconds }}</span></div>
+                    <div style="font-size:11px;color:var(--color-neutral-500)">{{ sec.description }}</div>
+                  </div>
+                  <button onClick="{{ sec.up }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-arrow-up"></i></button>
+                  <button onClick="{{ sec.down }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-arrow-down"></i></button>
+                  <button onClick="{{ sec.remove }}" style="background:none;border:none;color:var(--color-neutral-400);padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-trash"></i></button>
+                </div>
+              </sc-for>
+
+              <div style="border-radius:var(--radius-md);background:var(--color-surface);padding:12px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ builder.sectionTypes }}" as="st_" hint-placeholder-count="5">
+                    <button onClick="{{ st_.select }}" style="font-size:11px;padding:6px 11px;border-radius:20px;border:1px solid {{ st_.border }};background:{{ st_.bg }};color:{{ st_.color }}" style-hover="background:{{ st_.hoverBg }}">{{ st_.name }}</button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ builder.sectionTitleIsExercise }}">
+                  <select onChange="{{ builder.sectionForm.setTitle }}" style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:7px 8px;font-size:13px">
+                    <option value="">Choose exercise…</option>
+                    <sc-for list="{{ builder.sectionForm.exerciseOptions }}" as="opt" hint-placeholder-count="4">
+                      <option value="{{ opt }}">{{ opt }}</option>
+                    </sc-for>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ builder.sectionTitleIsCustom }}">
+                  <input value="{{ builder.sectionForm.title }}" onChange="{{ builder.sectionForm.setTitle }}" placeholder="Section title" style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:7px 8px;font-size:13px"/>
+                </sc-if>
+                <textarea value="{{ builder.sectionForm.description }}" onChange="{{ builder.sectionForm.setDescription }}" placeholder="Description (optional)" style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:7px 8px;font-size:13px;min-height:44px;resize:vertical;font-family:var(--font-body)"></textarea>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:var(--color-neutral-500)">Duration (seconds)</span>
+                  <input type="number" value="{{ builder.sectionForm.seconds }}" onChange="{{ builder.sectionForm.setSeconds }}" style="width:70px;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:6px 8px;font-size:13px"/>
+                </div>
+                <button onClick="{{ builder.addSection }}" style="align-self:flex-start;display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--color-accent);color:var(--color-accent);border-radius:var(--radius-md);padding:7px 13px;font-size:12px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-accent) 12%, transparent)" style-active="background:color-mix(in srgb, var(--color-accent) 22%, transparent)"><i class="ph ph-plus"></i>Add Section</button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Schedule (tap to assign)</div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                <sc-for list="{{ builder.dayCells }}" as="dc" hint-placeholder-count="14">
+                  <button onClick="{{ dc.toggle }}" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:8px;border:1px solid {{ dc.border }};background:{{ dc.bg }};color:{{ dc.color }}" style-hover="background:{{ dc.hoverBg }}">
+                    <span style="font-size:9px">{{ dc.day }}</span>
+                    <span style="font-size:9px;color:var(--color-neutral-500)">{{ dc.slot }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ builderStepPicker }}">
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ builderCategories }}" as="c" hint-placeholder-count="6">
+                <button onClick="{{ c.select }}" style="flex:none;font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }}" style-hover="background:{{ c.hoverBg }}">{{ c.name }}</button>
+              </sc-for>
+            </div>
+            <sc-for list="{{ filteredExercises }}" as="ex" hint-placeholder-count="4">
+              <div onClick="{{ ex.addToBuilder }}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:var(--radius-md);background:var(--color-surface)" style-hover="background:color-mix(in srgb, var(--color-text) 4%, var(--color-surface))">
+                <div style="font-size:13px">{{ ex.name }}</div>
+                <i class="ph ph-plus" style="color:var(--color-accent)"></i>
+              </div>
+            </sc-for>
+          </sc-if>
+
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== HIIT PLAYER MODE ===== -->
+    <sc-if value="{{ isHiitPlayerMode }}">
+      <div style="position:absolute;inset:0;background:var(--color-bg);display:flex;flex-direction:column;z-index:20">
+        <div style="flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px">
+          <button onClick="{{ hiitPlayer.exit }}" style="background:none;border:none;color:var(--color-neutral-400);display:flex;padding:6px;border-radius:8px;margin:-6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-x" style="font-size:20px"></i></button>
+          <div style="flex:1;font-family:var(--font-heading);font-weight:600;font-size:16px">{{ hiitPlayer.routineName }}</div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px">
+          <div style="font-size:12px;color:var(--color-neutral-500)">{{ hiitPlayer.progressLabel }}</div>
+          <div style="font-size:12px;color:var(--color-accent);font-family:var(--font-heading);font-weight:500">{{ hiitPlayer.nextLabel }}</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 24px">
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;text-align:center">{{ hiitPlayer.sectionTitle }}</div>
+          <div style="font-size:12px;color:var(--color-neutral-500);text-align:center;max-width:260px">{{ hiitPlayer.sectionDescription }}</div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:64px;letter-spacing:-0.02em;margin:14px 0;color:var(--color-accent)">{{ hiitPlayer.timeLabel }}</div>
+        </div>
+        <div style="flex:none;padding:12px 16px 22px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:center;gap:8px">
+            <sc-for list="{{ hiitPlayer.soundOptions }}" as="snd" hint-placeholder-count="3">
+              <button onClick="{{ snd.select }}" style="font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid {{ snd.border }};background:{{ snd.bg }};color:{{ snd.color }}" style-hover="background:{{ snd.hoverBg }}">{{ snd.name }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface)">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+              <input type="checkbox" checked="{{ hiitPlayer.endBeepEnabled }}" onChange="{{ hiitPlayer.toggleEndBeep }}" style="accent-color:var(--color-accent);width:16px;height:16px"/>
+              Ending beep/chime sound
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+              <input type="checkbox" checked="{{ hiitPlayer.voiceEnabled }}" onChange="{{ hiitPlayer.toggleVoice }}" style="accent-color:var(--color-accent);width:16px;height:16px"/>
+              Voice transition announcements
+            </label>
+            <sc-if value="{{ hiitPlayer.voiceEnabled }}">
+              <select value="{{ hiitPlayer.selectedVoiceURI }}" onChange="{{ hiitPlayer.setVoice }}" style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;color:var(--color-text);padding:7px 8px;font-size:12px">
+                <sc-for list="{{ hiitPlayer.voiceOptions }}" as="v" hint-placeholder-count="3">
+                  <option value="{{ v.uri }}">{{ v.name }}</option>
+                </sc-for>
+              </select>
+            </sc-if>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button onClick="{{ hiitPlayer.toggleMute }}" style="background:none;border:none;color:var(--color-text);display:flex;padding:4px;border-radius:6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="{{ hiitPlayer.muteIcon }}" style="font-size:18px"></i></button>
+              <input type="range" min="0" max="100" value="{{ hiitPlayer.volume }}" onChange="{{ hiitPlayer.setVolume }}" style="flex:1;accent-color:var(--color-accent)"/>
+              <span style="font-size:11px;color:var(--color-neutral-500);width:30px;text-align:right">{{ hiitPlayer.volume }}%</span>
+            </div>
+          </div>
+
+          <sc-if value="{{ hiitPlayer.showStart }}">
+            <button onClick="{{ hiitPlayer.pressStart }}" style="width:100%;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:14px;font-size:16px;font-family:var(--font-heading);font-weight:600" style-hover="background:var(--color-accent-600)" style-active="background:var(--color-accent-400)">{{ hiitPlayer.startLabel }}</button>
+          </sc-if>
+          <sc-if value="{{ hiitPlayer.running }}">
+            <button onClick="{{ hiitPlayer.pressStop }}" style="width:100%;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:14px;font-size:16px;font-family:var(--font-heading);font-weight:600" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)" style-active="background:color-mix(in srgb, var(--color-text) 14%, transparent)">Stop</button>
+          </sc-if>
+          <sc-if value="{{ hiitPlayer.finished }}">
+            <button onClick="{{ hiitPlayer.exit }}" style="width:100%;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:14px;font-size:16px;font-family:var(--font-heading);font-weight:600" style-hover="background:var(--color-accent-600)" style-active="background:var(--color-accent-400)">Done</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== EXERCISE DETAIL OVERLAY ===== -->
+    <sc-if value="{{ overlayExercise }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:30;background:color-mix(in srgb, var(--color-neutral-900) 60%, transparent);display:flex;align-items:flex-end">
+        <div style="width:100%;max-height:82%;background:var(--color-bg);border-radius:20px 20px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)">
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:18px">{{ overlayExercise.name }}</div>
+            <div style="display:flex;gap:4px">
+              <sc-if value="{{ overlayExercise.ownedByMe }}">
+                <button onClick="{{ overlayExercise.editIt }}" style="background:none;border:none;color:var(--color-accent);padding:6px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)"><i class="ph ph-pencil-simple" style="font-size:18px"></i></button>
+              </sc-if>
+              <sc-if value="{{ !overlayExercise.ownedByMe }}">
+                <button onClick="{{ overlayExercise.editIt }}" style="background:none;border:none;color:var(--color-accent);padding:6px;border-radius:8px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)"><i class="ph ph-copy" style="font-size:18px"></i></button>
+              </sc-if>r(--color-accent) 10%, transparent)"><i class="ph ph-pencil-simple" style="font-size:18px"></i></button>
+              </sc-if>
+              <button onClick="{{ closeOverlayExercise }}" style="background:none;border:none;color:var(--color-neutral-400);padding:6px;border-radius:8px;margin:-6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-x" style="font-size:19px"></i></button>
+            </div>
+          </div>
+          <div class="om-scroll" style="overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Start</div>
+                <image-slot id="{{ overlayExercise.startSlotId }}" shape="rounded" radius="10" placeholder="drop start photo" style="width:100%;height:110px"></image-slot>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500)">Finish</div>
+                <image-slot id="{{ overlayExercise.finishSlotId }}" shape="rounded" radius="10" placeholder="drop finish photo" style="width:100%;height:110px"></image-slot>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+              <div><div style="color:var(--color-neutral-500)">Muscles worked</div><div style="margin-top:2px">{{ overlayExercise.muscles }}</div></div>
+              <div><div style="color:var(--color-neutral-500)">Equipment</div><div style="margin-top:2px">{{ overlayExercise.equipment }}</div></div>
+              <div><div style="color:var(--color-neutral-500)">Bench position</div><div style="margin-top:2px">{{ overlayExercise.bench }}</div></div>
+              <div><div style="color:var(--color-neutral-500)">Accessory</div><div style="margin-top:2px">{{ overlayExercise.accessory }}</div></div>
+              <div><div style="color:var(--color-neutral-500)">Arm position</div><div style="margin-top:2px">{{ overlayExercise.armPos }}</div></div>
+            </div>
+            <div>
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:6px">Success tips</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ overlayExercise.tips }}" as="tip" hint-placeholder-count="3">
+                  <div style="display:flex;gap:8px;font-size:13px;line-height:1.4"><i class="ph-fill ph-check-circle" style="color:var(--color-accent);font-size:15px;flex:none;margin-top:2px"></i><span>{{ tip }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== CUSTOM EXERCISE FORM OVERLAY ===== -->
+    <sc-if value="{{ exerciseForm }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:31;background:color-mix(in srgb, var(--color-neutral-900) 60%, transparent);display:flex;align-items:flex-end">
+        <div style="width:100%;max-height:88%;background:var(--color-bg);border-radius:20px 20px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)">
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:18px">{{ exerciseForm.isEdit ? 'Edit Exercise' : 'New Custom Exercise' }}</div>
+            <button onClick="{{ exerciseForm.save }}" style="background:none;border:none;color:var(--color-accent);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:6px 8px;border-radius:8px;margin:-6px -8px" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)">Save</button>
+          </div>
+          <sc-if value="{{ exerciseForm.error }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:0 16px 8px;padding:8px 12px;border-radius:var(--radius-md);background:color-mix(in srgb, #e5484d 15%, var(--color-surface));color:#ff8a8a;font-size:12px">{{ exerciseForm.error }}</div>
+          </sc-if>
+          <div class="om-scroll" style="overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:10px">
+            <input value="{{ exerciseForm.name }}" onChange="{{ exerciseForm.setName }}" placeholder="Exercise name" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:10px 12px;font-size:15px;color:var(--color-text);font-family:var(--font-heading)"/>
+            <sc-if value="{{ exerciseForm.basedOn }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11px;color:var(--color-neutral-500)">Forking your own copy, based on {{ exerciseForm.basedOn }}</div>
+            </sc-if>
+            <div style="display:inline-flex;overflow:hidden;border:1px solid var(--color-divider);border-radius:var(--radius-md);align-self:flex-start">
+              <button onClick="{{ exerciseForm.setVisJustMe }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;background:{{ exerciseForm.visJustMeBg }};color:{{ exerciseForm.visJustMeColor }}">Just Me</button>
+              <button onClick="{{ exerciseForm.setVisPublic }}" style="padding:7px 14px;font-size:12px;font-family:var(--font-heading);border:none;border-left:1px solid var(--color-divider);background:{{ exerciseForm.visPublicBg }};color:{{ exerciseForm.visPublicColor }}">Public</button>
+            </div>
+            <div style="display:flex;gap:8px">
+              <select value="{{ exerciseForm.category }}" onChange="{{ exerciseForm.setCategory }}" style="flex:1;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);color:var(--color-text);padding:9px 8px;font-size:13px">
+                <sc-for list="{{ exerciseForm.categoryOptions }}" as="c" hint-placeholder-count="8">
+                  <option value="{{ c }}">{{ c }}</option>
+                </sc-for>
+              </select>
+              <select value="{{ exerciseForm.equipment }}" onChange="{{ exerciseForm.setEquipment }}" style="flex:1;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);color:var(--color-text);padding:9px 8px;font-size:13px">
+                <sc-for list="{{ exerciseForm.equipmentOptions }}" as="eq" hint-placeholder-count="6">
+                  <option value="{{ eq }}">{{ eq }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+              <input type="checkbox" checked="{{ exerciseForm.isCardio }}" onChange="{{ exerciseForm.toggleCardio }}" style="accent-color:var(--color-accent);width:16px;height:16px"/>
+              This is a cardio exercise (log time/distance instead of sets)
+            </label>
+            <input value="{{ exerciseForm.muscles }}" onChange="{{ exerciseForm.setMuscles }}" placeholder="Muscles worked" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text)"/>
+            <input value="{{ exerciseForm.bench }}" onChange="{{ exerciseForm.setBench }}" placeholder="Bench / body position" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text)"/>
+            <input value="{{ exerciseForm.accessory }}" onChange="{{ exerciseForm.setAccessory }}" placeholder="Accessory / attachment" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text)"/>
+            <input value="{{ exerciseForm.armPos }}" onChange="{{ exerciseForm.setArmPos }}" placeholder="Arm position" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text)"/>
+            <textarea value="{{ exerciseForm.tipsText }}" onChange="{{ exerciseForm.setTipsText }}" placeholder="Success tips — one per line" style="background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--color-text);min-height:80px;resize:vertical;font-family:var(--font-body)"></textarea>
+            <button onClick="{{ exerciseForm.cancel }}" style="align-self:flex-start;background:none;border:none;color:var(--color-neutral-400);font-size:12px;padding:6px 0" style-hover="color:var(--color-text)">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== ROUTINE DETAIL OVERLAY ===== -->
+    <sc-if value="{{ overlayRoutine }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:30;background:color-mix(in srgb, var(--color-neutral-900) 60%, transparent);display:flex;align-items:flex-end">
+        <div style="width:100%;max-height:82%;background:var(--color-bg);border-radius:20px 20px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)">
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px">
+            <div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:18px">{{ overlayRoutine.name }}</div>
+              <sc-if value="{{ overlayRoutine.sourceName }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">Adapted from {{ overlayRoutine.sourceName }}</div>
+              </sc-if>
+              <sc-if value="{{ overlayRoutine.ownerBadge }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">{{ overlayRoutine.ownerBadge }}</div>
+              </sc-if>
+            </div>
+            <button onClick="{{ closeOverlayRoutine }}" style="background:none;border:none;color:var(--color-neutral-400);padding:6px;border-radius:8px;margin:-6px" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)"><i class="ph ph-x" style="font-size:19px"></i></button>
+          </div>
+          <div class="om-scroll" style="overflow-y:auto;padding:8px 16px 20px;display:flex;flex-direction:column;gap:10px">
+            <sc-if value="{{ overlayRoutine.isHiit }}"><div style="font-size:12px;color:var(--color-neutral-500)">{{ overlayRoutine.hiitSummary }}</div></sc-if>
+            <sc-for list="{{ overlayRoutine.exRows }}" as="row" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:var(--radius-md);background:var(--color-surface)">
+                <div style="font-size:13px">{{ row.name }}</div>
+                <div style="font-size:11px;color:var(--color-neutral-500)">{{ row.detail }}</div>
+              </div>
+            </sc-for>
+            <sc-for list="{{ overlayRoutine.sectionRows }}" as="sec" hint-placeholder-count="0">
+              <div style="padding:10px;border-radius:var(--radius-md);background:var(--color-surface)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:13px;font-weight:500">{{ sec.title }}</div>
+                  <div style="font-size:11px;color:var(--color-neutral-500)">{{ sec.seconds }}</div>
+                </div>
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:2px">{{ sec.description }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;display:flex;gap:8px;padding:10px 16px 22px">
+            <sc-if value="{{ overlayRoutine.ownedByMe }}">
+              <button onClick="{{ overlayRoutine.editIt }}" style="flex:1;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:12px;font-size:14px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)" style-active="background:color-mix(in srgb, var(--color-text) 14%, transparent)">Edit</button>
+            </sc-if>
+            <sc-if value="{{ !overlayRoutine.ownedByMe }}">
+              <button onClick="{{ overlayRoutine.useIt }}" style="flex:1;background:transparent;border:1px solid var(--color-divider);color:var(--color-text);border-radius:var(--radius-md);padding:12px;font-size:14px;font-family:var(--font-heading);font-weight:500" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)" style-active="background:color-mix(in srgb, var(--color-text) 14%, transparent)">Use Workout</button>
+            </sc-if>
+            <button onClick="{{ overlayRoutine.startIt }}" style="flex:2;background:var(--color-accent);color:var(--color-bg);border:none;border-radius:var(--radius-md);padding:12px;font-size:14px;font-family:var(--font-heading);font-weight:600" style-hover="background:var(--color-accent-600)" style-active="background:var(--color-accent-400)">Start Workout</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+const EXERCISES = [
+  {id:'bench-press', name:'Bench Press', category:'Chest', muscles:'Pectoralis Major, Deltoids, Triceps', bench:'45° incline', accessory:'Long Hand Grips', armPos:'7 or 8', equipment:'Bowflex Machine', tips:['Keep a 90° angle between upper arms and torso.','Keep shoulder blades pinched together throughout.','Do not let elbows travel behind your shoulders.']},
+  {id:'chest-fly', name:'Chest Fly', category:'Chest', muscles:'Pectoralis Major, Anterior Deltoid', bench:'45° incline', accessory:'Long Hand Grips', armPos:'7 or 8', equipment:'Bowflex Machine', tips:['Maintain a 60–90° angle between upper arms and torso.','Keep knees bent, feet on floor, head back against bench.','Press straight out and slowly return to start.']},
+  {id:'standing-chest-press', name:'Standing Chest Press', category:'Chest', muscles:'Pectoralis Major, Deltoids, Triceps', bench:'Standing, facing engine', accessory:'Long Hand Grips', armPos:'6', equipment:'Bowflex Machine', tips:['Stagger your stance for balance.','Keep elbows slightly below shoulder height.','Press straight forward, control the return.']},
+  {id:'decline-chest-fly', name:'Decline Chest Fly', category:'Chest', muscles:'Lower Pectoralis Major', bench:'Decline (45°, reversed)', accessory:'Long Hand Grips', armPos:'2 or 3', equipment:'Bowflex Machine', tips:['Keep a slight bend in the elbows throughout.','Squeeze chest at full contraction.','Lower slowly under control.']},
+  {id:'seated-shoulder-press', name:'Seated Shoulder Press', category:'Shoulders', muscles:'Deltoids, Triceps', bench:'Upright, seated', accessory:'Long Hand Grips', armPos:'8 or 9', equipment:'Bowflex Machine', tips:['Keep wrists stacked over elbows.','Avoid arching your lower back.','Press straight overhead, don\u2019t lock out hard.']},
+  {id:'rear-deltoid-row', name:'Rear Deltoid Row', category:'Shoulders', muscles:'Posterior Deltoid, Rhomboids', bench:'Upright, facing engine', accessory:'Long Hand Grips', armPos:'6', equipment:'Bowflex Machine', tips:['Lead with your elbows, not your hands.','Squeeze shoulder blades together at the back.','Keep torso still throughout the row.']},
+  {id:'standing-lateral-raise', name:'Standing Lateral Raise', category:'Shoulders', muscles:'Medial Deltoid', bench:'Standing', accessory:'Long Hand Grips', armPos:'2', equipment:'Bowflex Machine', tips:['Raise arms to shoulder height, no higher.','Keep a slight bend in the elbows.','Lower slowly, resisting the whole way.']},
+  {id:'shoulder-shrug', name:'Shoulder Shrug', category:'Shoulders', muscles:'Trapezius', bench:'Standing', accessory:'Long Hand Grips', armPos:'1', equipment:'Bowflex Machine', tips:['Lift straight up, don\u2019t roll the shoulders.','Pause briefly at the top.','Keep arms relaxed and straight.']},
+  {id:'seated-lat-row', name:'Seated Lat Row', category:'Back', muscles:'Latissimus Dorsi, Biceps', bench:'Seated, upright', accessory:'Long Hand Grips', armPos:'4', equipment:'Bowflex Machine', tips:['Pull elbows straight back, close to the body.','Keep chest lifted, don\u2019t round the back.','Squeeze shoulder blades at the finish.']},
+  {id:'standing-lat-row', name:'Standing Lat Row', category:'Back', muscles:'Latissimus Dorsi, Biceps', bench:'Standing, facing engine', accessory:'Long Hand Grips', armPos:'2', equipment:'Bowflex Machine', tips:['Hinge slightly at the hips, keep spine neutral.','Drive elbows back and down.','Control the return, don\u2019t let it snap forward.']},
+  {id:'narrow-pulldown', name:'Narrow Pulldown', category:'Back', muscles:'Latissimus Dorsi, Biceps', bench:'Seated', accessory:'Curl/Pulldown Bar', armPos:'9', equipment:'Bowflex Machine', tips:['Pull the bar down to upper chest level.','Keep elbows close to your sides.','Avoid leaning back excessively.']},
+  {id:'stiff-arm-pulldown', name:'Stiff Arm Pulldown', category:'Back', muscles:'Latissimus Dorsi', bench:'Standing', accessory:'Curl/Pulldown Bar', armPos:'9', equipment:'Bowflex Machine', tips:['Keep elbows nearly straight throughout.','Pull down using your lats, not your arms.','Hinge slightly forward at the hips.']},
+  {id:'standing-biceps-curl', name:'Standing Biceps Curl', category:'Arms', muscles:'Biceps Brachii', bench:'Standing', accessory:'Long Hand Grips', armPos:'1', equipment:'Bowflex Machine', tips:['Keep elbows pinned to your sides.','Curl using a full range of motion.','Don\u2019t swing your torso to assist.']},
+  {id:'triceps-pushdown', name:'Triceps Pushdown', category:'Arms', muscles:'Triceps Brachii', bench:'Standing', accessory:'Curl/Pulldown Bar', armPos:'9', equipment:'Bowflex Machine', tips:['Keep elbows tucked at your sides.','Extend fully without locking hard.','Control the return to the start position.']},
+  {id:'french-press', name:'French Press', category:'Arms', muscles:'Triceps Brachii (long head)', bench:'Seated or standing', accessory:'Long Hand Grips', armPos:'9', equipment:'Bowflex Machine', tips:['Keep upper arms stationary and vertical.','Extend overhead through full range.','Avoid flaring the elbows outward.']},
+  {id:'seated-triceps-extension', name:'Seated Triceps Extension', category:'Arms', muscles:'Triceps Brachii', bench:'Seated, upright', accessory:'Long Hand Grips', armPos:'8', equipment:'Bowflex Machine', tips:['Keep elbows close to your head.','Extend arms fully, then control the return.','Keep torso upright throughout.']},
+  {id:'seated-crunch', name:'Seated Resisted Abdominal Crunch', category:'Abs', muscles:'Rectus Abdominis', bench:'Seated', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Curl your ribcage toward your pelvis.','Don\u2019t lift your head or chin to help.','Use slow, controlled motion \u2014 no kicking.']},
+  {id:'seated-oblique-crunch', name:'Seated Resisted Oblique Crunch', category:'Abs', muscles:'Obliques', bench:'Seated', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Rotate through the torso, not the arms.','Keep hips facing forward.','Control the return each rep.']},
+  {id:'trunk-rotation', name:'Standing Trunk Rotation', category:'Abs', muscles:'Obliques, Core', bench:'Standing', accessory:'Long Hand Grips', armPos:'6', equipment:'Bowflex Machine', tips:['Keep hips relatively stable as you rotate.','Rotate through your torso, not your arms.','Move slowly and with control both ways.']},
+  {id:'low-back-extension', name:'Seated Low Back Extension', category:'Abs', muscles:'Erector Spinae', bench:'Seated', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Extend through the lower back, not the neck.','Keep the motion slow and controlled.','Don\u2019t hyperextend at the top.']},
+  {id:'leg-extension', name:'Leg Extension', category:'Legs', muscles:'Quadriceps', bench:'Seated, Leg Extension attachment', accessory:'Leg Extension pad', armPos:'—', equipment:'Bowflex Machine', tips:['Extend legs fully without locking knees hard.','Keep your back against the bench.','Lower slowly under control.']},
+  {id:'leg-curl', name:'Leg Curl', category:'Legs', muscles:'Hamstrings', bench:'Seated or lying, Leg Curl attachment', accessory:'Leg Curl pad', armPos:'—', equipment:'Bowflex Machine', tips:['Curl heels toward your glutes.','Keep hips pressed down throughout.','Control the return each rep.']},
+  {id:'leg-press', name:'Leg Press', category:'Legs', muscles:'Quadriceps, Glutes, Hamstrings', bench:'Seated, Leg Press plate', accessory:'Leg Press plate', armPos:'—', equipment:'Bowflex Machine', tips:['Keep knees tracking over your toes.','Don\u2019t lock knees out at extension.','Press through your whole foot.']},
+  {id:'seated-calf-raise', name:'Seated Calf Raise', category:'Legs', muscles:'Gastrocnemius, Soleus', bench:'Seated, Leg Press plate', accessory:'Leg Press plate', armPos:'—', equipment:'Bowflex Machine', tips:['Rise onto the balls of your feet fully.','Pause briefly at the top.','Lower slowly for a full stretch.']},
+  {id:'jog', name:'Jog', category:'Cardio', isCardio:true, muscles:'Cardiovascular System, Legs', bench:'Outdoors or treadmill', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Warm up with an easy walk for 3-5 minutes first.','Keep a conversational pace you can sustain.','Land softly and keep your posture upright.']},
+  {id:'walk', name:'Walk', category:'Cardio', isCardio:true, muscles:'Cardiovascular System, Legs', bench:'Outdoors or treadmill', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Keep a brisk, steady pace.','Swing your arms naturally to engage more muscle.','Stand tall — avoid hunching over.']},
+  {id:'stationary-bike', name:'Stationary Bike', category:'Cardio', isCardio:true, muscles:'Cardiovascular System, Quadriceps, Hamstrings', bench:'Seated on bike', accessory:'Bike console', armPos:'—', equipment:'Cardio Machine', tips:['Adjust seat height so knees stay slightly bent at full extension.','Keep a steady cadence throughout.','Increase resistance gradually as you build endurance.']},
+  {id:'treadmill', name:'Treadmill', category:'Cardio', isCardio:true, muscles:'Cardiovascular System, Legs', bench:'Standing on belt', accessory:'Treadmill console', armPos:'—', equipment:'Cardio Machine', tips:['Start at a walking pace to warm up.','Keep your eyes forward, not down at your feet.','Use the incline sparingly at first.']},
+  {id:'rowing', name:'Rowing', category:'Cardio', isCardio:true, muscles:'Full Body, Back, Legs', bench:'Aerobic Rowing position', accessory:'Long Hand Grips', armPos:'6', equipment:'Bowflex Machine', tips:['Drive with your legs first, then lean back, then pull your arms in.','Keep a smooth, continuous motion.','Maintain steady breathing throughout the interval.']},
+  {id:'elliptical', name:'Elliptical', category:'Cardio', isCardio:true, muscles:'Cardiovascular System, Full Body', bench:'Standing on pedals', accessory:'Elliptical console', armPos:'—', equipment:'Cardio Machine', tips:['Keep your posture upright, don\u2019t lean on the handles.','Push and pull evenly through the full stride.','Alternate direction occasionally to vary muscle use.']},
+  {id:'stair-climber', name:'Stair Climber', category:'Cardio', isCardio:true, muscles:'Glutes, Quadriceps, Calves', bench:'Standing on steps', accessory:'Stair climber console', armPos:'—', equipment:'Cardio Machine', tips:['Avoid leaning heavily on the handrails.','Take full steps rather than tiny ones.','Keep your core engaged for stability.']},
+  {id:'custom-cardio', name:'Custom Cardio', category:'Cardio', isCardio:true, muscles:'Varies by activity', bench:'—', accessory:'—', armPos:'—', equipment:'Custom', tips:['Log any cardio activity not listed here.','Track resistance, time and distance as available.','Keep intensity appropriate to your fitness level.']},
+  {id:'hamstring-stretch', name:'Hamstring Stretch', category:'Legs', muscles:'Hamstrings', bench:'Floor or standing', accessory:'None', armPos:'—', equipment:'Stretch', tips:['Hinge from the hips, keeping your back flat.','Ease into the stretch — never bounce.','Hold for 20-30 seconds per side.']},
+  {id:'quad-stretch', name:'Quad Stretch', category:'Legs', muscles:'Quadriceps', bench:'Standing', accessory:'None', armPos:'—', equipment:'Stretch', tips:['Keep knees close together as you pull your heel back.','Stand tall — don\u2019t arch your lower back.','Hold for 20-30 seconds per side.']},
+  {id:'shoulder-stretch', name:'Shoulder Stretch', category:'Shoulders', muscles:'Deltoids, Rotator Cuff', bench:'Standing', accessory:'None', armPos:'—', equipment:'Stretch', tips:['Pull the arm gently across your chest.','Keep the shoulder relaxed, away from your ear.','Hold for 20-30 seconds per side.']},
+  {id:'cat-cow-stretch', name:'Cat-Cow Stretch', category:'Back', muscles:'Spinal Erectors, Core', bench:'Floor, on hands and knees', accessory:'None', armPos:'—', equipment:'Stretch', tips:['Move slowly between arching and rounding your back.','Sync the movement with your breath.','Keep wrists stacked under shoulders.']},
+  {id:'childs-pose', name:'Child\u2019s Pose', category:'Back', muscles:'Lats, Spinal Erectors', bench:'Floor', accessory:'None', armPos:'—', equipment:'Stretch', tips:['Sit back toward your heels, arms extended forward.','Relax your shoulders down and away from your ears.','Breathe deeply and hold for 30 seconds or more.']},
+  {id:'push-up', name:'Push-Up', category:'Chest', muscles:'Pectoralis Major, Triceps, Deltoids', bench:'Floor', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Keep your body in a straight line from head to heels.','Lower until your chest nearly touches the floor.','Keep elbows at roughly 45° from your torso.']},
+  {id:'bodyweight-squat', name:'Bodyweight Squat', category:'Legs', muscles:'Quadriceps, Glutes, Hamstrings', bench:'Floor', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Keep your chest up and knees tracking over your toes.','Sit back like you\u2019re lowering onto a chair.','Drive through your heels to stand.']},
+  {id:'plank', name:'Plank', category:'Abs', muscles:'Rectus Abdominis, Core', bench:'Floor', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Keep a straight line from head to heels.','Squeeze your glutes and brace your core.','Don\u2019t let your hips sag or pike up.']},
+  {id:'walking-lunge', name:'Walking Lunge', category:'Legs', muscles:'Quadriceps, Glutes, Hamstrings', bench:'Floor', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Step forward into a controlled lunge, knee over ankle.','Keep your torso upright throughout.','Push off the front foot to step into the next rep.']},
+  {id:'burpee', name:'Burpee', category:'Full Body', muscles:'Full Body', bench:'Floor', accessory:'None', armPos:'—', equipment:'Bodyweight', tips:['Move with control on the way down to protect your back.','Land softly on the jump.','Keep a steady pace you can sustain for reps.']},
+  {id:'kettlebell-swing', name:'Kettlebell Swing', category:'Full Body', muscles:'Glutes, Hamstrings, Core', bench:'Standing', accessory:'Kettlebell', armPos:'—', equipment:'Kettlebell', tips:['Hinge at the hips, don\u2019t squat the swing.','Drive with your hips to snap the kettlebell up.','Keep your back flat and core braced throughout.']},
+  {id:'kettlebell-goblet-squat', name:'Kettlebell Goblet Squat', category:'Legs', muscles:'Quadriceps, Glutes', bench:'Standing', accessory:'Kettlebell', armPos:'—', equipment:'Kettlebell', tips:['Hold the kettlebell close to your chest.','Keep your elbows inside your knees at the bottom.','Drive through your heels to stand.']},
+  {id:'kettlebell-deadlift', name:'Kettlebell Deadlift', category:'Legs', muscles:'Hamstrings, Glutes, Lower Back', bench:'Standing', accessory:'Kettlebell', armPos:'—', equipment:'Kettlebell', tips:['Keep the kettlebell close to your shins.','Hinge at the hips with a flat back.','Drive your hips forward to stand tall.']},
+  {id:'turkish-get-up', name:'Turkish Get-Up', category:'Full Body', muscles:'Full Body, Shoulders, Core', bench:'Floor', accessory:'Kettlebell', armPos:'—', equipment:'Kettlebell', tips:['Keep your eyes on the kettlebell throughout the movement.','Move slowly and with control through each step.','Keep the arm locked out straight overhead.']},
+  {id:'kettlebell-row', name:'Kettlebell Row', category:'Back', muscles:'Latissimus Dorsi, Rhomboids, Biceps', bench:'Bent over, standing', accessory:'Kettlebell', armPos:'—', equipment:'Kettlebell', tips:['Keep your back flat, hinge from the hips.','Pull the kettlebell to your hip, elbow close to your body.','Control the descent each rep.']},
+];
+
+const VIB_STANCES = ['Feet together (narrow)','Shoulder-width','Wide stance','Staggered / split','Single leg','Balls of feet / toes','Heels only','Kneeling on plate','Hands on plate','Forearms on plate','Seated on plate','Seated, feet on plate','Lying, feet on plate'];
+const VIB_MODES = ['Vibration (linear)','Oscillation (pivotal)','Tri-planar','Combined / dual','Massage pulse'];
+const VIB_EXERCISES = [
+  ['vib-static-squat','Static Squat Hold','Legs','Quadriceps, Glutes','Shoulder-width','Hold a 90° knee bend with your chest up.'],
+  ['vib-deep-squat','Deep Squat Hold','Legs','Glutes, Quadriceps, Adductors','Wide stance','Sit as low as your mobility allows, heels down.'],
+  ['vib-dynamic-squat','Dynamic Squat','Legs','Quadriceps, Glutes','Shoulder-width','Move slowly — 3 seconds down, 3 seconds up.'],
+  ['vib-single-leg-squat','Single-Leg Squat','Legs','Quadriceps, Glutes, Stabilizers','Single leg','Keep the free leg off the plate and hips level.'],
+  ['vib-lunge','Split Lunge','Legs','Quadriceps, Glutes, Hip Flexors','Staggered / split','Front foot on the plate, back knee soft.'],
+  ['vib-calf-raise','Calf Raise','Legs','Gastrocnemius, Soleus','Balls of feet / toes','Rise onto the balls of your feet and hold.'],
+  ['vib-standing-posture','Standing Whole-Body','Full Body','Postural Chain, Core','Shoulder-width','Knees slightly bent — never lock them out on a plate.'],
+  ['vib-push-up','Push-Up Hold','Chest','Pectorals, Triceps, Core','Hands on plate','Hands on the plate, body in one straight line.'],
+  ['vib-plank','Forearm Plank','Abs','Rectus Abdominis, Core','Forearms on plate','Brace hard — the vibration will try to break your line.'],
+  ['vib-side-plank','Side Plank','Abs','Obliques, Core','Forearms on plate','One forearm on the plate, hips stacked and lifted.'],
+  ['vib-glute-bridge','Glute Bridge','Legs','Glutes, Hamstrings','Lying, feet on plate','Drive the hips up and squeeze at the top.'],
+  ['vib-crunch','Crunch','Abs','Rectus Abdominis','Lying, feet on plate','Heels on the plate, curl the ribs toward the hips.'],
+  ['vib-superman','Prone Superman Hold','Back','Erector Spinae, Glutes','Forearms on plate','Lift chest and thighs slightly — no neck strain.'],
+  ['vib-triceps-dip','Triceps Dip','Arms','Triceps','Hands on plate','Hands behind you on the plate, elbows tracking back.'],
+  ['vib-strap-curl','Strap Biceps Curl','Arms','Biceps Brachii','Shoulder-width','Stand on the plate holding the straps, elbows pinned.'],
+  ['vib-strap-row','Strap Row','Back','Lats, Rhomboids','Shoulder-width','Hinge slightly and pull the straps to your hips.'],
+  ['vib-calf-massage','Seated Calf Massage','Legs','Calves (recovery)','Seated, feet on plate','Low frequency — this is recovery, not training.'],
+  ['vib-hamstring-massage','Seated Hamstring Massage','Legs','Hamstrings (recovery)','Seated on plate','Sit directly on the plate and let the muscle loosen.'],
+  ['vib-kneeling-shoulder','Kneeling Shoulder Press-Up','Shoulders','Deltoids, Core','Kneeling on plate','Kneel on the plate, hands down, shoulders packed.'],
+].map(([id,name,bodyPart,muscles,stance,tip]) => ({
+  id, name, category: 'Vibration Plate', bodyPart, muscles, isVib: true, equipment: 'Vibration Plate',
+  bench: 'On plate — ' + stance, accessory: 'Vibration plate', armPos: '\u2014',
+  stance, defaultDuration: 45, defaultFreq: 25, defaultLevel: 10, defaultMode: VIB_MODES[0],
+  tips: [tip, 'Keep knees soft — never lock joints on a vibrating platform.', 'Start with short holds at low frequency and build up.'],
+}));
+
+const ROUTINE_DEFS = [
+  {id:'better-body', name:'20 Minute Better Body', days:'M-W-F', ex:[['seated-lat-row',2,'10-15'],['rear-deltoid-row',2,'10-15'],['seated-triceps-extension',2,'10-15'],['standing-biceps-curl',2,'10-15'],['low-back-extension',2,'10-15'],['seated-crunch',2,'10-15'],['bench-press',2,'10-15'],['leg-extension',2,'10-15'],['leg-curl',2,'10-15']]},
+  {id:'adv-conditioning', name:'Advanced General Conditioning', days:'M-T-Th-F', ex:[['standing-chest-press',3,'10-12'],['seated-shoulder-press',3,'10-12'],['triceps-pushdown',3,'10-12'],['french-press',3,'10-12'],['leg-press',3,'10-12'],['seated-calf-raise',3,'10-12'],['standing-lat-row',3,'10-12'],['stiff-arm-pulldown',3,'10-12'],['standing-biceps-curl',3,'10-12'],['low-back-extension',3,'10-12'],['seated-crunch',3,'10-12']]},
+  {id:'upper-lower', name:'20 Minute Upper/Lower Body', days:'M-T-Th-F', ex:[['bench-press',3,'12-15'],['seated-lat-row',3,'12-15'],['seated-shoulder-press',3,'12-15'],['french-press',3,'12-15'],['standing-biceps-curl',3,'12-15'],['leg-extension',3,'12-15'],['leg-curl',3,'12-15'],['leg-press',3,'12-15'],['seated-calf-raise',3,'12-15'],['low-back-extension',3,'10-12'],['seated-crunch',3,'10-12']]},
+  {id:'body-building', name:'Body Building', days:'3 on, 1 off', ex:[['bench-press',4,'8-12'],['decline-chest-fly',4,'8-12'],['seated-shoulder-press',4,'8-12'],['rear-deltoid-row',4,'8-12'],['standing-lateral-raise',4,'8-12'],['shoulder-shrug',4,'8-12'],['seated-lat-row',4,'8-12'],['narrow-pulldown',4,'8-12'],['standing-biceps-curl',4,'8-12'],['seated-triceps-extension',4,'8-12'],['french-press',4,'8-12'],['leg-extension',4,'8-12'],['leg-curl',3,'8-12'],['leg-press',4,'8-12'],['seated-calf-raise',4,'12-15'],['low-back-extension',4,'8-12'],['seated-crunch',4,'8-12'],['seated-oblique-crunch',4,'8-12']]},
+  {id:'circuit', name:'Circuit Training', days:'2-3x / week', ex:[['standing-chest-press',1,'8-12'],['standing-lat-row',1,'8-12'],['trunk-rotation',1,'8-12'],['seated-shoulder-press',1,'8-12'],['standing-biceps-curl',1,'8-12'],['leg-press',1,'8-12'],['rear-deltoid-row',1,'8-12'],['triceps-pushdown',1,'8-12'],['seated-oblique-crunch',1,'8-12'],['leg-extension',1,'8-12'],['leg-curl',1,'8-12']]},
+  {id:'strength', name:'Strength Training', days:'M-W-F', ex:[['bench-press',4,'6-8'],['seated-lat-row',4,'6-8'],['leg-press',4,'6-8'],['seated-shoulder-press',3,'6-8'],['standing-biceps-curl',3,'6-8'],['triceps-pushdown',3,'6-8']]},
+];
+
+const CATEGORY_LIST = ['All','Chest','Shoulders','Back','Arms','Abs','Legs','Full Body','Cardio','Vibration Plate'];
+const EQUIPMENT_LIST = ['All','Bowflex Machine','Bodyweight','Kettlebell','Vibration Plate','Stretch','Cardio Machine','Custom'];
+EXERCISES.forEach(e => { e.visibility = 'manufacturer'; e.ownerId = null; e.ownerName = 'Bowflex'; });
+VIB_EXERCISES.forEach(e => { e.visibility = 'manufacturer'; e.ownerId = null; e.ownerName = 'Vibration Plate'; EXERCISES.push(e); });
+let ALL_EXERCISES = EXERCISES.slice();
+function toLocalISO(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_SHORT = ['S','M','T','W','T','F','S'];
+
+function exById(id){ return ALL_EXERCISES.find(e => e.id === id); }
+function exHasWeight(ex){ return !!ex && (ex.equipment === 'Bowflex Machine' || ex.equipment === 'Kettlebell'); }
+function toGroups(e){ if (e.groups && e.groups.length) return e.groups; return [{ uid: 'grp-'+Math.random().toString(36).slice(2,8), sets: e.sets ?? '', reps: e.reps ?? '', weight: e.weight ?? '' }]; }
+function defaultSectionForm(){ return { type: 'Warm Up', title: 'Warm Up', description: '', seconds: 60 }; }
+function sectionAnnouncement(section){ return section.isCycleRest ? `Repeat Cycle in ${section.seconds} seconds` : 'Begin ' + section.title; }
+function chipHover(active){ return active ? 'color-mix(in srgb, var(--color-accent) 30%, var(--color-accent-800))' : 'color-mix(in srgb, var(--color-text) 7%, transparent)'; }
+const SECTION_TYPES = ['Warm Up', 'Exercise', 'Rest', 'Cool Down', 'Custom'];
+const AVATAR_COLORS = ['oklch(65% 0.13 280)','oklch(65% 0.13 200)','oklch(65% 0.13 340)','oklch(65% 0.13 100)','oklch(65% 0.13 30)','oklch(65% 0.13 160)'];
+function ownerBadgeFor(item, activeProfileId) {
+  const vis = item.visibility || (item.custom ? 'justme' : 'manufacturer');
+  if (vis === 'manufacturer') return item.ownerName || 'Bowflex';
+  if (item.ownerId === activeProfileId) return null;
+  if (vis === 'public') return `Public · by ${item.ownerName || 'Unknown'}`;
+  return null;
+}
+function visOk(item, activeProfileId, filter) {
+  const vis = item.visibility || (item.custom ? 'justme' : 'manufacturer');
+  if (vis === 'manufacturer') return filter.manufacturer;
+  if (item.ownerId === activeProfileId) return filter.mine;
+  if (vis === 'public') return filter.public;
+  return false;
+}
+
+class Component extends DCLogic {
+  state = {
+    mode: 'tabs',
+    tab: 'home',
+    routines: ROUTINE_DEFS.map(r => ({
+      id: r.id, name: r.name, custom: false, modified: false, type: 'standard',
+      visibility: 'manufacturer', ownerId: null, ownerName: 'Bowflex',
+      exercises: r.ex.map(([exerciseId, sets, reps]) => ({exerciseId, sets, reps})),
+    })),
+    hiitPlayer: null,
+    hiitSettings: { endBeepEnabled: true, voiceEnabled: true, voiceURI: null, volume: 80, muted: false },
+    availableVoices: [],
+    profiles: [],
+    activeProfileId: null,
+    showProfileGate: true,
+    newProfileDraft: null,
+    libraryVisFilter: { manufacturer: true, mine: true, public: true },
+    resolveModal: null,
+    schedule: (() => {
+      const s = {}; DAY_NAMES.forEach(d => s[d] = {AM: [], PM: []}); return s;
+    })(),
+    history: [],
+    setLog: [],
+    logFilters: { search: '', dateFrom: '', dateTo: '', sortKey: 'date', sortDir: 'desc' },
+    exportMenuOpen: false,
+    exportToast: '',
+    historyView: 'calendar',
+    libraryCategory: 'All',
+    libraryEquipment: 'All',
+    customExercises: [],
+    exerciseForm: null,
+    overlayExerciseId: null,
+    overlayRoutineId: null,
+    session: null,
+    builder: null,
+    nextCustomId: 1,
+  };
+
+  componentDidMount() {
+    this.loadVoices();
+    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
+    const saved = this.loadPersisted();
+    this._profileDataStore = (saved && saved.profileData) || {};
+    if (saved && saved.profiles && saved.profiles.length) {
+      ALL_EXERCISES = EXERCISES.concat(saved.customExercises || []);
+      this.setState({
+        profiles: saved.profiles,
+        routines: [...this.state.routines.filter(r => !r.custom), ...(saved.customRoutines || [])],
+        customExercises: saved.customExercises || [],
+        showProfileGate: true,
+      });
+      return;
+    }
+    this.seedDemoData();
+  }
+
+  emptyProfileBlob() {
+    const schedule = {}; DAY_NAMES.forEach(d => schedule[d] = {AM: [], PM: []});
+    return { schedule, history: [], setLog: [], nextCustomId: 1, hiitSettings: { endBeepEnabled: true, voiceEnabled: true, voiceURI: null, volume: 80, muted: false } };
+  }
+
+  seedDemoData() {
+    const profileId = 'user-demo-me';
+    const profile = { id: profileId, name: 'Me', color: AVATAR_COLORS[0], initial: 'M' };
+    const schedule = {}; DAY_NAMES.forEach(d => schedule[d] = {AM: [], PM: []});
+    this._profileDataStore = { [profileId]: { schedule, history: [], setLog: [], nextCustomId: 1, hiitSettings: { endBeepEnabled: true, voiceEnabled: true, voiceURI: null, volume: 80, muted: false } } };
+    this.setState(s => ({ profiles: [profile], showProfileGate: true }), () => this.persist());
+  }
+
+  loadVoices() {
+    if (!window.speechSynthesis) return;
+    const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+    if (voices.length) this.setState({ availableVoices: voices });
+  }
+  synthesizeSetLogEntry(dateStr, ampm, exerciseId, sets, repsRange, routineName, seedIdx) {
+    const ex = exById(exerciseId);
+    if (!ex) return [];
+    if (ex.isCardio) return [{ date: dateStr, ampm, exerciseId, exerciseName: ex.name, set: 1, reps: '20 min', weight: '2.0 mi', routineName }];
+    const isBody = !exHasWeight(ex);
+    const [lo, hi] = String(repsRange).split('-').map(n => parseInt(n, 10) || 10);
+    const baseWeight = 20 + (exerciseId.length % 6) * 10;
+    const out = [];
+    for (let s = 1; s <= sets; s++) {
+      const reps = lo + ((s + seedIdx) % Math.max(1, hi - lo + 1));
+      out.push({ date: dateStr, ampm, exerciseId, exerciseName: ex.name, set: s, reps, weight: isBody ? 'BODY' : baseWeight + s * 5, routineName });
+    }
+    return out;
+  }
+  getRoutineExerciseList(routineId, customRoutines) {
+    const stock = ROUTINE_DEFS.find(r => r.id === routineId);
+    if (stock) return stock.ex.map(([exerciseId, sets, reps]) => ({ exerciseId, sets, reps }));
+    const custom = (customRoutines || []).find(r => r.id === routineId);
+    if (custom && custom.type !== 'hiit' && custom.exercises) return custom.exercises.map(e => ({ exerciseId: e.exerciseId, sets: e.sets, reps: e.reps }));
+    return null;
+  }
+  backfillSetLog(history, customRoutines) {
+    const out = [];
+    history.forEach((h, i) => {
+      const list = this.getRoutineExerciseList(h.routineId, customRoutines);
+      if (!list) return;
+      const ampm = (i % 3 === 0) ? 'PM' : 'AM';
+      list.forEach(item => {
+        out.push(...this.synthesizeSetLogEntry(h.date, ampm, item.exerciseId, item.sets, item.reps, h.routineName, i));
+      });
+    });
+    return out;
+  }
+  loadPersisted() {
+    try {
+      const raw = window.localStorage.getItem('bowflex-tracker-v2');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+  persist() {
+    try {
+      const st = this.state;
+      this._profileDataStore = this._profileDataStore || {};
+      if (st.activeProfileId) {
+        this._profileDataStore[st.activeProfileId] = {
+          schedule: st.schedule, history: st.history, setLog: st.setLog,
+          nextCustomId: st.nextCustomId, hiitSettings: st.hiitSettings,
+        };
+      }
+      window.localStorage.setItem('bowflex-tracker-v2', JSON.stringify({
+        profiles: st.profiles,
+        customRoutines: st.routines.filter(r => r.custom),
+        customExercises: st.customExercises,
+        profileData: this._profileDataStore,
+      }));
+    } catch (e) {}
+  }
+
+  fmtDate(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((today - d) / 86400000);
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+  }
+
+  routineName(id) { const r = this.state.routines.find(x => x.id === id); return r ? r.name : ''; }
+
+  startSession(routineId) {
+    const r = this.state.routines.find(x => x.id === routineId);
+    if (!r) return;
+    const todayISO = toLocalISO(new Date());
+    const logged = (this.state.setLog || []).filter(l => l.date === todayISO && l.routineName === r.name);
+    if (logged.length) {
+      const byEx = {};
+      logged.forEach(l => { (byEx[l.exerciseId] = byEx[l.exerciseId] || []).push(l); });
+      const rows = r.exercises.map(e => {
+        const ex = exById(e.exerciseId);
+        const entries = byEx[e.exerciseId] || [];
+        if (ex && ex.isVib) {
+          const c = entries[0];
+          return { exerciseId: e.exerciseId, isVib: true, done: entries.length > 0, target: `${e.duration || '?'}s @ ${e.freq || '?'}Hz`,
+            stance: (c && c.stance) || e.stance || '', mode: (c && c.mode) || e.mode || '',
+            duration: c ? (parseInt(c.reps, 10) || '') : (e.duration ?? ''),
+            freq: c ? (parseInt(c.weight, 10) || '') : (e.freq ?? ''),
+            level: c ? (c.set ?? '') : (e.level ?? '') };
+        }
+        if (ex && ex.isCardio) {
+          const c = entries[0];
+          return { exerciseId: e.exerciseId, isCardio: true, target: `${e.time ?? 20} min`, done: entries.length > 0,
+            resistance: e.resistance ?? 5, time: c ? parseInt(c.reps, 10) || (e.time ?? 20) : (e.time ?? 20), distance: c ? (parseFloat(c.weight) || '') : '' };
+        }
+        const groups = (entries.length ? entries : toGroups(e)).map(src => ({
+          uid: 'grp-'+Math.random().toString(36).slice(2,8),
+          sets: entries.length ? (src.set ?? '') : (src.sets ?? ''),
+          reps: src.reps ?? '',
+          weight: entries.length ? (src.weight === 'BODY' ? '' : (src.weight ?? '')) : (src.weight ?? ''),
+        }));
+        return { exerciseId: e.exerciseId, target: groups.map(g => `${g.sets || '?'}×${g.reps || '?'}`).join(', '), done: entries.length > 0, groups };
+      });
+      this.setState({ mode: 'workout', overlayRoutineId: null, session: { routineId, routineName: r.name, rows, editingDate: todayISO } });
+      return;
+    }
+    this.setState({
+      mode: 'workout',
+      session: {
+        routineId, routineName: r.name,
+        rows: r.exercises.map(e => {
+          const ex = exById(e.exerciseId);
+          if (ex && ex.isVib) return { exerciseId: e.exerciseId, isVib: true, done: true, target: `${e.duration || '?'}s @ ${e.freq || '?'}Hz`,
+            stance: e.stance || '', mode: e.mode || '', duration: e.duration ?? '', freq: e.freq ?? '', level: e.level ?? '' };
+          if (ex && ex.isCardio) return { exerciseId: e.exerciseId, isCardio: true, target: `${e.time ?? 20} min`, done: true, resistance: e.resistance ?? 5, time: e.time ?? 20, distance: e.distance ?? '' };
+          const targetGroups = toGroups(e);
+          const target = targetGroups.map(g => `${g.sets || '?'}×${g.reps || '?'}`).join(', ');
+          return { exerciseId: e.exerciseId, target, done: true,
+            groups: targetGroups.map(g => ({ uid: 'grp-'+Math.random().toString(36).slice(2,8), sets: g.sets === '' || g.sets === undefined || g.sets === null ? '' : (parseInt(g.sets, 10) || ''), reps: '', weight: '' })) };
+        }),
+      },
+      overlayRoutineId: null,
+    });
+  }
+
+  finishWorkout() {
+    const s = this.state.session;
+    if (!s) return;
+    const pending = [];
+    s.rows.forEach((row, ri) => {
+      if (!row.done || row.isCardio || row.isVib) return;
+      const ex = exById(row.exerciseId);
+      const hasWeight = exHasWeight(ex);
+      const groups = row.groups || [];
+      groups.forEach((g, gi) => {
+        const blank = v => v === '' || v === null || v === undefined;
+        if (!blank(g.sets) && !blank(g.reps) && (!hasWeight || !blank(g.weight))) return;
+        const label = groups.length > 1 ? `${ex?.name || row.exerciseId} — group ${gi+1}` : (ex?.name || row.exerciseId);
+        pending.push({ ri, gi, label, hasWeight, sets: g.sets ?? '', reps: g.reps ?? '', weight: g.weight ?? '' });
+      });
+    });
+    if (pending.length) {
+      const items = pending.map(p => ({ ...p,
+        setSets: (e) => this.updateResolveItem(p.ri, p.gi, 'sets', e.target.value),
+        setReps: (e) => this.updateResolveItem(p.ri, p.gi, 'reps', e.target.value),
+        setWeight: (e) => this.updateResolveItem(p.ri, p.gi, 'weight', e.target.value),
+      }));
+      this.setState({ resolveModal: { items } });
+      return;
+    }
+    this.completeFinish();
+  }
+  updateResolveItem(ri, gi, field, value) {
+    this.setState(s => ({ resolveModal: { items: s.resolveModal.items.map(it => (it.ri === ri && it.gi === gi) ? { ...it, [field]: value } : it) } }));
+  }
+  cancelResolveModal() {
+    this.setState({ resolveModal: null });
+  }
+  confirmResolveModal() {
+    const items = this.state.resolveModal.items;
+    this.setState(s => {
+      const rows = s.session.rows.map((row, ri) => {
+        const matches = items.filter(it => it.ri === ri);
+        if (!matches.length) return row;
+        const groups = row.groups.map((g, gi) => {
+          const m = matches.find(it => it.gi === gi);
+          if (!m) return g;
+          return { ...g, sets: m.sets, reps: m.reps, weight: m.hasWeight ? m.weight : g.weight };
+        });
+        return { ...row, groups };
+      });
+      const routines = s.routines.map(r => {
+        if (r.id !== s.session.routineId) return r;
+        const exercises = r.exercises.map(e => {
+          const rowIdx = rows.findIndex(row => row.exerciseId === e.exerciseId);
+          if (rowIdx === -1) return e;
+          if (!items.some(it => it.ri === rowIdx)) return e;
+          const row = rows[rowIdx];
+          const groups = (row.groups || []).map(g => ({ uid: g.uid, sets: String(g.sets ?? ''), reps: String(g.reps ?? ''), weight: g.weight === '' || g.weight === undefined ? '' : String(g.weight) }));
+          return { ...e, groups };
+        });
+        return { ...r, exercises };
+      });
+      return { session: { ...s.session, rows }, routines, resolveModal: null };
+    }, () => this.completeFinish());
+  }
+  completeFinish() {
+    const s = this.state.session;
+    if (!s) return;
+    const today = new Date();
+    const dateStr = toLocalISO(today);
+    const ampm = today.getHours() < 12 ? 'AM' : 'PM';
+    const logEntries = [];
+    s.rows.forEach(row => {
+      if (!row.done) return;
+      const ex = exById(row.exerciseId);
+      const isBody = !exHasWeight(ex);
+      if (row.isVib) {
+        logEntries.push({ date: dateStr, ampm, exerciseId: row.exerciseId, exerciseName: ex?.name || row.exerciseId, set: row.level ?? '', reps: row.duration ? row.duration+' s' : '', weight: row.freq ? row.freq+' Hz' : '', stance: row.stance || '', mode: row.mode || '', routineName: s.routineName });
+      } else if (row.isCardio) {
+        logEntries.push({ date: dateStr, ampm, exerciseId: row.exerciseId, exerciseName: ex?.name || row.exerciseId, set: 1, reps: row.time ? row.time+' min' : '', weight: row.distance ? row.distance+' mi' : '', routineName: s.routineName });
+      } else {
+        (row.groups || []).forEach(g => {
+          const reps = g.reps || '';
+          if (!reps && !g.weight) return;
+          logEntries.push({ date: dateStr, ampm, exerciseId: row.exerciseId, exerciseName: ex?.name || row.exerciseId, set: g.sets || '', reps, weight: isBody ? 'BODY' : (g.weight || ''), routineName: s.routineName });
+        });
+      }
+    });
+    const editing = s.editingDate;
+    this.setState(st => {
+      const priorLog = editing ? st.setLog.filter(l => !(l.date === editing && l.routineName === s.routineName)) : st.setLog;
+      const entry = {date: dateStr, routineId: s.routineId, routineName: s.routineName, exCount: s.rows.filter(r => r.done).length};
+      const history = editing
+        ? st.history.map(h => (h.date === editing && h.routineId === s.routineId) ? entry : h)
+        : [entry, ...st.history];
+      return { mode: 'tabs', tab: 'history', session: null, history, setLog: [...logEntries, ...priorLog] };
+    }, () => this.persist());
+  }
+
+  openBuilderFresh(kind) {
+    this.setState({ mode: 'builder', builder: { step: kind === 'hiit' ? 'hiitEdit' : 'kind', kind: kind || null, editingId: null, name: kind === 'hiit' ? 'New HIIT Workout' : '', visibility: 'justme', exRows: [], sections: [], sectionForm: defaultSectionForm(), cycles: 1, restBetweenCycles: 0, daySelections: {}, pickerCategory: 'Chest' } });
+  }
+
+  pickBuilderKind(kind) {
+    this.setState(s => ({ builder: { ...s.builder, kind,
+      step: kind === 'hiit' ? 'hiitEdit' : 'source',
+      name: kind === 'hiit' ? 'New HIIT Workout' : s.builder.name,
+    } }));
+  }
+
+  closeBuilder() {
+    const b = this.state.builder;
+    const hasContent = b && ((b.exRows && b.exRows.length) || (b.sections && b.sections.length));
+    if (hasContent && !window.confirm('Discard this workout without saving?')) return;
+    this.setState({ mode: 'tabs', tab: 'workouts', builder: null });
+  }
+
+  setSectionType(type) {
+    const autoTitle = {'Warm Up':'Warm Up', 'Rest':'Rest', 'Cool Down':'Cool Down'}[type];
+    this.setState(s => ({ builder: { ...s.builder, sectionForm: { ...s.builder.sectionForm, type, title: autoTitle !== undefined ? autoTitle : '' } } }));
+  }
+  addBuilderSection() {
+    this.setState(s => {
+      const f = s.builder.sectionForm;
+      const title = (f.title || '').trim();
+      const seconds = parseInt(f.seconds, 10) || 0;
+      if (!title || seconds <= 0) return {};
+      const section = { id: 'sec-' + Math.random().toString(36).slice(2,8), uid: 'sec-' + Math.random().toString(36).slice(2,9), title, description: f.description || '', seconds };
+      return { builder: { ...s.builder, sections: [...s.builder.sections, section], sectionForm: defaultSectionForm(), saveError: null } };
+    });
+  }
+  setCycles(e) {
+    this.setState(s => ({ builder: { ...s.builder, cycles: e.target.value } }));
+  }
+  setRestBetweenCycles(e) {
+    this.setState(s => ({ builder: { ...s.builder, restBetweenCycles: e.target.value } }));
+  }
+  moveBuilderSection(si, dir) {
+    this.setState(s => {
+      const sections = [...s.builder.sections];
+      const nj = si + dir;
+      if (nj < 0 || nj >= sections.length) return {};
+      [sections[si], sections[nj]] = [sections[nj], sections[si]];
+      return { builder: { ...s.builder, sections } };
+    });
+  }
+
+  speak(text) {
+    if (!window.speechSynthesis || !this.state.hiitSettings.voiceEnabled || this.state.hiitSettings.muted) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const { voiceURI, volume } = this.state.hiitSettings;
+    if (voiceURI) {
+      const v = this.state.availableVoices.find(v => v.voiceURI === voiceURI);
+      if (v) u.voice = v;
+    }
+    u.volume = Math.max(0, Math.min(1, volume / 100));
+    window.speechSynthesis.speak(u);
+  }
+  beep(type) {
+    if (!this.state.hiitSettings.endBeepEnabled || this.state.hiitSettings.muted) return;
+    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = this.audioCtx;
+    const vol = Math.max(0, Math.min(1, this.state.hiitSettings.volume / 100));
+    const freqMap = { beep: 880, chime: 1320, click: 600 };
+    const waveMap = { beep: 'sine', chime: 'triangle', click: 'square' };
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.type = waveMap[type] || 'sine'; o.frequency.value = freqMap[type] || 880;
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3 * vol + 0.0001, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.16);
+  }
+
+  startHiitPlayer(routineId) {
+    const r = this.state.routines.find(x => x.id === routineId);
+    if (!r || !r.sections || !r.sections.length) return;
+    const cycles = parseInt(r.cycles, 10) || 1;
+    const rest = parseInt(r.restBetweenCycles, 10) || 0;
+    let flat = [];
+    for (let c = 0; c < cycles; c++) {
+      flat = flat.concat(r.sections);
+      if (c < cycles - 1 && rest > 0) flat.push({ id: 'cyclerest-'+c, title: 'Repeat Cycle', description: 'Rest before the next cycle', seconds: rest, isCycleRest: true });
+    }
+    this.setState({
+      mode: 'hiitPlayer', overlayRoutineId: null,
+      hiitPlayer: { routineId, routineName: r.name, sections: flat, index: 0, remaining: flat[0].seconds, running: false, started: false, finished: false, soundType: 'beep' },
+    });
+  }
+  hiitPressStart() {
+    const hp = this.state.hiitPlayer;
+    if (!hp || hp.finished) return;
+    if (!hp.started) {
+      this.setState(s => ({ hiitPlayer: { ...s.hiitPlayer, started: true } }));
+      this.speak('Start Workout');
+      setTimeout(() => {
+        this.speak(sectionAnnouncement(hp.sections[0]));
+        this.setState(s => ({ hiitPlayer: { ...s.hiitPlayer, running: true } }));
+        this.runHiitTimer();
+      }, 1400);
+    } else {
+      this.setState(s => ({ hiitPlayer: { ...s.hiitPlayer, running: true } }));
+      this.runHiitTimer();
+    }
+  }
+  hiitPressStop() {
+    clearInterval(this._hiitTimer);
+    this.setState(s => ({ hiitPlayer: s.hiitPlayer ? { ...s.hiitPlayer, running: false } : null }));
+  }
+  runHiitTimer() {
+    clearInterval(this._hiitTimer);
+    this._hiitTimer = setInterval(() => this.hiitTick(), 1000);
+  }
+  hiitTick() {
+    this.setState(s => {
+      const hp = s.hiitPlayer;
+      if (!hp || !hp.running) return {};
+      const remaining = hp.remaining - 1;
+      if (remaining === 3 || remaining === 2 || remaining === 1) this.beep(hp.soundType);
+      if (remaining > 0) return { hiitPlayer: { ...hp, remaining } };
+      const nextIndex = hp.index + 1;
+      if (nextIndex < hp.sections.length) {
+        const next = hp.sections[nextIndex];
+        setTimeout(() => this.speak(sectionAnnouncement(next)), 50);
+        return { hiitPlayer: { ...hp, index: nextIndex, remaining: next.seconds } };
+      }
+      clearInterval(this._hiitTimer);
+      setTimeout(() => this.speak('End of workout'), 50);
+      const nowD = new Date();
+      const today = toLocalISO(nowD);
+      const ampm = nowD.getHours() < 12 ? 'AM' : 'PM';
+      const hiitLogEntries = hp.sections.map((sec, i) => ({
+        date: today, ampm, exerciseId: sec.id, exerciseName: sec.title, set: i + 1,
+        reps: Math.round(sec.seconds) + 's', weight: 'HIIT', routineName: hp.routineName,
+      }));
+      return {
+        hiitPlayer: { ...hp, remaining: 0, running: false, finished: true },
+        history: [{ date: today, routineId: hp.routineId, routineName: hp.routineName, exCount: hp.sections.length }, ...s.history],
+        setLog: [...hiitLogEntries, ...s.setLog],
+      };
+    }, () => this.persist());
+  }
+  setHiitSound(type) {
+    this.setState(s => ({ hiitPlayer: s.hiitPlayer ? { ...s.hiitPlayer, soundType: type } : null }));
+  }
+  setHiitSettings(patch) {
+    this.setState(s => ({ hiitSettings: { ...s.hiitSettings, ...patch } }), () => this.persist());
+  }
+  selectProfile(pid) {
+    const blob = (this._profileDataStore && this._profileDataStore[pid]) || this.emptyProfileBlob();
+    this.setState({
+      activeProfileId: pid, showProfileGate: false, tab: 'home', newProfileDraft: null,
+      schedule: blob.schedule, history: blob.history, setLog: blob.setLog,
+      nextCustomId: blob.nextCustomId, hiitSettings: blob.hiitSettings,
+    }, () => this.persist());
+  }
+  openProfileGate() {
+    this.setState({ showProfileGate: true, newProfileDraft: null });
+  }
+  openNewProfileDraft() {
+    this.setState({ newProfileDraft: { name: '', color: AVATAR_COLORS[0] } });
+  }
+  cancelNewProfileDraft() {
+    this.setState({ newProfileDraft: null });
+  }
+  setNewProfileName(e) {
+    this.setState(s => ({ newProfileDraft: { ...s.newProfileDraft, name: e.target.value } }));
+  }
+  setNewProfileColor(color) {
+    this.setState(s => ({ newProfileDraft: { ...s.newProfileDraft, color } }));
+  }
+  submitNewProfileDraft() {
+    const d = this.state.newProfileDraft;
+    const name = (d && d.name || '').trim();
+    if (!name) return;
+    const id = 'user-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    const profile = { id, name, color: d.color || AVATAR_COLORS[0], initial: name[0].toUpperCase() };
+    this.setState(s => ({ profiles: [...s.profiles, profile] }), () => this.selectProfile(id));
+  }
+  deleteProfile(pid) {
+    const p = this.state.profiles.find(x => x.id === pid);
+    if (!p) return;
+    if (!window.confirm(`Delete profile "${p.name}"? Their private workouts and history will be permanently deleted.`)) return;
+    this.setState(s => ({
+      profiles: s.profiles.filter(x => x.id !== pid),
+      routines: s.routines.filter(r => !(r.ownerId === pid && r.visibility === 'justme')).map(r => r.ownerId === pid ? { ...r, ownerName: 'Unknown' } : r),
+      customExercises: s.customExercises.filter(e => !(e.ownerId === pid && e.visibility === 'justme')).map(e => e.ownerId === pid ? { ...e, ownerName: 'Unknown' } : e),
+      activeProfileId: s.activeProfileId === pid ? null : s.activeProfileId,
+    }), () => {
+      if (this._profileDataStore) delete this._profileDataStore[pid];
+      ALL_EXERCISES = EXERCISES.concat(this.state.customExercises);
+      this.persist();
+    });
+  }
+  toggleVisFilter(key) {
+    this.setState(s => ({ libraryVisFilter: { ...s.libraryVisFilter, [key]: !s.libraryVisFilter[key] } }));
+  }
+  openNewExerciseForm(fromBuilder) {
+    this.setState({ exerciseForm: {
+      id: null, name: '', category: 'Chest', equipment: 'Bowflex Machine', isCardio: false,
+      muscles: '', bench: '', accessory: '', armPos: '', tipsText: '', fromBuilder: !!fromBuilder, visibility: 'justme', basedOn: null,
+    } });
+  }
+  openEditExerciseForm(exerciseId) {
+    const ex = exById(exerciseId);
+    if (!ex) return;
+    const ownedByMe = ex.ownerId === this.state.activeProfileId && ex.custom;
+    this.setState({ overlayExerciseId: null, exerciseForm: {
+      id: ownedByMe ? ex.id : null, name: ex.name, category: ex.category, equipment: ex.equipment, isCardio: !!ex.isCardio,
+      muscles: ex.muscles || '', bench: ex.bench || '', accessory: ex.accessory || '', armPos: ex.armPos || '',
+      tipsText: (ex.tips || []).join('\n'), fromBuilder: false, visibility: ownedByMe ? (ex.visibility || 'justme') : 'justme',
+      basedOn: ownedByMe ? null : ex.name,
+    } });
+  }
+  updateExerciseForm(patch) {
+    this.setState(s => ({ exerciseForm: { ...s.exerciseForm, ...patch } }));
+  }
+  closeExerciseForm() {
+    this.setState({ exerciseForm: null });
+  }
+  saveExerciseForm() {
+    const f = this.state.exerciseForm;
+    if (!f) return;
+    const name = f.name.trim();
+    if (!name) { this.setState({ exerciseForm: { ...f, error: 'Name is required.' } }); return; }
+    const id = f.id || ('custom-ex-' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '-' + Math.random().toString(36).slice(2,6));
+    const tips = f.tipsText.split('\n').map(t => t.trim()).filter(Boolean);
+    const activeProfile = this.state.profiles.find(p => p.id === this.state.activeProfileId);
+    const existing = f.id ? this.state.customExercises.find(e => e.id === f.id) : null;
+    const newEx = {
+      id, name, category: f.category, equipment: f.equipment, isCardio: f.isCardio, custom: true,
+      visibility: f.visibility || 'justme',
+      ownerId: existing ? existing.ownerId : this.state.activeProfileId,
+      ownerName: existing ? existing.ownerName : (activeProfile ? activeProfile.name : 'Unknown'),
+      muscles: f.muscles.trim(), bench: f.bench.trim() || '—', accessory: f.accessory.trim() || 'None', armPos: f.armPos.trim() || '—',
+      tips: tips.length ? tips : ['No tips added yet.'],
+    };
+    this.setState(s => {
+      const customExercises = f.id ? s.customExercises.map(e => e.id === id ? newEx : e) : [...s.customExercises, newEx];
+      ALL_EXERCISES = EXERCISES.concat(customExercises);
+      return { customExercises, exerciseForm: null };
+    }, () => {
+      this.persist();
+      if (f.fromBuilder && !f.id) this.addExerciseToBuilder(id);
+    });
+  }
+  setLogFilter(patch) {
+    this.setState(s => ({ logFilters: { ...s.logFilters, ...patch } }));
+  }
+  setLogSort(key) {
+    this.setState(s => ({ logFilters: { ...s.logFilters, sortKey: key, sortDir: s.logFilters.sortKey === key && s.logFilters.sortDir === 'desc' ? 'asc' : 'desc' } }));
+  }
+  toggleExportMenu() {
+    this.setState(s => ({ exportMenuOpen: !s.exportMenuOpen }));
+  }
+  showExportToast(msg) {
+    this.setState({ exportToast: msg, exportMenuOpen: false });
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => this.setState({ exportToast: '' }), 2200);
+  }
+  getFilteredLogRows() {
+    const lf = this.state.logFilters;
+    let rows = this.state.setLog.filter(r => {
+      if (lf.search && !(r.exerciseName.toLowerCase().includes(lf.search.toLowerCase()) || r.routineName.toLowerCase().includes(lf.search.toLowerCase()))) return false;
+      if (lf.dateFrom && r.date < lf.dateFrom) return false;
+      if (lf.dateTo && r.date > lf.dateTo) return false;
+      return true;
+    });
+    rows.sort((a, b) => {
+      let av = a[lf.sortKey], bv = b[lf.sortKey];
+      if (lf.sortKey === 'weight' || lf.sortKey === 'reps') { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; }
+      if (av < bv) return lf.sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return lf.sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return rows.map(r => ({ ...r, dateLabel: this.fmtDate(r.date) }));
+  }
+  logRowsAsCSV() {
+    const rows = this.getFilteredLogRows();
+    const headers = ['Date','AM/PM','Exercise','Set','Reps','Weight','Workout'];
+    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [headers.map(esc).join(',')];
+    rows.forEach(r => lines.push([r.date, r.ampm, r.exerciseName, r.set, r.reps, r.weight, r.routineName].map(esc).join(',')));
+    return lines.join('\n');
+  }
+  exportCSV() {
+    const csv = this.logRowsAsCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `workout-log-${toLocalISO(new Date())}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    this.showExportToast('CSV downloaded');
+  }
+  exportCopy() {
+    const csv = this.logRowsAsCSV();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(csv).then(() => this.showExportToast('Copied to clipboard')).catch(() => this.showExportToast('Copy failed'));
+    } else {
+      this.showExportToast('Copy not supported');
+    }
+  }
+  exportPrint() {
+    this.setState({ exportMenuOpen: false });
+    setTimeout(() => window.print(), 50);
+  }
+  exportShare() {
+    const csv = this.logRowsAsCSV();
+    const file = new File([csv], `workout-log-${toLocalISO(new Date())}.csv`, { type: 'text/csv' });
+    if (navigator.share) {
+      const sharePromise = (navigator.canShare && navigator.canShare({ files: [file] }))
+        ? navigator.share({ files: [file], title: 'Workout Log' })
+        : navigator.share({ title: 'Workout Log', text: csv });
+      sharePromise.then(() => this.showExportToast('Shared')).catch(() => this.setState({ exportMenuOpen: false }));
+    } else {
+      this.showExportToast('Share not supported');
+    }
+  }
+  exitHiitPlayer() {
+    clearInterval(this._hiitTimer);
+    this.setState({ mode: 'tabs', hiitPlayer: null });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const today = new Date();
+    const dow = DAY_NAMES[today.getDay()];
+
+    const weekStrip = [];
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date(today); d.setDate(d.getDate() + i);
+      const dn = DAY_NAMES[d.getDay()];
+      const isToday = i === 0;
+      const hasSlot = st.schedule[dn] && (st.schedule[dn].AM || st.schedule[dn].PM);
+      const iso = toLocalISO(d);
+      const done = st.history.some(h => h.date === iso);
+      let dotColor = 'var(--color-neutral-800)';
+      if (done) dotColor = 'var(--color-accent)';
+      else if (hasSlot) dotColor = 'var(--color-accent-700)';
+      weekStrip.push({ label: DAY_SHORT[d.getDay()], isToday, dotColor, bg: isToday ? 'var(--color-accent-800)' : 'transparent' });
+    }
+
+    const todaySched = st.schedule[dow] || {AM: [], PM: []};
+    const todayISO = toLocalISO(new Date());
+    const todaySlots = [];
+    ['AM','PM'].forEach(slot => {
+      (todaySched[slot] || []).forEach(routineId => {
+        const r = st.routines.find(x => x.id === routineId);
+        if (!r) return;
+        const isHiit = r.type === 'hiit';
+        const doneToday = st.history.some(h => h.date === todayISO && h.routineId === r.id && h.routineName === r.name);
+        todaySlots.push({
+          slot, label: slot,
+          name: r.name,
+          countLabel: isHiit ? `${r.sections.length} section${r.sections.length===1?'':'s'}` : `${r.exercises.length} exercise${r.exercises.length===1?'':'s'}`,
+          exercises: isHiit ? r.sections.map(sec => ({ name: sec.title })) : r.exercises.map(e => ({ name: exById(e.exerciseId)?.name || e.exerciseId })),
+          start: () => isHiit ? this.startHiitPlayer(r.id) : this.startSession(r.id),
+          doneToday,
+          startLabel: doneToday ? 'Completed' : 'Start Workout',
+          startIcon: doneToday ? 'ph-fill ph-check-circle' : 'ph ph-play-fill',
+          startBg: doneToday ? 'var(--color-surface)' : 'var(--color-accent)',
+          startColor: doneToday ? 'var(--color-neutral-400)' : 'var(--color-bg)',
+          startBorder: doneToday ? '1px solid var(--color-divider)' : 'none',
+          startHoverBg: doneToday ? 'var(--color-surface)' : 'var(--color-accent-600)',
+          startActiveBg: doneToday ? 'var(--color-surface)' : 'var(--color-accent-400)',
+        });
+      });
+    });
+
+    const streakCount = (() => {
+      let c = 0;
+      for (let i = 0; i < 60; i++) {
+        const d = new Date(today); d.setDate(d.getDate() - i);
+        const iso = toLocalISO(d);
+        if (st.history.some(h => h.date === iso)) c++;
+        else if (i > 0) break;
+      }
+      return c;
+    })();
+
+    const workoutFilter = st.workoutFilter || 'all';
+    const workoutFilters = [
+      {key:'all', label:'All'}, {key:'standard', label:'Standard'}, {key:'hiit', label:'HIIT'},
+    ].map(f => ({ ...f, active: f.key === workoutFilter, hoverBg: chipHover(f.key === workoutFilter),
+      border: f.key === workoutFilter ? 'var(--color-accent)' : 'var(--color-divider)',
+      bg: f.key === workoutFilter ? 'var(--color-accent-800)' : 'transparent',
+      color: f.key === workoutFilter ? 'var(--color-accent-100)' : 'var(--color-text)',
+      select: () => this.setState({ workoutFilter: f.key }) }));
+    const visFilterChips = [
+      {key:'manufacturer', label:'Manufacturer'}, {key:'mine', label:'Mine'}, {key:'public', label:'Public'},
+    ].map(f => ({ ...f, active: st.libraryVisFilter[f.key], hoverBg: chipHover(st.libraryVisFilter[f.key]),
+      border: st.libraryVisFilter[f.key] ? 'var(--color-accent)' : 'var(--color-divider)',
+      bg: st.libraryVisFilter[f.key] ? 'var(--color-accent-800)' : 'transparent',
+      color: st.libraryVisFilter[f.key] ? 'var(--color-accent-100)' : 'var(--color-text)',
+      toggle: () => this.toggleVisFilter(f.key) }));
+
+    const sortedRoutines = [...st.routines].filter(r => visOk(r, st.activeProfileId, st.libraryVisFilter)).filter(r => workoutFilter === 'all' || (workoutFilter === 'hiit' ? r.type === 'hiit' : r.type !== 'hiit')).sort((a,b) => {
+      const score = r => (r.custom ? 2 : 0) + (Object.values(st.schedule).some(s => s.AM.includes(r.id) || s.PM.includes(r.id)) ? 1 : 0);
+      return score(b) - score(a);
+    }).map(r => {
+      const tags = [];
+      DAY_NAMES.forEach(d => { if (st.schedule[d].AM.includes(r.id)) tags.push(d+' AM'); if (st.schedule[d].PM.includes(r.id)) tags.push(d+' PM'); });
+      return {
+        id: r.id, name: r.name, custom: r.custom, isHiit: r.type === 'hiit', sourceName: r.sourceName || null,
+        ownedByMe: r.ownerId === st.activeProfileId, ownerBadge: ownerBadgeFor(r, st.activeProfileId),
+        exCountLabel: r.type === 'hiit' ? (() => {
+          const cycles = r.cycles || 1;
+          const rest = r.restBetweenCycles || 0;
+          const perCycle = r.sections.reduce((a,s)=>a+s.seconds,0);
+          const totalSec = perCycle * cycles + rest * Math.max(0, cycles - 1);
+          const mins = Math.round(totalSec / 60);
+          const sectionWord = r.sections.length === 1 ? 'section' : 'sections';
+          const cycleLabel = cycles > 1 ? ` × ${cycles} cycles` : '';
+          return `${r.sections.length} ${sectionWord}${cycleLabel} · ${mins} min`;
+        })() : `${r.exercises.length} exercise${r.exercises.length === 1 ? '' : 's'}`,
+        scheduleTags: tags,
+        open: () => this.setState({ overlayRoutineId: r.id }),
+      };
+    });
+
+    const categories = CATEGORY_LIST.map(c => ({
+      name: c, active: c === st.libraryCategory, hoverBg: chipHover(c === st.libraryCategory),
+      border: c === st.libraryCategory ? 'var(--color-accent)' : 'var(--color-divider)',
+      bg: c === st.libraryCategory ? 'var(--color-accent-800)' : 'transparent',
+      color: c === st.libraryCategory ? 'var(--color-accent-100)' : 'var(--color-text)',
+      select: () => this.setState({ libraryCategory: c }),
+    }));
+
+    const equipmentTypes = EQUIPMENT_LIST.map(eq => ({
+      name: eq, active: eq === st.libraryEquipment, hoverBg: chipHover(eq === st.libraryEquipment),
+      border: eq === st.libraryEquipment ? 'var(--color-accent)' : 'var(--color-divider)',
+      bg: eq === st.libraryEquipment ? 'var(--color-accent-800)' : 'transparent',
+      color: eq === st.libraryEquipment ? 'var(--color-accent-100)' : 'var(--color-text)',
+      select: () => this.setState({ libraryEquipment: eq }),
+    }));
+
+    const catForFilter = st.mode === 'builder' && st.builder ? st.builder.pickerCategory : st.libraryCategory;
+    const equipForFilter = st.mode === 'builder' ? 'All' : st.libraryEquipment;
+    const filteredExercises = ALL_EXERCISES.filter(e => visOk(e, st.activeProfileId, st.libraryVisFilter)).filter(e => (catForFilter === 'All' || e.category === catForFilter) && (equipForFilter === 'All' || e.equipment === equipForFilter)).map(e => ({
+      id: e.id, name: e.name, muscles: e.muscles, custom: !!e.custom, ownerBadge: ownerBadgeFor(e, st.activeProfileId),
+      open: () => this.setState({ overlayExerciseId: e.id }),
+      addToBuilder: () => this.addExerciseToBuilder(e.id),
+    }));
+    const builderCategories = CATEGORY_LIST.map(c => {
+      const active = !!(st.builder && c === st.builder.pickerCategory);
+      return {
+        name: c, active, hoverBg: chipHover(active),
+        border: active ? 'var(--color-accent)' : 'var(--color-divider)',
+        bg: active ? 'var(--color-accent-800)' : 'transparent',
+        color: active ? 'var(--color-accent-100)' : 'var(--color-text)',
+        select: () => this.setState(s => ({ builder: { ...s.builder, pickerCategory: c } })),
+      };
+    });
+
+    const overlayExercise = st.overlayExerciseId ? (() => {
+      const e = exById(st.overlayExerciseId);
+      const ownedByMe = e.ownerId === st.activeProfileId && e.custom;
+      return { ...e, startSlotId: 'ex-start-'+e.id, finishSlotId: 'ex-finish-'+e.id, ownedByMe, editIt: () => this.openEditExerciseForm(e.id) };
+    })() : null;
+
+    const overlayRoutine = st.overlayRoutineId ? (() => {
+      const r = st.routines.find(x => x.id === st.overlayRoutineId);
+      if (!r) return null;
+      const isHiit = r.type === 'hiit';
+      const hiitSummary = isHiit ? (() => {
+        const cycles = r.cycles || 1;
+        const rest = r.restBetweenCycles || 0;
+        const perCycle = r.sections.reduce((a,s)=>a+s.seconds,0);
+        const totalSec = perCycle * cycles + rest * Math.max(0, cycles - 1);
+        const parts = [`${cycles} cycle${cycles===1?'':'s'}`];
+        if (cycles > 1 && rest > 0) parts.push(`${rest}s rest between`);
+        parts.push(`${Math.round(totalSec/60)} min total`);
+        return parts.join(' · ');
+      })() : '';
+      return {
+        name: r.name, custom: r.custom, isHiit, hiitSummary, sourceName: r.sourceName || null,
+        ownedByMe: r.ownerId === st.activeProfileId, ownerBadge: ownerBadgeFor(r, st.activeProfileId),
+        exRows: isHiit ? [] : r.exercises.map(e => {
+          const ex = exById(e.exerciseId);
+          const isCardio = !!(ex && ex.isCardio);
+          const detail = ex && ex.isVib ? `${e.duration || '?'}s · ${e.freq || '?'}Hz · L${e.level || '?'}`
+            : isCardio ? `${e.time ?? 20} min`
+            : toGroups(e).map(g => `${g.sets || '?'} × ${g.reps || '?'}`).join(', ');
+          return { name: ex?.name || e.exerciseId, detail };
+        }),
+        sectionRows: isHiit ? r.sections.map(sec => ({ title: sec.title, description: sec.description, seconds: sec.seconds + 's' })) : [],
+        startIt: () => isHiit ? this.startHiitPlayer(r.id) : this.startSession(r.id),
+        editIt: () => this.editRoutineInBuilder(r.id),
+        useIt: () => this.useWorkoutAsNew(r.id),
+      };
+    })() : null;
+
+    const historyList = st.history.slice(0, 12).map(h => ({
+      routineName: h.routineName, dateLabel: this.fmtDate(h.date), exCount: h.exCount,
+    }));
+
+    const lf = st.logFilters;
+    let logRows = st.setLog.filter(r => {
+      if (lf.search && !(r.exerciseName.toLowerCase().includes(lf.search.toLowerCase()) || r.routineName.toLowerCase().includes(lf.search.toLowerCase()))) return false;
+      if (lf.dateFrom && r.date < lf.dateFrom) return false;
+      if (lf.dateTo && r.date > lf.dateTo) return false;
+      return true;
+    });
+    const sortKey = lf.sortKey;
+    logRows.sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === 'weight' || sortKey === 'reps') { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; }
+      if (av < bv) return lf.sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return lf.sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    const logColumns = [
+      {key:'date', label:'Date'}, {key:'ampm', label:'AM/PM'}, {key:'exerciseName', label:'Exercise'},
+      {key:'set', label:'Sets'}, {key:'reps', label:'Reps'}, {key:'weight', label:'Weight'}, {key:'routineName', label:'Workout'},
+    ].map(c => ({ ...c, arrow: lf.sortKey === c.key ? (lf.sortDir === 'asc' ? '↑' : '↓') : '', select: () => this.setLogSort(c.key) }));
+    const logRowsView = logRows.map(r => ({ ...r, dateLabel: this.fmtDate(r.date) }));
+
+    const now = new Date();
+    const monthLabel = now.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOffset = firstOfMonth.getDay();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    const calendarCells = [];
+    for (let i = 0; i < startOffset; i++) calendarCells.push({day:'', bg:'transparent', color:'transparent'});
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = toLocalISO(new Date(now.getFullYear(), now.getMonth(), d));
+      const done = st.history.some(h => h.date === iso);
+      const isToday = d === now.getDate();
+      calendarCells.push({
+        day: d,
+        bg: done ? 'var(--color-accent-800)' : (isToday ? 'var(--color-neutral-800)' : 'transparent'),
+        color: done ? 'var(--color-accent-100)' : 'var(--color-neutral-400)',
+      });
+    }
+
+    const scheduleRows = DAY_NAMES.map(d => {
+      const s = st.schedule[d];
+      const parts = [];
+      if (s.AM.length) parts.push('AM: ' + s.AM.map(id => this.routineName(id)).join(', '));
+      if (s.PM.length) parts.push('PM: ' + s.PM.map(id => this.routineName(id)).join(', '));
+      return { day: d, summary: parts.length ? parts.join(' · ') : 'Rest day', hasAny: parts.length > 0, color: parts.length > 0 ? 'var(--color-text)' : 'var(--color-neutral-600)' };
+    });
+
+    const tabDefs = [
+      {key:'home', label:'Home', iconOn:'ph-fill ph-house', iconOff:'ph ph-house'},
+      {key:'workouts', label:'Workouts', iconOn:'ph-fill ph-barbell', iconOff:'ph ph-barbell'},
+      {key:'library', label:'Library', iconOn:'ph-fill ph-book-open', iconOff:'ph ph-book-open'},
+      {key:'history', label:'History', iconOn:'ph-fill ph-calendar-check', iconOff:'ph ph-calendar-check'},
+      {key:'profile', label:'Profile', iconOn:'ph-fill ph-user', iconOff:'ph ph-user'},
+    ];
+    const tabs = tabDefs.map(t => ({
+      ...t, active: t.key === st.tab, hoverBg: chipHover(t.key === st.tab),
+      icon: t.key === st.tab ? t.iconOn : t.iconOff,
+      color: t.key === st.tab ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      select: () => this.setState({ tab: t.key }),
+    }));
+    const tabTitleMap = {home:'Home', workouts:'Workouts', library:'Exercise Library', history:'History', profile:'Profile'};
+
+    let session = null;
+    if (st.mode === 'workout' && st.session) {
+      session = {
+        routineName: st.session.routineName,
+        finishLabel: st.session.editingDate ? 'Update Workout' : 'Finish Workout',
+        rows: st.session.rows.map((row, ri) => ({
+          name: exById(row.exerciseId)?.name || row.exerciseId,
+          target: row.target,
+          done: row.done,
+          isCardio: !!row.isCardio, isVib: !!row.isVib, notCardio: !row.isCardio && !row.isVib,
+          stance: row.stance ?? '', mode: row.mode ?? '', duration: row.duration ?? '', freq: row.freq ?? '', level: row.level ?? '',
+          stanceOptions: VIB_STANCES.map(v => ({ value: v, label: v })),
+          modeOptions: VIB_MODES.map(v => ({ value: v, label: v })),
+          setStance: (e) => this.updateSessionRow(ri, r => ({ ...r, stance: e.target.value })),
+          setMode: (e) => this.updateSessionRow(ri, r => ({ ...r, mode: e.target.value })),
+          setDuration: (e) => this.updateSessionRow(ri, r => ({ ...r, duration: e.target.value })),
+          setFreq: (e) => this.updateSessionRow(ri, r => ({ ...r, freq: e.target.value })),
+          setLevel: (e) => this.updateSessionRow(ri, r => ({ ...r, level: e.target.value })),
+          doneIcon: row.done ? 'ph-fill ph-check-circle' : 'ph ph-circle',
+          doneColor: row.done ? 'var(--color-accent)' : 'var(--color-neutral-600)',
+          toggleDone: () => this.updateSessionRow(ri, r => ({ ...r, done: !r.done })),
+          resistance: row.resistance, time: row.time, distance: row.distance,
+          setResistance: (e) => this.updateSessionRow(ri, r => ({ ...r, resistance: e.target.value })),
+          setTimeVal: (e) => this.updateSessionRow(ri, r => ({ ...r, time: e.target.value })),
+          setDistanceVal: (e) => this.updateSessionRow(ri, r => ({ ...r, distance: e.target.value })),
+
+          sets: (row.groups || []).map((g, gi) => ({
+            uid: g.uid, count: g.sets, weight: g.weight, reps: g.reps,
+            setCount: (e) => this.updateSessionGroup(ri, gi, {sets: e.target.value}),
+            setWeight: (e) => this.updateSessionGroup(ri, gi, {weight: e.target.value}),
+            setReps: (e) => this.updateSessionGroup(ri, gi, {reps: e.target.value}),
+            remove: () => this.removeSessionGroup(ri, gi),
+            canRemove: (row.groups || []).length > 1,
+          })),
+          addSet: () => this.addSessionGroup(ri),
+        })),
+      };
+    }
+
+    let builder = null;
+    if (st.mode === 'builder' && st.builder) {
+      const b = st.builder;
+      builder = {
+        step: b.step, editingId: b.editingId, name: b.name, saveError: b.saveError,
+        builderTitle: b.editingId ? 'Edit Workout' : (b.kind === 'hiit' ? 'New HIIT Workout' : 'New Workout'),
+        setName: (e) => this.setState(s => ({ builder: { ...s.builder, name: e.target.value } })),
+        setVisJustMe: () => this.setBuilderVisibility('justme'), setVisPublic: () => this.setBuilderVisibility('public'),
+        visJustMeBg: (b.visibility || 'justme') === 'justme' ? 'var(--color-accent-800)' : 'transparent',
+        visJustMeColor: (b.visibility || 'justme') === 'justme' ? 'var(--color-accent-100)' : 'var(--color-text)',
+        visPublicBg: b.visibility === 'public' ? 'var(--color-accent-800)' : 'transparent',
+        visPublicColor: b.visibility === 'public' ? 'var(--color-accent-100)' : 'var(--color-text)',
+        pickScratch: () => this.setState(s => ({ builder: { ...s.builder, step: 'edit', name: s.builder.name || 'New Workout', exRows: [] } })),
+        openPicker: () => this.setState(s => ({ builder: { ...s.builder, step: 'picker' } })),
+        pickStandard: () => this.pickBuilderKind('standard'),
+        pickHiit: () => this.pickBuilderKind('hiit'),
+        sectionTypes: SECTION_TYPES.map(t => {
+          const active = t === b.sectionForm.type;
+          return {
+            name: t, active, hoverBg: chipHover(active),
+            border: active ? 'var(--color-accent)' : 'var(--color-divider)',
+            bg: active ? 'var(--color-accent-800)' : 'transparent',
+            color: active ? 'var(--color-accent-100)' : 'var(--color-text)',
+            select: () => this.setSectionType(t),
+          };
+        }),
+        sectionTitleIsCustom: b.sectionForm.type === 'Custom',
+        sectionTitleIsExercise: b.sectionForm.type === 'Exercise',
+        sectionForm: {
+          title: b.sectionForm.title, description: b.sectionForm.description, seconds: b.sectionForm.seconds,
+          setTitle: (e) => this.setState(s => ({ builder: { ...s.builder, sectionForm: { ...s.builder.sectionForm, title: e.target.value } } })),
+          setDescription: (e) => this.setState(s => ({ builder: { ...s.builder, sectionForm: { ...s.builder.sectionForm, description: e.target.value } } })),
+          setSeconds: (e) => this.setState(s => ({ builder: { ...s.builder, sectionForm: { ...s.builder.sectionForm, seconds: e.target.value } } })),
+          exerciseOptions: EXERCISES.map(e => e.name),
+        },
+        addSection: () => this.addBuilderSection(),
+        cycles: b.cycles, restBetweenCycles: b.restBetweenCycles,
+        setCycles: (e) => this.setCycles(e), setRestBetweenCycles: (e) => this.setRestBetweenCycles(e),
+        sectionRows: b.sections.map((sec, si) => ({
+          uid: sec.uid || ('sec-'+si), title: sec.title, description: sec.description, seconds: sec.seconds + 's',
+          up: () => this.moveBuilderSection(si, -1),
+          down: () => this.moveBuilderSection(si, 1),
+          remove: () => this.setState(s => ({ builder: { ...s.builder, sections: s.builder.sections.filter((_,i) => i !== si) } })),
+        })),
+        exRows: (b.exRows || []).map((row, ri) => {
+          const rowEx = exById(row.exerciseId);
+          const isVib = !!(row.isVib || (rowEx && rowEx.isVib));
+          const rowGroups = toGroups(row);
+          const hasWeight = exHasWeight(rowEx);
+          return {
+          uid: row.uid || ('row-'+ri), name: rowEx?.name || row.exerciseId,
+          isVib, isCardio: !!row.isCardio, notCardio: !row.isCardio && !isVib, hasWeight,
+          stance: row.stance ?? '', mode: row.mode ?? '', duration: row.duration ?? '', freq: row.freq ?? '', level: row.level ?? '',
+          stanceOptions: VIB_STANCES.map(v => ({ value: v, label: v })),
+          modeOptions: VIB_MODES.map(v => ({ value: v, label: v })),
+          setStance: (e) => this.updateBuilderRow(ri, {stance: e.target.value}),
+          setMode: (e) => this.updateBuilderRow(ri, {mode: e.target.value}),
+          setDuration: (e) => this.updateBuilderRow(ri, {duration: e.target.value}),
+          setFreq: (e) => this.updateBuilderRow(ri, {freq: e.target.value}),
+          setLevel: (e) => this.updateBuilderRow(ri, {level: e.target.value}),
+          resistance: row.resistance, time: row.time, distance: row.distance,
+          groups: !row.isCardio ? rowGroups.map((g, gi) => ({
+            uid: g.uid || ('grp-'+ri+'-'+gi), sets: g.sets, reps: g.reps, weight: g.weight, hasWeight,
+            canRemove: rowGroups.length > 1,
+            setSets: (e) => this.updateBuilderGroup(ri, gi, {sets: e.target.value}),
+            setReps: (e) => this.updateBuilderGroup(ri, gi, {reps: e.target.value}),
+            setWeight: (e) => this.updateBuilderGroup(ri, gi, {weight: e.target.value}),
+            remove: () => this.removeBuilderGroup(ri, gi),
+          })) : [],
+          addGroup: () => this.addBuilderGroup(ri),
+          setResistance: (e) => this.updateBuilderRow(ri, {resistance: e.target.value}),
+          setTime: (e) => this.updateBuilderRow(ri, {time: e.target.value}),
+          setDistance: (e) => this.updateBuilderRow(ri, {distance: e.target.value}),
+          up: () => this.moveBuilderRow(ri, -1),
+          down: () => this.moveBuilderRow(ri, 1),
+          remove: () => this.setState(s => ({ builder: { ...s.builder, exRows: s.builder.exRows.filter((_,i) => i !== ri) } })),
+        };}),
+        dayCells: (() => {
+          const cells = [];
+          DAY_NAMES.forEach(d => ['AM','PM'].forEach(slot => {
+            const key = d+slot;
+            const sel = !!b.daySelections[key];
+            cells.push({ day: d, slot, selected: sel, hoverBg: chipHover(sel),
+              border: sel ? 'var(--color-accent)' : 'var(--color-divider)',
+              bg: sel ? 'var(--color-accent-800)' : 'transparent',
+              color: sel ? 'var(--color-accent-100)' : 'var(--color-text)',
+              toggle: () => this.toggleBuilderDay(key) });
+          }));
+          return cells;
+        })(),
+      };
+    }
+
+    const activeProfile = st.profiles.find(p => p.id === st.activeProfileId);
+    const profileCards = st.profiles.map(p => ({
+      id: p.id, name: p.name, initial: p.initial, color: p.color,
+      select: () => this.selectProfile(p.id), remove: () => this.deleteProfile(p.id),
+    }));
+    const avatarColorOptions = AVATAR_COLORS.map(c => ({
+      value: c, border: (st.newProfileDraft && st.newProfileDraft.color === c) ? 'var(--color-text)' : 'transparent',
+      select: () => this.setNewProfileColor(c),
+    }));
+
+    return {
+      mode: st.mode, tab: st.tab, tabTitle: tabTitleMap[st.tab],
+      isTabsMode: st.mode === 'tabs',
+      isHomeTab: st.mode === 'tabs' && st.tab === 'home',
+      isWorkoutsTab: st.tab === 'workouts',
+      isWorkoutsTabContent: st.mode === 'tabs' && st.tab === 'workouts',
+      isLibraryTab: st.mode === 'tabs' && st.tab === 'library',
+      isHistoryTab: st.mode === 'tabs' && st.tab === 'history',
+      isProfileTab: st.mode === 'tabs' && st.tab === 'profile',
+      isWorkoutMode: st.mode === 'workout',
+      isBuilderMode: st.mode === 'builder',
+      noTodaySlot: todaySlots.length === 0,
+      builderStepSource: !!(builder && builder.step === 'source'),
+      builderStepEdit: !!(builder && builder.step === 'edit'),
+      builderStepPicker: !!(builder && builder.step === 'picker'),
+      builderStepKind: !!(builder && builder.step === 'kind'),
+      builderStepHiitEdit: !!(builder && builder.step === 'hiitEdit'),
+      isHiitPlayerMode: st.mode === 'hiitPlayer',
+      hiitPlayer: (() => {
+        const hp = st.hiitPlayer;
+        if (!hp) return null;
+        const mm = String(Math.floor(hp.remaining / 60)).padStart(2,'0');
+        const ss = String(hp.remaining % 60).padStart(2,'0');
+        const current = hp.sections[hp.index];
+        const next = hp.sections[hp.index+1];
+        return {
+          routineName: hp.routineName, timeLabel: `${mm}:${ss}`,
+          sectionTitle: current.title, sectionDescription: current.description,
+          progressLabel: `Section ${hp.index+1} of ${hp.sections.length}`,
+          nextLabel: next ? `Next: ${next.title}` : 'Last section',
+          running: hp.running, started: hp.started, finished: hp.finished,
+          showStart: !hp.running && !hp.finished,
+          startLabel: hp.started ? 'Resume' : 'Start',
+          soundOptions: ['beep','chime','click'].map(t => {
+            const active = hp.soundType === t;
+            return { name: t, active,
+              hoverBg: chipHover(active),
+              border: active ? 'var(--color-accent)' : 'var(--color-divider)',
+              bg: active ? 'var(--color-accent-800)' : 'transparent',
+              color: active ? 'var(--color-accent-100)' : 'var(--color-neutral-500)',
+              select: () => this.setHiitSound(t) };
+          }),
+          endBeepEnabled: st.hiitSettings.endBeepEnabled,
+          voiceEnabled: st.hiitSettings.voiceEnabled,
+          toggleEndBeep: () => this.setHiitSettings({ endBeepEnabled: !st.hiitSettings.endBeepEnabled }),
+          toggleVoice: () => this.setHiitSettings({ voiceEnabled: !st.hiitSettings.voiceEnabled }),
+          voiceOptions: st.availableVoices.map(v => ({ uri: v.voiceURI, name: v.name })),
+          selectedVoiceURI: st.hiitSettings.voiceURI || (st.availableVoices[0] && st.availableVoices[0].voiceURI) || '',
+          setVoice: (e) => this.setHiitSettings({ voiceURI: e.target.value }),
+          volume: st.hiitSettings.volume,
+          setVolume: (e) => this.setHiitSettings({ volume: parseInt(e.target.value, 10) }),
+          muted: st.hiitSettings.muted,
+          toggleMute: () => this.setHiitSettings({ muted: !st.hiitSettings.muted }),
+          muteIcon: st.hiitSettings.muted || st.hiitSettings.volume === 0 ? 'ph ph-speaker-x' : (st.hiitSettings.volume < 50 ? 'ph ph-speaker-low' : 'ph ph-speaker-high'),
+          pressStart: () => this.hiitPressStart(),
+          pressStop: () => this.hiitPressStop(),
+          exit: () => this.exitHiitPlayer(),
+        };
+      })(),
+      weekStrip, streakCount, historyCount: st.history.length,
+      todaySlots,
+      goWorkoutsTab: () => this.setState({ tab: 'workouts' }),
+      sortedRoutines, workoutFilters, categories, equipmentTypes, filteredExercises, builderCategories,
+      libraryCategoryIsCardio: st.libraryCategory === 'Cardio',
+      exerciseForm: st.exerciseForm ? {
+        isEdit: !!st.exerciseForm.id, error: st.exerciseForm.error, basedOn: st.exerciseForm.basedOn,
+        name: st.exerciseForm.name, setName: (e) => this.updateExerciseForm({ name: e.target.value }),
+        setVisJustMe: () => this.updateExerciseForm({ visibility: 'justme' }), setVisPublic: () => this.updateExerciseForm({ visibility: 'public' }),
+        visJustMeBg: (st.exerciseForm.visibility || 'justme') === 'justme' ? 'var(--color-accent-800)' : 'transparent',
+        visJustMeColor: (st.exerciseForm.visibility || 'justme') === 'justme' ? 'var(--color-accent-100)' : 'var(--color-text)',
+        visPublicBg: st.exerciseForm.visibility === 'public' ? 'var(--color-accent-800)' : 'transparent',
+        visPublicColor: st.exerciseForm.visibility === 'public' ? 'var(--color-accent-100)' : 'var(--color-text)',
+        isCardio: st.exerciseForm.isCardio, toggleCardio: () => this.updateExerciseForm({ isCardio: !st.exerciseForm.isCardio }),
+        muscles: st.exerciseForm.muscles, setMuscles: (e) => this.updateExerciseForm({ muscles: e.target.value }),
+        bench: st.exerciseForm.bench, setBench: (e) => this.updateExerciseForm({ bench: e.target.value }),
+        accessory: st.exerciseForm.accessory, setAccessory: (e) => this.updateExerciseForm({ accessory: e.target.value }),
+        armPos: st.exerciseForm.armPos, setArmPos: (e) => this.updateExerciseForm({ armPos: e.target.value }),
+        tipsText: st.exerciseForm.tipsText, setTipsText: (e) => this.updateExerciseForm({ tipsText: e.target.value }),
+        categoryOptions: CATEGORY_LIST.filter(c => c !== 'All'), category: st.exerciseForm.category,
+        setCategory: (e) => this.updateExerciseForm({ category: e.target.value }),
+        equipmentOptions: EQUIPMENT_LIST.filter(c => c !== 'All'), equipment: st.exerciseForm.equipment,
+        setEquipment: (e) => this.updateExerciseForm({ equipment: e.target.value }),
+        save: () => this.saveExerciseForm(), cancel: () => this.closeExerciseForm(),
+      } : null,
+      openNewExercise: () => this.openNewExerciseForm(false),
+      openNewExerciseFromBuilder: () => this.openNewExerciseForm(true),
+      overlayExercise, closeOverlayExercise: () => this.setState({ overlayExerciseId: null }),
+      overlayRoutine, closeOverlayRoutine: () => this.setState({ overlayRoutineId: null }),
+      historyList, monthLabel, calendarCells, scheduleRows,
+      isCalendarView: st.historyView === 'calendar', isLogView: st.historyView === 'log',
+      showCalendarView: () => this.setState({ historyView: 'calendar' }),
+      showLogView: () => this.setState({ historyView: 'log' }),
+      logSearch: lf.search, setLogSearch: (e) => this.setLogFilter({ search: e.target.value }),
+      logDateFrom: lf.dateFrom, setLogDateFrom: (e) => this.setLogFilter({ dateFrom: e.target.value }),
+      logDateTo: lf.dateTo, setLogDateTo: (e) => this.setLogFilter({ dateTo: e.target.value }),
+      clearLogFilters: () => this.setLogFilter({ search: '', dateFrom: '', dateTo: '' }),
+      exportMenuOpen: st.exportMenuOpen, toggleExportMenu: () => this.toggleExportMenu(),
+      exportCSV: () => this.exportCSV(), exportCopy: () => this.exportCopy(), exportPrint: () => this.exportPrint(), exportShare: () => this.exportShare(),
+      canShare: !!(typeof navigator !== 'undefined' && navigator.share), exportToast: st.exportToast,
+      logColumns, logRows: logRowsView, logEmpty: logRowsView.length === 0,
+      openScheduleEditor: () => this.setState({ tab: 'workouts' }),
+      showProfileGate: st.showProfileGate, profileCards, avatarColorOptions,
+      newProfileDraft: st.newProfileDraft, openProfileGate: () => this.openProfileGate(),
+      openNewProfileDraft: () => this.openNewProfileDraft(), cancelNewProfileDraft: () => this.cancelNewProfileDraft(),
+      setNewProfileName: (e) => this.setNewProfileName(e), submitNewProfileDraft: () => this.submitNewProfileDraft(),
+      activeProfileColor: activeProfile ? activeProfile.color : 'var(--color-accent-800)',
+      activeProfileInitial: activeProfile ? activeProfile.initial : '?',
+      activeProfileName: activeProfile ? activeProfile.name : 'No profile',
+      visFilterChips,
+      resolveModal: st.resolveModal, cancelResolveModal: () => this.cancelResolveModal(), confirmResolveModal: () => this.confirmResolveModal(),
+      tabs,
+      openBuilderFresh: () => this.openBuilderFresh(),
+      openBuilderFreshHiit: () => this.openBuilderFresh('hiit'),
+      routines: st.routines.filter(r => r.type !== 'hiit').map(r => ({ id: r.id, name: r.name, pickAsSource: () => this.pickRoutineAsSource(r.id) })),
+      session, exitWorkout: () => this.setState({ mode: 'tabs', session: null }),
+      finishWorkout: () => this.finishWorkout(),
+      builder, closeBuilder: () => this.closeBuilder(),
+      saveBuilder: () => this.saveBuilder(),
+    };
+  }
+
+  updateSessionRow(ri, fn) {
+    this.setState(s => {
+      const rows = s.session.rows.map((r,i) => i===ri ? fn(r) : r);
+      return { session: { ...s.session, rows } };
+    });
+  }
+  updateSessionGroup(ri, gi, patch) {
+    this.setState(s => {
+      const rows = s.session.rows.map((r,i) => {
+        if (i !== ri) return r;
+        const groups = r.groups.map((g,j) => j===gi ? {...g, ...patch} : g);
+        return { ...r, groups };
+      });
+      return { session: { ...s.session, rows } };
+    });
+  }
+  addSessionGroup(ri) {
+    this.setState(s => {
+      const rows = s.session.rows.map((r,i) => {
+        if (i !== ri) return r;
+        return { ...r, groups: [...r.groups, { uid: 'grp-'+Math.random().toString(36).slice(2,8), sets: 1, reps: '', weight: '' }] };
+      });
+      return { session: { ...s.session, rows } };
+    });
+  }
+  removeSessionGroup(ri, gi) {
+    if (!window.confirm('Remove this set entry?')) return;
+    this.setState(s => {
+      const rows = s.session.rows.map((r,i) => {
+        if (i !== ri) return r;
+        return { ...r, groups: r.groups.filter((g,j) => j !== gi) };
+      });
+      return { session: { ...s.session, rows } };
+    });
+  }
+
+  useWorkoutAsNew(routineId) {
+    const r = this.state.routines.find(x => x.id === routineId);
+    if (!r) return;
+    const activeProfile = this.state.profiles.find(p => p.id === this.state.activeProfileId);
+    const who = (activeProfile && activeProfile.name || 'My').trim();
+    const possessive = who.toLowerCase() === 'my' ? who : (/s$/i.test(who) ? `${who}'` : `${who}'s`);
+    const newName = `${possessive} ${r.name}`;
+    const attribution = r.visibility === 'manufacturer' ? r.name : `${r.name} by ${r.ownerName || 'Unknown'}`;
+    if (r.type === 'hiit') {
+      this.setState({ overlayRoutineId: null, mode: 'builder', builder: {
+        step: 'hiitEdit', kind: 'hiit', editingId: null, name: newName, sourceName: attribution, fromUseWorkout: true, visibility: 'justme',
+        sections: r.sections.map(sec => ({ ...sec, uid: 'sec-'+Math.random().toString(36).slice(2,9) })),
+        sectionForm: defaultSectionForm(), cycles: r.cycles || 1, restBetweenCycles: r.restBetweenCycles || 0,
+        daySelections: {}, pickerCategory: 'Chest',
+      } });
+      return;
+    }
+    this.setState({ overlayRoutineId: null, mode: 'builder', builder: {
+      step: 'edit', kind: 'standard', editingId: null, name: newName, sourceName: attribution, fromUseWorkout: true, visibility: 'justme',
+      exRows: r.exercises.map(e => ({ ...e, groups: toGroups(e), uid: 'row-'+Math.random().toString(36).slice(2,9) })),
+      sections: [], sectionForm: defaultSectionForm(), daySelections: {}, pickerCategory: 'Chest',
+    } });
+  }
+  pickRoutineAsSource(routineId) {
+    const r = this.state.routines.find(x => x.id === routineId);
+    if (!r) return;
+    this.setState(s => ({ builder: { ...s.builder, step: 'edit', editingId: null, name: r.name + ' (copy)', exRows: r.exercises.map(e => ({...e, groups: toGroups(e), uid: 'row-'+Math.random().toString(36).slice(2,9)})) } }));
+  }
+  editRoutineInBuilder(routineId) {
+    const r = this.state.routines.find(x => x.id === routineId);
+    if (!r) return;
+    const daySelections = {};
+    DAY_NAMES.forEach(d => { if (this.state.schedule[d].AM.includes(routineId)) daySelections[d+'AM'] = true; if (this.state.schedule[d].PM.includes(routineId)) daySelections[d+'PM'] = true; });
+    if (r.type === 'hiit') {
+      this.setState({ overlayRoutineId: null, mode: 'builder', builder: { step: 'hiitEdit', kind: 'hiit', editingId: routineId, name: r.name, sourceName: r.sourceName || null, visibility: r.visibility || 'justme', sections: r.sections.map(sec => ({...sec, uid: sec.uid || ('sec-'+Math.random().toString(36).slice(2,9))})), sectionForm: defaultSectionForm(), cycles: r.cycles || 1, restBetweenCycles: r.restBetweenCycles || 0, daySelections, pickerCategory: 'Chest' } });
+      return;
+    }
+    this.setState({ overlayRoutineId: null, mode: 'builder', builder: { step: 'edit', kind: 'standard', editingId: routineId, name: r.name, sourceName: r.sourceName || null, visibility: r.visibility || 'justme', exRows: r.exercises.map(e => ({...e, groups: toGroups(e), uid: e.uid || ('row-'+Math.random().toString(36).slice(2,9))})), sections: [], sectionForm: defaultSectionForm(), daySelections, pickerCategory: 'Chest' } });
+  }
+  addExerciseToBuilder(exerciseId) {
+    const ex = exById(exerciseId);
+    const uid = 'row-' + Math.random().toString(36).slice(2, 9);
+    const newRow = ex && ex.isCardio ? {uid, exerciseId, isCardio: true, resistance: '', time: '', distance: ''}
+      : ex && ex.isVib ? {uid, exerciseId, isVib: true, stance: ex.stance || '', mode: '', duration: '', freq: '', level: ''}
+      : {uid, exerciseId, groups: [{uid: 'grp-'+Math.random().toString(36).slice(2,8), sets: '', reps: '', weight: ''}]};
+    this.setState(s => ({ builder: { ...s.builder, step: 'edit', exRows: [...s.builder.exRows, newRow], saveError: null } }));
+  }
+  updateBuilderRow(ri, patch) {
+    this.setState(s => ({ builder: { ...s.builder, exRows: s.builder.exRows.map((r,i) => i===ri ? {...r, ...patch} : r) } }));
+  }
+  updateBuilderGroup(ri, gi, patch) {
+    this.setState(s => ({ builder: { ...s.builder, exRows: s.builder.exRows.map((r,i) => {
+      if (i !== ri) return r;
+      const groups = toGroups(r).map((g,j) => j===gi ? {...g, ...patch} : g);
+      return { ...r, groups };
+    }) } }));
+  }
+  addBuilderGroup(ri) {
+    this.setState(s => ({ builder: { ...s.builder, exRows: s.builder.exRows.map((r,i) => {
+      if (i !== ri) return r;
+      return { ...r, groups: [...toGroups(r), {uid: 'grp-'+Math.random().toString(36).slice(2,8), sets: '', reps: '', weight: ''}] };
+    }) } }));
+  }
+  removeBuilderGroup(ri, gi) {
+    this.setState(s => ({ builder: { ...s.builder, exRows: s.builder.exRows.map((r,i) => {
+      if (i !== ri) return r;
+      const groups = toGroups(r).filter((_,j) => j!==gi);
+      return { ...r, groups: groups.length ? groups : toGroups(r) };
+    }) } }));
+  }
+  moveBuilderRow(ri, dir) {
+    this.setState(s => {
+      const rows = [...s.builder.exRows];
+      const nj = ri + dir;
+      if (nj < 0 || nj >= rows.length) return {};
+      [rows[ri], rows[nj]] = [rows[nj], rows[ri]];
+      return { builder: { ...s.builder, exRows: rows } };
+    });
+  }
+  setBuilderVisibility(v) {
+    this.setState(s => ({ builder: { ...s.builder, visibility: v } }));
+  }
+  toggleBuilderDay(key) {
+    this.setState(s => ({ builder: { ...s.builder, daySelections: { ...s.builder.daySelections, [key]: !s.builder.daySelections[key] } } }));
+  }
+
+  saveBuilder() {
+    const b = this.state.builder;
+    if (!b) { this.closeBuilder(); return; }
+    const isHiit = b.kind === 'hiit';
+    if (isHiit && !b.sections.length) { this.setState({ builder: { ...b, saveError: 'Add at least one section before saving.' } }); return; }
+    if (!isHiit && !b.exRows.length) { this.setState({ builder: { ...b, saveError: 'Add at least one exercise before saving.' } }); return; }
+    if (b.fromUseWorkout && !window.confirm(`Save "${b.name || 'New Workout'}" as a new workout?`)) return;
+    const id = b.editingId || ('custom-' + this.state.nextCustomId + '-' + Math.random().toString(36).slice(2,7));
+    const existing = b.editingId ? this.state.routines.find(r => r.id === b.editingId) : null;
+    const activeProfile = this.state.profiles.find(p => p.id === this.state.activeProfileId);
+    const ownerId = existing ? existing.ownerId : this.state.activeProfileId;
+    const ownerName = existing ? existing.ownerName : (activeProfile ? activeProfile.name : 'Unknown');
+    const visibility = b.visibility || 'justme';
+    const routine = isHiit
+      ? { id, name: b.name || 'New HIIT Workout', custom: true, modified: true, type: 'hiit', visibility, ownerId, ownerName, sections: b.sections, cycles: parseInt(b.cycles,10) || 1, restBetweenCycles: parseInt(b.restBetweenCycles,10) || 0, sourceName: b.sourceName || null }
+      : { id, name: b.name || 'New Workout', custom: true, modified: true, type: 'standard', visibility, ownerId, ownerName, exercises: b.exRows, sourceName: b.sourceName || null };
+    this.setState(s => {
+      let routines;
+      if (b.editingId) routines = s.routines.map(r => r.id === id ? routine : r);
+      else routines = [...s.routines, routine];
+      const schedule = {};
+      DAY_NAMES.forEach(d => {
+        schedule[d] = { ...s.schedule[d] };
+        ['AM','PM'].forEach(slot => {
+          const key = d+slot;
+          const withoutMe = (schedule[d][slot] || []).filter(rid => rid !== id);
+          schedule[d][slot] = b.daySelections[key] ? [...withoutMe, id] : withoutMe;
+        });
+      });
+      return { routines, schedule, mode: 'tabs', tab: 'workouts', workoutFilter: 'all', builder: null, nextCustomId: s.nextCustomId + (b.editingId ? 0 : 1) };
+    }, () => this.persist());
+  }
+}
+
+</script>
+</body>
+</html>

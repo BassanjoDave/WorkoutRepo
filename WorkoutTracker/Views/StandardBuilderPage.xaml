@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.StandardBuilderPage"
+             x:DataType="vm:StandardBuilderViewModel"
+             Title="Workout Builder">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding RoutineName}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Share with account" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding IsAccountShared}" />
+            </Grid>
+
+            <Label Text="EXERCISES" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ExerciseRows}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:StandardExerciseRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                    <Label Grid.Column="0" Text="{Binding Name}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                    <Button Grid.Column="1" Text="↑" Style="{StaticResource GhostButton}" FontSize="12"
+                                            SemanticProperties.Description="Move exercise up"
+                                            Command="{Binding MoveUpCommand}" CommandParameter="{Binding .}" />
+                                    <Button Grid.Column="2" Text="↓" Style="{StaticResource GhostButton}" FontSize="12"
+                                            SemanticProperties.Description="Move exercise down"
+                                            Command="{Binding MoveDownCommand}" CommandParameter="{Binding .}" />
+                                    <Button Grid.Column="3" Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                            Style="{StaticResource GhostButton}" FontSize="12"
+                                            SemanticProperties.Description="Remove exercise"
+                                            Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                </Grid>
+
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsStandard}" BindableLayout.ItemsSource="{Binding Groups}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:SetGroupRowViewModel">
+                                            <HorizontalStackLayout Spacing="6">
+                                                <Label Text="Sets" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="46">
+                                                    <Entry Text="{Binding Sets}" Keyboard="Numeric" FontSize="12" />
+                                                </Border>
+                                                <Label Text="Reps" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                                                    <Entry Text="{Binding Reps}" Placeholder="10-12" FontSize="12" />
+                                                </Border>
+                                                <Label Text="Weight" Style="{StaticResource MetaLabel}" VerticalOptions="Center"
+                                                       IsVisible="{Binding HasWeight, Source={RelativeSource AncestorType={x:Type vm:StandardExerciseRowViewModel}, Mode=FindAncestorBindingContext}}" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="56"
+                                                        IsVisible="{Binding HasWeight, Source={RelativeSource AncestorType={x:Type vm:StandardExerciseRowViewModel}, Mode=FindAncestorBindingContext}}">
+                                                    <Entry Text="{Binding Weight}" Placeholder="lbs" Keyboard="Numeric" FontSize="12" />
+                                                </Border>
+                                                <Button Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                                        Style="{StaticResource GhostButton}" FontSize="12"
+                                                        SemanticProperties.Description="Remove set"
+                                                        Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                            </HorizontalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                                <Button Text="+ Add new set" Style="{StaticResource GhostButton}" FontSize="11"
+                                        Command="{Binding AddGroupCommand}" HorizontalOptions="Start" IsVisible="{Binding IsStandard}" />
+
+                                <!-- Vibration Plate authoring defaults -->
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsVibration}">
+                                    <Label Text="Default stance / mode / duration / frequency / level for a fresh session — leave blank to require the member to fill it in each time."
+                                           Style="{StaticResource MetaLabel}" FontSize="10" />
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                        <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding StanceOptions}" SelectedItem="{Binding Stance}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding Mode}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                        <Border Grid.Column="0" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding Duration}" Placeholder="Sec" Keyboard="Numeric" FontSize="12" /></Border>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding Frequency}" Placeholder="Hz" Keyboard="Numeric" FontSize="12" /></Border>
+                                        <Border Grid.Column="2" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding Level}" Placeholder="1-30" Keyboard="Numeric" FontSize="12" /></Border>
+                                    </Grid>
+                                </VerticalStackLayout>
+
+                                <!-- Cardio authoring defaults -->
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsCardio}">
+                                    <Label Text="Default time / resistance for a fresh session. Distance is never pre-set — it's only ever entered live."
+                                           Style="{StaticResource MetaLabel}" FontSize="10" />
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                        <Border Grid.Column="0" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding Time}" Placeholder="Minutes" Keyboard="Numeric" FontSize="12" /></Border>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding Resistance}" Placeholder="Resistance" Keyboard="Numeric" FontSize="12" /></Border>
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Add exercise" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                    </Border>
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding AvailableExercises}" SelectedItem="{Binding SelectedExerciseToAdd}" TextColor="{StaticResource ColorText}" />
+                    </Border>
+                    <Button Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddExerciseCommand}" HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="SCHEDULE" Style="{StaticResource KickerLabel}" />
+                <Label Text="Assign this workout to your weekly schedule now, or skip and do it later from Profile → Weekly Schedule."
+                       Style="{StaticResource MetaLabel}" />
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding DayCells}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RoutineDayCellViewModel">
+                            <Border Stroke="{StaticResource ColorDivider}" BackgroundColor="Transparent"
+                                    StrokeShape="RoundRectangle 20" Padding="10,6" Margin="0,0,6,6">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Label}" FontSize="11">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="REMINDER" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}" />
+                </Grid>
+                <Label Text="Reminders are turned off in Profile → Workout Reminders. This setting is saved but won't fire until you turn them back on."
+                       Style="{StaticResource MetaLabel}" FontSize="10"
+                       IsVisible="{Binding Reminder.MasterEnabled, Converter={StaticResource InvertedBoolConverter}}" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}">
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding Reminder.OffsetLabels}" SelectedIndex="{Binding Reminder.OffsetIndex}"
+                                TextColor="{StaticResource ColorText}" FontSize="12" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding Reminder.SnoozeEnabled}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding Reminder.SnoozeEnabled}">
+                        <Label Grid.Column="0" Text="Snooze length (minutes)" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                            <Entry Text="{Binding Reminder.SnoozeMinutes}" Keyboard="Numeric" FontSize="12" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

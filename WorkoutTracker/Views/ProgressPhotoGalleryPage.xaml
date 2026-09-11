@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ProgressPhotoGalleryPage"
+             x:DataType="vm:ProgressPhotoGalleryViewModel"
+             Title="Progress Photos">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="18" RowSpacing="14">
+
+        <Button Grid.Row="0" Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                Command="{Binding BackCommand}" HorizontalOptions="Start" />
+
+        <Label Grid.Row="1" Text="{Binding OwnerDisplayName, StringFormat='{0}\'s Progress Photos'}" Style="{StaticResource HeadingLabel}" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding ProgressPhotos}" EmptyView="No progress photos yet.">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="3" HorizontalItemSpacing="6" VerticalItemSpacing="6" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProgressPhotoThumbnailViewModel">
+                    <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ViewCommand}" CommandParameter="{Binding}" />
+                        </Border.GestureRecognizers>
+                        <Grid>
+                            <Image Source="{Binding Thumbnail}" Aspect="AspectFill" HeightRequest="110" />
+                            <Label Text="{Binding DateLabel}" FontSize="9" TextColor="White" BackgroundColor="#80000000"
+                                   Padding="4,2" VerticalOptions="End" HorizontalOptions="Fill" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

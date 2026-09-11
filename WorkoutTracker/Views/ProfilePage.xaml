@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
+             x:Class="WorkoutTracker.Views.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Profile">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="18">
+
+            <views:AppTabBar ActiveRoute="profile" />
+
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Border Grid.Column="0" StrokeShape="RoundRectangle 26" Stroke="Transparent"
+                        BackgroundColor="{Binding ActiveMemberColor}" WidthRequest="52" HeightRequest="52" Padding="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenEditProfileCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding ActiveMemberInitial}" Style="{StaticResource HeadingLabel}"
+                           TextColor="{StaticResource ColorBg}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenEditProfileCommand}" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="{Binding ActiveMemberName}" Style="{StaticResource HeadingLabel}" FontSize="16" />
+                    <Label Text="Edit profile" Style="{StaticResource MetaLabel}" FontSize="11" TextColor="{StaticResource ColorAccent}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="2" Text="Switch" Style="{StaticResource SecondaryButton}" Command="{Binding OpenProfileGateCommand}" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="UNITS" Style="{StaticResource KickerLabel}" />
+                <HorizontalStackLayout>
+                    <Border Padding="16,7" StrokeShape="RoundRectangle 8,0,8,0" Stroke="{StaticResource ColorDivider}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SetUnitLbsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsLbs}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorAccent800}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="lbs" FontSize="13" />
+                    </Border>
+                    <Border Padding="16,7" StrokeShape="RoundRectangle 0,8,0,8" Stroke="{StaticResource ColorDivider}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SetUnitKgCommand}" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsLbs}" Value="False">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorAccent800}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="kg" FontSize="13" />
+                    </Border>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BiometricUnlockAvailable}">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="Sign in with Face ID / Touch ID" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="Confirms it's you instead of retyping your password each launch." Style="{StaticResource MetaLabel}" FontSize="10" />
+                </VerticalStackLayout>
+                <Switch Grid.Column="1" IsToggled="{Binding BiometricUnlockEnabled}" VerticalOptions="Center" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="THEME" Style="{StaticResource KickerLabel}" />
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding ThemeOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ThemeOptionViewModel">
+                            <Border Padding="16,7" Margin="0,0,8,8" StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding Id}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding DisplayName}" FontSize="13">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="WEEKLY SCHEDULE" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="Edit" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding OpenScheduleEditorCommand}" />
+                </Grid>
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding ScheduleRows}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ScheduleSummaryRowViewModel">
+                                <Grid ColumnDefinitions="40,*">
+                                    <Label Grid.Column="0" Text="{Binding Day}" Style="{StaticResource MetaLabel}" />
+                                    <Label Grid.Column="1" Text="{Binding Summary}" FontSize="12" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <Button Text="Rigs" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenEquipmentPreferencesCommand}" />
+
+            <Button Text="My Rigs" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenMyRigsCommand}" />
+
+            <Button Text="Workout Reminders" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenRemindersCommand}" />
+
+            <Button Text="Body Measurements" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenMeasurementsCommand}" />
+
+            <Button Text="Customize Home" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenCustomizeHomeCommand}" />
+
+            <Button Text="Manage Members" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenManageMembersCommand}" IsVisible="{Binding CanManageMembers}" />
+
+            <Button Text="Delete Account" Style="{StaticResource SecondaryButton}" TextColor="{StaticResource ColorAccent}"
+                    BorderColor="{StaticResource ColorAccent}" Command="{Binding DeleteAccountCommand}" IsVisible="{Binding IsPrimaryHolder}" />
+
+            <Button Text="Developer Settings" Style="{StaticResource GhostButton}" FontSize="11"
+                    Clicked="OnDevSettingsClicked" HorizontalOptions="Start" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

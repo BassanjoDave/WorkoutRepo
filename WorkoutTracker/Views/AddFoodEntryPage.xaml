@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.AddFoodEntryPage"
+             x:DataType="vm:AddFoodEntryViewModel"
+             Title="{Binding MealTypeLabel}">
+
+    <ContentPage.Resources>
+        <Style x:Key="ToggleChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="13,6" />
+            <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="14">
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="From your food library" FontSize="14" FontAttributes="Bold" VerticalOptions="Center"
+                           IsVisible="{Binding IsCustomEntry, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Label Grid.Column="0" Text="One-time custom entry" FontSize="14" FontAttributes="Bold" VerticalOptions="Center"
+                           IsVisible="{Binding IsCustomEntry}" />
+                    <Button Grid.Column="1" Text="Use custom entry instead"
+                            Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding ToggleCustomEntryCommand}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsCustomEntry}" Value="False">
+                                <Setter Property="Text" Value="Use custom entry instead" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsCustomEntry}" Value="True">
+                                <Setter Property="Text" Value="Pick from library instead" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </Grid>
+
+                <!-- Library picker -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsCustomEntry, Converter={StaticResource InvertedBoolConverter}}">
+                    <HorizontalStackLayout Spacing="6">
+                        <Border Style="{StaticResource ToggleChip}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleShowFoodsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ShowFoods}" Value="True">
+                                    <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="Foods" FontSize="12">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ShowFoods}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Style="{StaticResource ToggleChip}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleShowRecipesCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ShowRecipes}" Value="True">
+                                    <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="Recipes" FontSize="12">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ShowRecipes}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding SearchText}" Placeholder="Search foods and recipes…" FontSize="13" />
+                    </Border>
+                    <CollectionView ItemsSource="{Binding FilteredOptions}" SelectedItem="{Binding SelectedOption}"
+                                     SelectionMode="Single" MaximumHeightRequest="320">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FoodPickerOption">
+                                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,6">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Name}" FontSize="13" FontAttributes="Bold" />
+                                        <Label Text="{Binding SubtitleLabel}" Style="{StaticResource MetaLabel}" FontSize="11" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Quantity (servings)" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}" WidthRequest="100" HorizontalOptions="Start">
+                            <Entry Text="{Binding Quantity}" Keyboard="Numeric" FontSize="13" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Custom entry -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsCustomEntry}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Entry Text="{Binding CustomName}" Placeholder="e.g. Restaurant burger" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <Label Text="Calories" Style="{StaticResource MetaLabel}" />
+                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding CustomCalories}" Keyboard="Numeric" /></Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
+                            <Label Text="Protein (g)" Style="{StaticResource MetaLabel}" />
+                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding CustomProtein}" Keyboard="Numeric" /></Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                            <Label Text="Carbs (g)" Style="{StaticResource MetaLabel}" />
+                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding CustomCarbs}" Keyboard="Numeric" /></Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
+                            <Label Text="Fat (g)" Style="{StaticResource MetaLabel}" />
+                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding CustomFat}" Keyboard="Numeric" /></Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Add" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

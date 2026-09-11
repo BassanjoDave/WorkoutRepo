@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.SessionPage"
+             x:DataType="vm:SessionViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="16,50,16,10" ColumnSpacing="10">
+            <Button Grid.Column="0" Text="{StaticResource IconX}" FontFamily="{StaticResource FontPhosphorRegular}"
+                    Style="{StaticResource GhostButton}" Command="{Binding ExitCommand}" FontSize="20"
+                    SemanticProperties.Description="Exit workout" />
+            <Label Grid.Column="1" Text="{Binding RoutineName}" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="Edit" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding EditWorkoutCommand}" />
+        </Grid>
+
+        <!-- Exercise rows -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,0,16,16" Spacing="10" BindableLayout.ItemsSource="{Binding Rows}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SessionExerciseRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsDone}" Value="False">
+                                    <Setter Property="Opacity" Value="0.45" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0" Text="{Binding Name}" Style="{StaticResource HeadingLabel}" FontSize="14" VerticalOptions="Center" />
+                                    <Button Grid.Column="1" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                            Style="{StaticResource GhostButton}" FontSize="20" Padding="4"
+                                            TextColor="{StaticResource ColorAccent}"
+                                            SemanticProperties.Description="Mark done"
+                                            Command="{Binding ToggleDoneCommand}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding IsDone}" Value="False">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorNeutral600}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Button" Binding="{Binding IsDone}" Value="True">
+                                                <Setter Property="SemanticProperties.Description" Value="Mark not done" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Standard: sets × reps [@ weight] -->
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsStandard}" BindableLayout.ItemsSource="{Binding Groups}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:SessionGroupRowViewModel">
+                                            <HorizontalStackLayout Spacing="6">
+                                                <Label Text="Sets" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="50">
+                                                    <Entry Text="{Binding Sets}" Keyboard="Numeric" FontSize="12" />
+                                                </Border>
+                                                <Label Text="×" TextColor="{StaticResource ColorNeutral600}" VerticalOptions="Center" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="56">
+                                                    <Entry Text="{Binding Reps}" Placeholder="reps" Keyboard="Numeric" FontSize="12" />
+                                                </Border>
+                                                <Label Text="@" TextColor="{StaticResource ColorNeutral600}" VerticalOptions="Center"
+                                                       IsVisible="{Binding HasWeight, Source={RelativeSource AncestorType={x:Type vm:SessionExerciseRowViewModel}, Mode=FindAncestorBindingContext}}" />
+                                                <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60"
+                                                        IsVisible="{Binding HasWeight, Source={RelativeSource AncestorType={x:Type vm:SessionExerciseRowViewModel}, Mode=FindAncestorBindingContext}}">
+                                                    <Entry Text="{Binding Weight}" Placeholder="lbs" Keyboard="Numeric" FontSize="12" />
+                                                </Border>
+                                            </HorizontalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+
+                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="12" IsVisible="{Binding IsStandard}">
+                                    <Button Grid.Column="0" Text="+ Add set" Style="{StaticResource GhostButton}" FontSize="11"
+                                            Command="{Binding AddSetCommand}" HorizontalOptions="Start" />
+                                    <Button Grid.Column="1" Text="Start Rest" Style="{StaticResource GhostButton}" FontSize="11"
+                                            Command="{Binding StartRestCommand}" HorizontalOptions="Start" />
+                                </Grid>
+
+                                <!-- Vibration Plate: stance, mode, duration, frequency, level -->
+                                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsVibration}">
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                            <Label Text="Position / stance" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                            <Border Style="{StaticResource InputBorder}">
+                                                <Picker ItemsSource="{Binding StanceOptions}" SelectedItem="{Binding Stance}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                            <Label Text="Mode" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                            <Border Style="{StaticResource InputBorder}">
+                                                <Picker ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding Mode}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                            <Label Text="Duration (s)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Duration}" Placeholder="45" Keyboard="Numeric" FontSize="12" /></Border>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                            <Label Text="Freq (Hz)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Frequency}" Placeholder="25" Keyboard="Numeric" FontSize="12" /></Border>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="2" Spacing="3">
+                                            <Label Text="Level (1-30)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                            <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Level}" Placeholder="10" Keyboard="Numeric" FontSize="12" /></Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </VerticalStackLayout>
+
+                                <!-- Cardio: time, distance, resistance -->
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" IsVisible="{Binding IsCardio}">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                        <Label Text="Time (min)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Time}" Keyboard="Numeric" FontSize="12" /></Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                        <Label Text="Distance (mi)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Distance}" Keyboard="Numeric" FontSize="12" /></Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="2" Spacing="3">
+                                        <Label Text="Resistance" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Resistance}" Keyboard="Numeric" FontSize="12" /></Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Rest timer bar -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="16,0,16,8" IsVisible="{Binding IsResting}">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
+                <Label Grid.Column="0" Text="Resting" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="{Binding RestRemainingSeconds}" Style="{StaticResource HeadingLabel}" FontSize="22" VerticalOptions="Center" HorizontalOptions="Center" />
+                <Button Grid.Column="2" Text="-15s" Style="{StaticResource GhostButton}" FontSize="11"
+                        Command="{Binding SubtractRestTimeCommand}" />
+                <Button Grid.Column="3" Text="+15s" Style="{StaticResource GhostButton}" FontSize="11"
+                        Command="{Binding AddRestTimeCommand}" />
+                <Button Grid.Column="4" Text="Skip" Style="{StaticResource SecondaryButton}" FontSize="11"
+                        Command="{Binding SkipRestCommand}" />
+            </Grid>
+        </Border>
+
+        <!-- Finish -->
+        <Button Grid.Row="3" Text="Finish Workout" Style="{StaticResource AccentFilledButton}"
+                Command="{Binding FinishCommand}" Margin="16" HorizontalOptions="Fill" />
+
+        <!-- Resolve modal: every set group still missing sets, reps, or weight -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" BackgroundColor="#80000000" IsVisible="{Binding IsResolving}">
+            <Border Style="{StaticResource ElevatedCardBorder}" Margin="24" VerticalOptions="Center" MaximumHeightRequest="600">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Finish Workout" Style="{StaticResource TitleLabel}" />
+                    <Label Text="A few sets are missing sets, reps, or weight. Fill in what you can — anything left blank stays blank."
+                           Style="{StaticResource MetaLabel}" />
+                    <ScrollView MaximumHeightRequest="360">
+                        <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ResolveItems}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ResolveItemViewModel">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding Label}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorText}" />
+                                        <HorizontalStackLayout Spacing="6">
+                                            <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="50">
+                                                <Entry Text="{Binding Group.Sets}" Placeholder="sets" Keyboard="Numeric" FontSize="12" />
+                                            </Border>
+                                            <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="56">
+                                                <Entry Text="{Binding Group.Reps}" Placeholder="reps" Keyboard="Numeric" FontSize="12" />
+                                            </Border>
+                                            <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60" IsVisible="{Binding HasWeight}">
+                                                <Entry Text="{Binding Group.Weight}" Placeholder="lbs" Keyboard="Numeric" FontSize="12" />
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelResolveCommand}" />
+                        <Button Grid.Column="1" Text="Finish Workout" Style="{StaticResource AccentFilledButton}" Command="{Binding ConfirmResolveCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- PR celebration: shown after Finish when at least one exercise beat its prior best weight -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" BackgroundColor="#80000000" IsVisible="{Binding ShowPrCelebration}">
+            <Border Style="{StaticResource ElevatedCardBorder}" Margin="24" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Label Text="{StaticResource IconFlameFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                           TextColor="{StaticResource ColorAccent}" FontSize="36" HorizontalOptions="Center" />
+                    <Label Text="New Personal Record!" Style="{StaticResource TitleLabel}" HorizontalTextAlignment="Center" />
+                    <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding NewPersonalRecords}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Label Text="{Binding .}" FontSize="13" HorizontalTextAlignment="Center" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Button Text="Nice!" Style="{StaticResource AccentFilledButton}" Command="{Binding DismissPrCelebrationCommand}"
+                            HorizontalOptions="Center" WidthRequest="160" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

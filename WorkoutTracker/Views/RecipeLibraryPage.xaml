@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.RecipeLibraryPage"
+             x:DataType="vm:RecipeLibraryViewModel"
+             Title="Recipes">
+
+    <ContentPage.Resources>
+        <Style x:Key="ToggleChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="13,6" />
+            <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+
+            <Border Style="{StaticResource InputBorder}">
+                <Entry Text="{Binding SearchText}" Placeholder="Search recipes…" FontSize="13" />
+            </Border>
+
+            <HorizontalStackLayout Spacing="6">
+                <Border Style="{StaticResource ToggleChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleBaseVisibleCommand}" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding ShowBase}" Value="True">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Base" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding ShowBase}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Style="{StaticResource ToggleChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleMineVisibleCommand}" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding ShowMine}" Value="True">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Mine" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding ShowMine}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Style="{StaticResource ToggleChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleOthersVisibleCommand}" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding ShowOthers}" Value="True">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Others" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding ShowOthers}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+            </HorizontalStackLayout>
+
+            <Button Text="+ New Recipe" Style="{StaticResource PrimaryOutlineButton}" FontSize="12"
+                    Command="{Binding AddRecipeCommand}" HorizontalOptions="Start" />
+
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Sections}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RecipeCategorySectionViewModel">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleExpandedCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Label Grid.Column="0" Text="{Binding CategoryLabel}" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                                <Label Grid.Column="1" TextColor="{StaticResource ColorNeutral500}" FontSize="12" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
+                                            <Setter Property="Text" Value="▾" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="False">
+                                            <Setter Property="Text" Value="▸" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Grid>
+
+                            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsExpanded}" BindableLayout.ItemsSource="{Binding Recipes}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RecipeRowViewModel">
+                                        <Border Style="{StaticResource CardBorder}">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                    <HorizontalStackLayout Spacing="6">
+                                                        <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
+                                                        <Border Style="{StaticResource TagAccentBorder}">
+                                                            <Label Text="{Binding Badge}" Style="{StaticResource TagAccentLabel}" FontSize="9" />
+                                                        </Border>
+                                                    </HorizontalStackLayout>
+                                                    <Label Text="{Binding SubtitleLabel}" Style="{StaticResource MetaLabel}" />
+                                                </VerticalStackLayout>
+                                                <Button Grid.Column="1" Text="Edit" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                                        Command="{Binding EditCommand}" CommandParameter="{Binding Id}" VerticalOptions="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label Text="No recipes match these filters." Style="{StaticResource MetaLabel}"
+                   IsVisible="{Binding NoResults}" HorizontalTextAlignment="Center" Margin="0,20" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

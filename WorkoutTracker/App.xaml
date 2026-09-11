@@ -1,0 +1,25 @@
+﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WorkoutTracker"
+             xmlns:conv="clr-namespace:WorkoutTracker.Converters"
+             x:Class="WorkoutTracker.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Colors.<Theme> (ground palette + theme-aware Shadows) and Styles.xaml are
+                     both added in code by App.xaml.cs, in that order, right after this
+                     dictionary loads — Styles.xaml's own resources (button/card Shadows,
+                     ColorBg etc. on Setters) need the theme dictionary to already be merged
+                     when THEY parse, which is why it isn't statically listed here. See
+                     App.xaml.cs and Services/ThemeSettings.cs. -->
+                <ResourceDictionary Source="Resources/Styles/Colors.Base.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Icons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <conv:StringToBoolConverter x:Key="StringToBoolConverter" />
+            <conv:IsZeroConverter x:Key="IsZeroConverter" />
+            <conv:HexToColorConverter x:Key="HexToColorConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

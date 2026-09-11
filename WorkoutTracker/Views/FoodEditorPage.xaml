@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.FoodEditorPage"
+             x:DataType="vm:FoodEditorViewModel"
+             Title="Add Food">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding Name}" Placeholder="e.g. Granola" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Brand (optional)" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding BrandName}" Placeholder="e.g. Nature Valley" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Serving size" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding ServingLabel}" Placeholder="e.g. 100 g, 1 cup, 1 bar" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="PER SERVING" Style="{StaticResource KickerLabel}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                    <Label Text="Calories" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Calories}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
+                    <Label Text="Protein (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Protein}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                    <Label Text="Fat (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Fat}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
+                    <Label Text="Sodium (mg)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Sodium}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label Text="CARBOHYDRATES" Style="{StaticResource KickerLabel}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                    <Label Text="Carbs (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Carbs}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
+                    <Label Text="Fiber (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Fiber}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                    <Label Text="Sugar (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Sugar}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
+                    <Label Text="Sugar alcohols (g)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding SugarAlcohol}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

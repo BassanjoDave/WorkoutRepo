@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ExerciseDetailPage"
+             x:DataType="vm:ExerciseDetailViewModel"
+             Title="{Binding Name}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+
+            <Label Text="{Binding Name}" Style="{StaticResource HeadingLabel}" FontSize="22" />
+
+            <ScrollView Orientation="Horizontal" IsVisible="{Binding HasImages}">
+                <HorizontalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Images}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ExercisePhotoViewModel">
+                            <VerticalStackLayout Spacing="4" WidthRequest="160">
+                                <Image Source="{Binding Source}" Aspect="AspectFill" HeightRequest="160" WidthRequest="160" />
+                                <Label Text="{Binding Label}" Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center"
+                                       IsVisible="{Binding Label, Converter={StaticResource StringToBoolConverter}}" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="90,*">
+                        <Label Grid.Column="0" Text="Muscles" Style="{StaticResource MetaLabel}" />
+                        <Label Grid.Column="1" Text="{Binding Muscles}" FontSize="13" />
+                    </Grid>
+                    <Grid ColumnDefinitions="90,*">
+                        <Label Grid.Column="0" Text="Rig" Style="{StaticResource MetaLabel}" />
+                        <Label Grid.Column="1" Text="{Binding Equipment}" FontSize="13" />
+                    </Grid>
+                    <Grid ColumnDefinitions="90,*" IsVisible="{Binding Bench, Converter={StaticResource StringToBoolConverter}}">
+                        <Label Grid.Column="0" Text="Bench" Style="{StaticResource MetaLabel}" />
+                        <Label Grid.Column="1" Text="{Binding Bench}" FontSize="13" />
+                    </Grid>
+                    <Grid ColumnDefinitions="90,*" IsVisible="{Binding Accessory, Converter={StaticResource StringToBoolConverter}}">
+                        <Label Grid.Column="0" Text="Accessory" Style="{StaticResource MetaLabel}" />
+                        <Label Grid.Column="1" Text="{Binding Accessory}" FontSize="13" />
+                    </Grid>
+                    <Grid ColumnDefinitions="90,*" IsVisible="{Binding ArmPosition, Converter={StaticResource StringToBoolConverter}}">
+                        <Label Grid.Column="0" Text="Arm position" Style="{StaticResource MetaLabel}" />
+                        <Label Grid.Column="1" Text="{Binding ArmPosition}" FontSize="13" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="TIPS" Style="{StaticResource KickerLabel}" />
+                <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Tips}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Label Text="{Binding .}" FontSize="13" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

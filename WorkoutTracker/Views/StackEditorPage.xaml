@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.StackEditorPage"
+             x:DataType="vm:StackEditorViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding StackName}" Placeholder="e.g. Morning Stack" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Days" Style="{StaticResource MetaLabel}" />
+                <!-- One flat FlexLayout bound to one collection (DayCells, "All" included as
+                     its first entry) — nesting two Wrap FlexLayouts here previously made them
+                     fight over each other's available width and scattered the day chips
+                     across rows unpredictably. -->
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding DayCells}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:StackDayCellViewModel">
+                            <Border StrokeShape="RoundRectangle 20" Padding="13,6" Margin="0,0,6,6"
+                                    Stroke="{StaticResource ColorDivider}" BackgroundColor="Transparent" Shadow="{StaticResource ShadowSm}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Label}" FontSize="12">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Time" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <TimePicker Time="{Binding Time}" TextColor="{StaticResource ColorText}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="ITEMS" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Items}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:StackItemRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                        <Entry Text="{Binding Name}" Placeholder="Item name" FontAttributes="Bold" />
+                                    </Border>
+                                    <Button Grid.Column="1" Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                            Style="{StaticResource GhostButton}" SemanticProperties.Description="Remove item"
+                                            Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="Type" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding KindOptions}" SelectedItem="{Binding Kind}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="Form" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding FormOptions}" SelectedItem="{Binding Form}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="Dose" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Entry Text="{Binding DoseQuantityText}" Keyboard="Numeric" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="Dose unit" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding DoseUnitOptions}" SelectedItem="{Binding DoseUnit}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <!-- Qty taken + units taken sit on one row so together they read
+                                     like "1 Pill" / "2 Softgels" — TakenSummary below pluralizes
+                                     live, since the Picker's own selected text can't. -->
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="Qty taken" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Entry Text="{Binding QuantityTakenText}" Keyboard="Numeric" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="Units taken" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding TakenUnitOptions}" SelectedItem="{Binding TakenUnit}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <Label Text="{Binding TakenSummary}" Style="{StaticResource MetaLabel}" FontSize="11" />
+
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Note" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                    <Border Style="{StaticResource InputBorder}">
+                                        <Entry Text="{Binding Note}" Placeholder="Optional" FontSize="12" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Add item" Style="{StaticResource MetaLabel}" />
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Item name" Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Entry Text="{Binding NewItemName}" Placeholder="e.g. Vitamin D" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Type" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding KindOptions}" SelectedItem="{Binding NewItemKind}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Form" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding FormOptions}" SelectedItem="{Binding NewItemForm}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Dose" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding NewItemDoseQuantity}" Keyboard="Numeric" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Dose unit" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding DoseUnitOptions}" SelectedItem="{Binding NewItemDoseUnit}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Qty taken + units taken on one row, reading like "1 Pill" / "2 Softgels" —
+                         see NewItemTakenSummary for the live pluralized preview below. -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Qty taken" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding NewItemQuantityTaken}" Keyboard="Numeric" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Units taken" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding TakenUnitOptions}" SelectedItem="{Binding NewItemTakenUnit}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label Text="{Binding NewItemTakenSummary}" Style="{StaticResource MetaLabel}" FontSize="11" />
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Note" Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Entry Text="{Binding NewItemNote}" Placeholder="Optional" FontSize="12" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Button Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddItemCommand}" HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="REMINDER" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding ReminderEnabled}" />
+                </Grid>
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding ReminderEnabled}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding SnoozeEnabled}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding SnoozeEnabled}">
+                        <Label Grid.Column="0" Text="Snooze length (minutes)" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                            <Entry Text="{Binding SnoozeMinutesText}" Keyboard="Numeric" FontSize="12" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

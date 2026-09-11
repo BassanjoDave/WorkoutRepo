@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Theme-invariant tokens — the neutral/accent ramps and avatar palette read the
+  same regardless of which Colors.<Theme>.xaml is merged alongside this file
+  (see App.xaml.cs). Only the "ground" roles — background/surface/text/accent/
+  divider — change per theme; those live in the per-theme files so adding a
+  new theme later means adding one small file, not touching this one.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Neutral ramp -->
+    <Color x:Key="ColorNeutral100">#F3F5FE</Color>
+    <Color x:Key="ColorNeutral200">#E4E7F5</Color>
+    <Color x:Key="ColorNeutral300">#CFD3E5</Color>
+    <Color x:Key="ColorNeutral400">#B2B6CA</Color>
+    <Color x:Key="ColorNeutral500">#9397AB</Color>
+    <Color x:Key="ColorNeutral600">#75798C</Color>
+    <Color x:Key="ColorNeutral700">#595D6C</Color>
+    <Color x:Key="ColorNeutral800">#3F424D</Color>
+    <Color x:Key="ColorNeutral900">#292B31</Color>
+
+    <!-- Accent ramp -->
+    <Color x:Key="ColorAccent100">#F5F4FF</Color>
+    <Color x:Key="ColorAccent200">#E7E5FE</Color>
+    <Color x:Key="ColorAccent300">#D2CEFD</Color>
+    <Color x:Key="ColorAccent400">#B5ABFC</Color>
+    <Color x:Key="ColorAccent500">#968AE0</Color>
+    <Color x:Key="ColorAccent600">#796CBF</Color>
+    <Color x:Key="ColorAccent700">#5D5294</Color>
+    <Color x:Key="ColorAccent800">#423A6A</Color>
+    <Color x:Key="ColorAccent900">#2B2741</Color>
+
+    <!-- Avatar palette — oklch(65% 0.13 H) from the prototype's AVATAR_COLORS, converted to sRGB hex. -->
+    <Color x:Key="AvatarColor1">#8085DC</Color>
+    <Color x:Key="AvatarColor2">#00A6AE</Color>
+    <Color x:Key="AvatarColor3">#C36DA8</Color>
+    <Color x:Key="AvatarColor4">#A29015</Color>
+    <Color x:Key="AvatarColor5">#D26E5E</Color>
+    <Color x:Key="AvatarColor6">#31A773</Color>
+
+</ResourceDictionary>

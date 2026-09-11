@@ -1,0 +1,5 @@
+WorkoutTracker/
+**/bin/
+**/obj/
+.git/
+*.slnx

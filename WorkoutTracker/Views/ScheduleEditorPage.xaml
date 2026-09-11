@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ScheduleEditorPage"
+             x:DataType="vm:ScheduleEditorViewModel"
+             Title="Edit Schedule">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="14" BindableLayout.ItemsSource="{Binding Days}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ScheduleDayRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding DayLabel}" Style="{StaticResource HeadingLabel}" FontSize="14" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                        <Label Text="AM" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedAm}"
+                                                    TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                        <Label Text="PM" Style="{StaticResource MetaLabel}" FontSize="10" />
+                                        <Border Style="{StaticResource InputBorder}">
+                                            <Picker ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedPm}"
+                                                    TextColor="{StaticResource ColorText}" FontSize="12" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

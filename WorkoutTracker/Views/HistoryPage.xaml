@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
+             x:Class="WorkoutTracker.Views.HistoryPage"
+             x:DataType="vm:HistoryViewModel"
+             Title="History">
+
+    <ContentPage.Resources>
+        <Style x:Key="ToggleChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="13,6" />
+            <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <VerticalStackLayout Padding="18" Spacing="14">
+
+        <views:AppTabBar ActiveRoute="history" />
+
+        <Label Text="History" Style="{StaticResource HeadingLabel}" />
+
+        <!-- Overview / Progress / Log toggle -->
+        <HorizontalStackLayout Spacing="6">
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowCalendarCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOverviewTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Overview" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsOverviewTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowProgressCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsProgressTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Progress" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsProgressTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowLogCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsLogTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Log" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsLogTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowNutritionCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsNutritionTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Nutrition" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsNutritionTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowStacksHistoryCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsStacksTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Stacks" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsStacksTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+        </HorizontalStackLayout>
+
+        <!-- Overview -->
+        <ScrollView IsVisible="{Binding IsOverviewTab}">
+            <VerticalStackLayout Spacing="14">
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Text="&#171;" Style="{StaticResource GhostButton}" FontSize="14"
+                                    Padding="8,2" MinimumWidthRequest="0" MinimumHeightRequest="0"
+                                    SemanticProperties.Description="Previous month" Command="{Binding PreviousMonthCommand}" />
+                            <Label Grid.Column="1" Text="{Binding MonthLabel}" Style="{StaticResource MetaLabel}"
+                                   HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                            <Button Grid.Column="2" Text="&#187;" Style="{StaticResource GhostButton}" FontSize="14"
+                                    Padding="8,2" MinimumWidthRequest="0" MinimumHeightRequest="0"
+                                    SemanticProperties.Description="Next month" Command="{Binding NextMonthCommand}" />
+                        </Grid>
+                        <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding CalendarCells}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CalendarCellViewModel">
+                                    <Border StrokeShape="RoundRectangle 6" Stroke="Transparent" BackgroundColor="{Binding BackgroundColor}"
+                                            WidthRequest="42" HeightRequest="30" Padding="0">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding Day}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding Day}" FontSize="11" HorizontalOptions="Center" VerticalOptions="Center"
+                                               TextColor="{StaticResource ColorText}" />
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="RECENT SESSIONS" Style="{StaticResource KickerLabel}" />
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding RecentSessions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:HistorySessionRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                           TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding RoutineName}" FontSize="13" />
+                                        <Label Style="{StaticResource MetaLabel}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding DateLabel}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding ExerciseCount}" />
+                                                    <Span Text=" exercises" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="RECENT NUTRITION" Style="{StaticResource KickerLabel}" IsVisible="{Binding HasRecentNutrition}" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasRecentNutrition}" BindableLayout.ItemsSource="{Binding RecentNutritionDays}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NutritionDayRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                           TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding DateLabel}" FontSize="13" />
+                                        <Label Text="{Binding SummaryLabel}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="RECENT STACKS" Style="{StaticResource KickerLabel}" IsVisible="{Binding HasRecentStacksTaken}" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasRecentStacksTaken}" BindableLayout.ItemsSource="{Binding RecentStacksTaken}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NutritionDayRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                           TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding DateLabel}" FontSize="13" />
+                                        <Label Text="{Binding SummaryLabel}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Progress -->
+        <ScrollView IsVisible="{Binding IsProgressTab}">
+            <VerticalStackLayout Spacing="14">
+                <Border Style="{StaticResource CardBorder}">
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="{Binding AllTimeWorkouts}" Style="{StaticResource TitleLabel}" FontSize="20" HorizontalTextAlignment="Center" />
+                            <Label Text="Workouts" Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" FontSize="10" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="{Binding LongestStreak}" Style="{StaticResource TitleLabel}" FontSize="20" HorizontalTextAlignment="Center" />
+                            <Label Text="Best Streak" Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" FontSize="10" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="2" Spacing="2">
+                            <Label Text="{Binding AllTimeVolumeLabel}" Style="{StaticResource MetaLabel}" FontSize="10"
+                                   HorizontalTextAlignment="Center" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasProgressData}">
+                    <Label Text="EXERCISE PROGRESS" Style="{StaticResource KickerLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding ProgressExercises}" SelectedItem="{Binding SelectedProgressExercise}"
+                                TextColor="{StaticResource ColorText}" FontSize="13" />
+                    </Border>
+                    <Border Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="8">
+                            <GraphicsView Drawable="{Binding ProgressDrawable}" HeightRequest="180" />
+                            <Label Text="{Binding ProgressBestLabel}" FontSize="12" FontAttributes="Bold" />
+                            <Label Text="{Binding ProgressSessionsLabel}" Style="{StaticResource MetaLabel}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Border Style="{StaticResource ElevatedCardBorder}" IsVisible="{Binding HasProgressData, Converter={StaticResource InvertedBoolConverter}}">
+                    <Label Text="Log a few weighted workouts and your progress will show up here." Style="{StaticResource MetaLabel}"
+                           HorizontalTextAlignment="Center" />
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Log -->
+        <VerticalStackLayout Spacing="10" IsVisible="{Binding IsLogTab}">
+            <Border Style="{StaticResource InputBorder}">
+                <Entry Text="{Binding LogSearch}" Placeholder="Search exercise or workout…" FontSize="13" />
+            </Border>
+            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="From" Style="{StaticResource MetaLabel}" FontSize="10" />
+                    <DatePicker Date="{Binding LogDateFrom}" FontSize="12" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                    <Label Text="To" Style="{StaticResource MetaLabel}" FontSize="10" />
+                    <DatePicker Date="{Binding LogDateTo}" FontSize="12" />
+                </VerticalStackLayout>
+                <Button Grid.Column="2" Text="Clear" Style="{StaticResource GhostButton}" FontSize="11"
+                        Command="{Binding ClearLogFiltersCommand}" VerticalOptions="End" />
+            </Grid>
+
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <VerticalStackLayout>
+                    <Grid ColumnDefinitions="60,60,*,60" Padding="10,8" ColumnSpacing="4">
+                        <Button Grid.Column="0" Text="Date" Style="{StaticResource GhostButton}" FontSize="10"
+                                Command="{Binding SortByCommand}" CommandParameter="Date" />
+                        <Button Grid.Column="1" Text="Exercise" Style="{StaticResource GhostButton}" FontSize="10"
+                                Command="{Binding SortByCommand}" CommandParameter="Exercise" />
+                        <Label Grid.Column="2" Text="Set" Style="{StaticResource KickerLabel}" FontSize="10" VerticalOptions="Center" />
+                        <Button Grid.Column="3" Text="Weight" Style="{StaticResource GhostButton}" FontSize="10"
+                                Command="{Binding SortByCommand}" CommandParameter="Weight" />
+                    </Grid>
+                    <CollectionView ItemsSource="{Binding LogRows}" MaximumHeightRequest="340">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LogRowViewModel">
+                                <Grid ColumnDefinitions="60,90,*,60" Padding="10,8" ColumnSpacing="4">
+                                    <Label Grid.Column="0" Text="{Binding DateLabel}" FontSize="11" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="{Binding ExerciseName}" FontSize="11" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                    <Label Grid.Column="2" VerticalOptions="Center" FontSize="11">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Sets}" />
+                                                <Span Text=" × " />
+                                                <Span Text="{Binding Reps}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                    <Label Grid.Column="3" Text="{Binding Weight}" FontSize="11" VerticalOptions="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <Label Text="No logged sets match these filters." Style="{StaticResource MetaLabel}"
+                           IsVisible="{Binding LogEmpty}" HorizontalTextAlignment="Center" Margin="0,20" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Copy to Clipboard" Style="{StaticResource SecondaryButton}" FontSize="12"
+                        Command="{Binding CopyLogToClipboardCommand}" />
+                <Button Grid.Column="1" Text="Share as CSV" Style="{StaticResource PrimaryOutlineButton}" FontSize="12"
+                        Command="{Binding ShareLogCsvCommand}" />
+            </Grid>
+            <Label Text="{Binding ExportStatus}" Style="{StaticResource MetaLabel}"
+                   IsVisible="{Binding ExportStatus, Converter={StaticResource StringToBoolConverter}}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Nutrition -->
+        <ScrollView IsVisible="{Binding IsNutritionTab}">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Per-day totals from your food log, most recent first." Style="{StaticResource MetaLabel}" FontSize="10" />
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding NutritionDayRows}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NutritionDayRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                           TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding DateLabel}" FontSize="13" />
+                                        <Label Text="{Binding SummaryLabel}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Label Text="No meals logged yet." Style="{StaticResource MetaLabel}"
+                       IsVisible="{Binding NutritionEmpty}" HorizontalTextAlignment="Center" Margin="0,20" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Stacks -->
+        <ScrollView IsVisible="{Binding IsStacksTab}">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Days you marked a supplement or medication stack as taken, most recent first." Style="{StaticResource MetaLabel}" FontSize="10" />
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding StackHistoryDayRows}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NutritionDayRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                           TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding DateLabel}" FontSize="13" />
+                                        <Label Text="{Binding SummaryLabel}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Label Text="No stacks marked taken yet." Style="{StaticResource MetaLabel}"
+                       IsVisible="{Binding StackHistoryEmpty}" HorizontalTextAlignment="Center" Margin="0,20" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </VerticalStackLayout>
+</ContentPage>

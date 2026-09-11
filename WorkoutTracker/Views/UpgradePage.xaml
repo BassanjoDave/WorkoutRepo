@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.UpgradePage"
+             x:DataType="vm:UpgradeViewModel"
+             Title="Upgrade">
+
+    <!-- Routes the native toolbar/hardware back action through BackCommand too —
+         see its doc comment for why this can't be Shell's default relative pop. -->
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding BackCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+            <Label Text="{Binding ReasonLabel}" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Purchasing isn't wired up yet — this is a preview of the pricing while billing is being built."
+                   Style="{StaticResource MetaLabel}" />
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="No Ads" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="$1.99/mo · $15.99/yr — removes ads, Workouts page only, 1 seat" Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Full Access" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="$4.99/mo · $39.99/yr — ad-free access to every page, 1 seat" Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Nutrition unlock" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="$1.99/mo · $15.99/yr — Nutrition page + History tab* " Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Stacks unlock" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="$1.99/mo · $15.99/yr — Stacks page + History tab*" Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Measurements unlock" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="$1.99/mo · $15.99/yr — Measurements page*" Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+            <Label Text="*Ad-free access to a page you unlock à la carte requires No Ads or Full Access — a page unlock by itself doesn't remove ads."
+                   Style="{StaticResource MetaLabel}" FontSize="11" />
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Family plan" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="+$1.99/mo (+$15.99/yr) covers 4 total users, plus two more $1.99/mo blocks covering seats 5–8 and 9–12 (12 total max). Every family member gets the ad-free access to whichever pages the main account holder has unlocked."
+                           Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Coming soon" Style="{StaticResource SecondaryButton}" IsEnabled="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

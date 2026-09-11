@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ExerciseEditorPage"
+             x:DataType="vm:ExerciseEditorViewModel"
+             Title="Add Custom Exercise">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding Name}" Placeholder="e.g. Backyard Sprints" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Category" Style="{StaticResource MetaLabel}" />
+                <Label Text="Vibration Plate or Cardio changes what the session screen asks for — stance/duration/frequency for Vibration Plate, time/distance/resistance for Cardio — instead of sets and reps."
+                       Style="{StaticResource MetaLabel}" FontSize="10" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Picker ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" TextColor="{StaticResource ColorText}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Rig" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Picker ItemsSource="{Binding EquipmentOptions}" SelectedItem="{Binding SelectedEquipment}" TextColor="{StaticResource ColorText}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Muscles worked (optional)" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding Muscles}" Placeholder="e.g. Quads, Glutes, Core" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Tips (optional, one per line)" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Editor Text="{Binding TipsText}" HeightRequest="90" Placeholder="Keep your back flat.&#10;Drive through your heels." />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Photos" Style="{StaticResource MetaLabel}" />
+                <Label Text="Add at least a start and finish position photo — add more if the movement needs extra angles."
+                       Style="{StaticResource MetaLabel}" FontSize="10" />
+                <ScrollView Orientation="Horizontal">
+                    <HorizontalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Photos}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ExercisePhotoRowViewModel">
+                                <VerticalStackLayout Spacing="4" WidthRequest="120">
+                                    <Image Source="{Binding Path}" Aspect="AspectFill" HeightRequest="120" WidthRequest="120" />
+                                    <Border Style="{StaticResource InputBorder}" Padding="6,2">
+                                        <Entry Text="{Binding Label}" Placeholder="Label" FontSize="11" />
+                                    </Border>
+                                    <Button Text="Remove" Style="{StaticResource GhostButton}" FontSize="10"
+                                            Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </ScrollView>
+                <Button Text="+ Add Photo" Style="{StaticResource GhostButton}" FontSize="12"
+                        Command="{Binding AddPhotoCommand}" HorizontalOptions="Start" />
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Share with account" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding IsAccountShared}" />
+            </Grid>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

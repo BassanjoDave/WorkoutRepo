@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.EquipmentPreferencesPage"
+             x:DataType="vm:EquipmentPreferencesViewModel"
+             Title="Rigs">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="16">
+                <Label Text="Choose which rigs you have access to. The Library will only show exercises for the types you select here."
+                       Style="{StaticResource MetaLabel}" />
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Groups}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:EquipmentGroupViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding AllSelected}" />
+                                        <Label Grid.Column="1" Text="{Binding Label}" Style="{StaticResource HeadingLabel}" FontSize="14" VerticalOptions="Center" />
+                                    </Grid>
+                                    <VerticalStackLayout Spacing="4" Margin="28,0,0,0" BindableLayout.ItemsSource="{Binding Items}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:EquipmentItemViewModel">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" />
+                                                    <Label Grid.Column="1" Text="{Binding Label}" FontSize="13" VerticalOptions="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="+ Add Rig Type" Style="{StaticResource PrimaryOutlineButton}"
+                        Command="{Binding AddCustomTypeCommand}" HorizontalOptions="Start" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

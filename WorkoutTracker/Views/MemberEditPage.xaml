@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.MemberEditPage"
+             x:DataType="vm:MemberEditViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <Border StrokeShape="RoundRectangle 36" Stroke="Transparent"
+                    BackgroundColor="{Binding SelectedColor, Converter={StaticResource HexToColorConverter}}"
+                    WidthRequest="72" HeightRequest="72" Padding="0" HorizontalOptions="Center">
+                <Label Text="{Binding PreviewInitial}" Style="{StaticResource HeadingLabel}"
+                       TextColor="{StaticResource ColorBg}" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding Name}" Placeholder="Name" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Avatar color" Style="{StaticResource MetaLabel}" />
+                <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding AvatarColorOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Border StrokeShape="RoundRectangle 14" WidthRequest="28" HeightRequest="28" Padding="0"
+                                    BackgroundColor="{Binding ., Converter={StaticResource HexToColorConverter}}"
+                                    Stroke="{StaticResource ColorText}" StrokeThickness="0">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnColorTapped" CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="Date of birth" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding HasDateOfBirth}" />
+                </Grid>
+                <DatePicker Date="{Binding DateOfBirth}" IsVisible="{Binding HasDateOfBirth}" FontSize="13" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Role" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Picker ItemsSource="{Binding RoleOptions}" SelectedItem="{Binding SelectedRole}" TextColor="{StaticResource ColorText}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding CanLinkGoogle}">
+                <Label Text="GOOGLE ACCOUNT" Style="{StaticResource KickerLabel}" />
+                <Border Style="{StaticResource CardBorder}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="{Binding LinkedGoogleLabel}" FontSize="13" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Unlink" Style="{StaticResource SecondaryButton}" FontSize="12"
+                                IsVisible="{Binding IsLinked}" Command="{Binding UnlinkGoogleAccountCommand}" />
+                        <Button Grid.Column="1" Text="Link Google Account" Style="{StaticResource PrimaryOutlineButton}" FontSize="12"
+                                IsVisible="{Binding IsLinked, Converter={StaticResource InvertedBoolConverter}}"
+                                IsEnabled="{Binding IsLinking, Converter={StaticResource InvertedBoolConverter}}"
+                                Command="{Binding LinkGoogleAccountCommand}" />
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding CanManageAuth}">
+                <Label Text="PROFILE PROTECTION" Style="{StaticResource KickerLabel}" />
+                <Label Text="Require a PIN or biometric scan before switching into this profile." Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="8">
+                        <Picker ItemsSource="{Binding AuthModeOptions}" SelectedItem="{Binding SelectedAuthMode}" TextColor="{StaticResource ColorText}" />
+                        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasPin}">
+                            <Label Grid.Column="0" Text="A PIN is set for this profile." FontSize="12" VerticalOptions="Center" Style="{StaticResource MetaLabel}" />
+                            <Button Grid.Column="1" Text="Change PIN" Style="{StaticResource SecondaryButton}" FontSize="12" Command="{Binding ChangePinCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="CAPABILITIES" Style="{StaticResource KickerLabel}" />
+                <Label Text="Prefilled from the role above — flip any of these to customize just this member." Style="{StaticResource MetaLabel}" />
+
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                    <Label Grid.Row="0" Grid.Column="0" Text="View others' history" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="0" Grid.Column="1" IsToggled="{Binding ViewOthersHistory}" />
+
+                    <Label Grid.Row="1" Grid.Column="0" Text="Create shared workouts" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="1" Grid.Column="1" IsToggled="{Binding CreateSharedWorkouts}" />
+
+                    <Label Grid.Row="2" Grid.Column="0" Text="Edit others' workouts" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="2" Grid.Column="1" IsToggled="{Binding EditOthersWorkouts}" />
+
+                    <Label Grid.Row="3" Grid.Column="0" Text="Edit own schedule" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="3" Grid.Column="1" IsToggled="{Binding EditOwnSchedule}" />
+
+                    <Label Grid.Row="4" Grid.Column="0" Text="Edit anyone's schedule" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="4" Grid.Column="1" IsToggled="{Binding EditAnyoneSchedule}" />
+
+                    <Label Grid.Row="5" Grid.Column="0" Text="Delete others' content" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="5" Grid.Column="1" IsToggled="{Binding DeleteContent}" />
+
+                    <Label Grid.Row="6" Grid.Column="0" Text="Manage members" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="6" Grid.Column="1" IsToggled="{Binding ManageMembers}" />
+
+                    <Label Grid.Row="7" Grid.Column="0" Text="Manage billing" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="7" Grid.Column="1" IsToggled="{Binding ManageBilling}" />
+
+                    <Label Grid.Row="8" Grid.Column="0" Text="Export data" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Row="8" Grid.Column="1" IsToggled="{Binding ExportData}" />
+                </Grid>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

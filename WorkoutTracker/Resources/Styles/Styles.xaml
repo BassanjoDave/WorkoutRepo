@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Nocturne component styles, mapped from ds/nocturne-styles.css. Originally
+  dark-only per the handoff ("Chrome is dark-only here"); now theme-aware via
+  the ColorBg/ColorAccent/ShadowSm/etc. keys each Colors.<Theme> dictionary
+  defines. Inter and Phosphor are registered in MauiProgram.cs from Resources/Fonts.
+  Has x:Class so App.xaml.cs can merge it by constructing the compiled type
+  directly, AFTER the theme dictionary — this file's own Setters resolve those
+  keys via plain StaticResource at parse time, so the theme must already be
+  merged when that happens. A runtime `Source = new Uri(...)` merge doesn't
+  reliably load under this project's SourceGen XAML compilation.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="WorkoutTracker.Resources.Styles.AppStyles">
+
+    <x:String x:Key="FontBody">InterRegular</x:String>
+    <x:String x:Key="FontHeading">InterSemibold</x:String>
+    <!-- The heading font family at weight 500 (buttons, chips, tab labels) rather than 600 (titles, card headers). -->
+    <x:String x:Key="FontHeadingMedium">InterMedium</x:String>
+
+    <!-- Radius scale -->
+    <x:Double x:Key="RadiusSm">4</x:Double>
+    <x:Double x:Key="RadiusMd">8</x:Double>
+    <x:Double x:Key="RadiusLg">14</x:Double>
+
+    <!-- Space scale (density 0.70x per the handoff) -->
+    <x:Double x:Key="Space1">2.8</x:Double>
+    <x:Double x:Key="Space2">5.6</x:Double>
+    <x:Double x:Key="Space3">8.4</x:Double>
+    <x:Double x:Key="Space4">11.2</x:Double>
+    <x:Double x:Key="Space6">16.8</x:Double>
+    <x:Double x:Key="Space8">22.4</x:Double>
+
+    <!-- Elevation — ShadowSm/Md/Lg are defined per-theme (Colors.Dark.cs / Colors.Light.cs),
+         not here: Dark uses a purple backlit glow instead of a literal drop shadow, Light
+         keeps a conventional soft dark shadow. ShadowSm is the baseline on every plain
+         section card (CardBorder) and button so sections/controls read as distinct
+         surfaces rather than flat against the page; Md/Lg are for cards that should
+         stand out further. -->
+
+    <!-- ══════════ Page / Shell chrome ══════════ -->
+
+    <Style TargetType="Page" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorBg}" />
+        <!-- Native TabBar chrome is replaced everywhere by Views/AppTabBar.xaml — see its comment for why. -->
+        <Setter Property="Shell.TabBarIsVisible" Value="False" />
+    </Style>
+
+    <!-- The platform default off-state thumb is a dark grey that all but
+         disappears against this app's dark background — pin it to something
+         that stays visible whether the switch is on or off. -->
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="ThumbColor" Value="{StaticResource ColorNeutral300}" />
+    </Style>
+
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource ColorBg}" />
+        <Setter Property="Shell.ForegroundColor" Value="{StaticResource ColorText}" />
+        <Setter Property="Shell.TitleColor" Value="{StaticResource ColorText}" />
+        <Setter Property="Shell.DisabledColor" Value="{StaticResource ColorNeutral700}" />
+        <Setter Property="Shell.UnselectedColor" Value="{StaticResource ColorNeutral500}" />
+        <Setter Property="Shell.NavBarHasShadow" Value="False" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource ColorBg}" />
+        <Setter Property="Shell.TabBarForegroundColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource ColorNeutral500}" />
+    </Style>
+
+    <!-- ══════════ Labels — heading / body / meta / kicker scales ══════════ -->
+
+    <Style TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style x:Key="HeadingLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeading}" />
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="FontSize" Value="20" />
+    </Style>
+
+    <Style x:Key="TitleLabel" TargetType="Label" BasedOn="{StaticResource HeadingLabel}">
+        <Setter Property="FontSize" Value="22" />
+    </Style>
+
+    <Style x:Key="BodyLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style x:Key="MetaLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+        <Setter Property="TextColor" Value="{StaticResource ColorNeutral500}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style x:Key="KickerLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+        <Setter Property="TextColor" Value="{StaticResource ColorNeutral500}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="CharacterSpacing" Value="1.2" />
+        <Setter Property="TextTransform" Value="Uppercase" />
+    </Style>
+
+    <!-- ══════════ Buttons — outlined primary is the norm; filled is the one exception ══════════ -->
+
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="BorderColor" Value="{StaticResource ColorDivider}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="13,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- MAUI's implicit (unkeyed) Button style above can't be referenced via BasedOn,
+         so the shared button metrics are repeated on each named variant below. -->
+
+    <!-- .btn-primary: the outlined accent button used for most primary actions -->
+    <Style x:Key="PrimaryOutlineButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="13,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="BorderColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- .btn-secondary -->
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="13,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="BorderColor" Value="{StaticResource ColorDivider}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- .btn-ghost — outlined like every other button style, for a consistent look app-wide -->
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="BorderColor" Value="{StaticResource ColorDivider}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- The nav buttons in Views/AppTabBar.xaml — like GhostButton (accent text, no fill)
+         but with a visible outline + shadow so the header reads as distinct tappable
+         pills rather than plain text. Kept separate from GhostButton, which stays
+         borderless where it's used elsewhere (e.g. Home's "Today" button). -->
+    <Style x:Key="TabBarButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinimumHeightRequest" Value="32" />
+        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="BorderColor" Value="{StaticResource ColorDivider}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- The one filled button in the whole system: profile-draft "Create" -->
+    <Style x:Key="AccentFilledButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeadingMedium}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="13,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorAccent}" />
+        <Setter Property="TextColor" Value="{StaticResource ColorBg}" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <!-- ══════════ Cards / surfaces ══════════ -->
+
+    <!-- .card — flat surface, no border. Carries a subtle shadow (ShadowSm) so
+         sections read as distinct surfaces against the page background. -->
+    <Style x:Key="CardBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ColorSurface}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+    </Style>
+
+    <Style x:Key="ElevatedCardBorder" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowMd}" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <!-- ══════════ Inputs — Entry has no border of its own; wrap it in this Border ══════════ -->
+
+    <Style TargetType="Entry">
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource ColorNeutral500}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+    </Style>
+
+    <Style x:Key="InputBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ColorSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="Padding" Value="10,2" />
+    </Style>
+
+    <!-- ══════════ Tags / pills ══════════ -->
+
+    <Style x:Key="TagAccentBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ColorAccent800}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+        <Setter Property="Padding" Value="9,3" />
+    </Style>
+
+    <Style x:Key="TagAccentLabel" TargetType="Label" BasedOn="{StaticResource MetaLabel}">
+        <Setter Property="TextColor" Value="{StaticResource ColorAccent100}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+</ResourceDictionary>

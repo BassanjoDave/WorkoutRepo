@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.HiitPlayerPage"
+             x:DataType="vm:HiitPlayerViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <!-- A plain dark drop-shadow for the white text over the HIIT section's own
+             color-coded background — that background varies (sky blue/green/red/custom),
+             so a fixed dark shadow reads consistently instead of the app's usual
+             theme-driven purple-glow ShadowSm/Md/Lg, which is tuned for card surfaces,
+             not text sitting on a solid color. -->
+        <Shadow x:Key="HiitTextShadow" Brush="Black" Opacity="0.55" Radius="6" Offset="0,2" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Padding="16,50,16,10" ColumnSpacing="6">
+            <Button Grid.Column="0" Text="{StaticResource IconX}" FontFamily="{StaticResource FontPhosphorRegular}"
+                    Style="{StaticResource GhostButton}" Command="{Binding ExitCommand}" FontSize="20"
+                    SemanticProperties.Description="Exit workout" />
+            <Label Grid.Column="1" Text="{Binding RoutineName}" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="Edit" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding EditWorkoutCommand}" />
+            <Button Grid.Column="3" Text="{StaticResource IconSpeakerHigh}" FontFamily="{StaticResource FontPhosphorRegular}"
+                    Style="{StaticResource GhostButton}" Command="{Binding ToggleMuteCommand}" FontSize="18"
+                    SemanticProperties.Description="Mute sound">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding Muted}" Value="True">
+                        <Setter Property="Text" Value="{StaticResource IconSpeakerX}" />
+                        <Setter Property="SemanticProperties.Description" Value="Unmute sound" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="20">
+        <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}" StrokeThickness="1"
+                BackgroundColor="{Binding DisplayBackgroundColor}" Shadow="{StaticResource ShadowSm}"
+                Padding="24" VerticalOptions="Center">
+        <VerticalStackLayout Spacing="20">
+
+            <VerticalStackLayout IsVisible="{Binding Finished, Converter={StaticResource InvertedBoolConverter}}" Spacing="20">
+                <Label Style="{StaticResource MetaLabel}" TextColor="White" Shadow="{StaticResource HiitTextShadow}" HorizontalTextAlignment="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Section " />
+                            <Span Text="{Binding DisplaySectionNumber}" />
+                            <Span Text=" of " />
+                            <Span Text="{Binding TotalSections}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+                <Label Text="{Binding CurrentTitle}" Style="{StaticResource TitleLabel}" TextColor="White" Shadow="{StaticResource HiitTextShadow}" FontSize="26" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding CurrentDescription}" Style="{StaticResource MetaLabel}" TextColor="White" Shadow="{StaticResource HiitTextShadow}" HorizontalTextAlignment="Center"
+                       IsVisible="{Binding CurrentDescription, Converter={StaticResource StringToBoolConverter}}" />
+                <Label Text="{Binding RemainingSeconds}" Style="{StaticResource HeadingLabel}" TextColor="White" Shadow="{StaticResource HiitTextShadow}" FontSize="64" HorizontalTextAlignment="Center" />
+                <Button Text="{Binding StartButtonLabel}"
+                        Style="{StaticResource AccentFilledButton}"
+                        Command="{Binding ToggleStartCommand}"
+                        IsVisible="{Binding IsRunning, Converter={StaticResource InvertedBoolConverter}}"
+                        HorizontalOptions="Center" WidthRequest="200" />
+                <Button Text="Pause" Style="{StaticResource SecondaryButton}" Command="{Binding PauseCommand}"
+                        IsVisible="{Binding IsRunning}" HorizontalOptions="Center" WidthRequest="200" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout IsVisible="{Binding Finished}" Spacing="12">
+                <Label Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                       TextColor="{StaticResource ColorAccent}" FontSize="40" HorizontalOptions="Center" />
+                <Label Text="Workout complete" Style="{StaticResource HeadingLabel}" HorizontalTextAlignment="Center" />
+                <Button Text="Done" Style="{StaticResource AccentFilledButton}" Command="{Binding ExitCommand}" HorizontalOptions="Center" WidthRequest="200" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+        </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

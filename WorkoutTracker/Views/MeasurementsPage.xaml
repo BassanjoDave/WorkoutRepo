@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
+             x:Class="WorkoutTracker.Views.MeasurementsPage"
+             x:DataType="vm:MeasurementsViewModel"
+             Title="Measurements">
+
+    <ContentPage.Resources>
+        <Style x:Key="ToggleChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="13,6" />
+            <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+        </Style>
+        <DataTemplate x:Key="ChipTemplate" x:DataType="vm:MetricChipViewModel">
+            <Border Style="{StaticResource ToggleChip}" Margin="0,0,6,6">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding Name}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{Binding Name}" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <views:AppTabBar ActiveRoute="measurements" />
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Body Measurements" Style="{StaticResource HeadingLabel}" VerticalOptions="Center" />
+                <Button Grid.Column="1" Text="+ Log Weigh-In" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding LogMeasurementCommand}" />
+            </Grid>
+
+            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding MetricChips}" BindableLayout.ItemTemplate="{StaticResource ChipTemplate}" />
+
+            <Label Text="RANGE" Style="{StaticResource KickerLabel}" />
+            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding RangeChips}" BindableLayout.ItemTemplate="{StaticResource ChipTemplate}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding IsCustomRange}">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="From" Style="{StaticResource MetaLabel}" FontSize="10" />
+                    <DatePicker Date="{Binding CustomFrom}" FontSize="12" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                    <Label Text="To" Style="{StaticResource MetaLabel}" FontSize="10" />
+                    <DatePicker Date="{Binding CustomTo}" FontSize="12" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <GraphicsView Drawable="{Binding BodyMetricDrawable}" HeightRequest="220" />
+                    <Label Text="{Binding BodyMetricLabel}" FontSize="12" FontAttributes="Bold"
+                           IsVisible="{Binding BodyMetricLabel, Converter={StaticResource StringToBoolConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorder}" IsVisible="{Binding WaistHipRatioLabel, Converter={StaticResource StringToBoolConverter}}">
+                <Label Text="{Binding WaistHipRatioLabel}" FontSize="13" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+            </Border>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Progress Photos" Style="{StaticResource HeadingLabel}" FontSize="15" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="+ Add" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding AddProgressPhotoCommand}" />
+                    </Grid>
+
+                    <Label Text="You've reached the 100-photo limit. Delete a photo to add another." Style="{StaticResource MetaLabel}"
+                           IsVisible="{Binding IsAtPhotoCap}" />
+
+                    <CollectionView ItemsSource="{Binding ProgressPhotos}" EmptyView="No progress photos yet."
+                                    HeightRequest="{Binding ProgressPhotosGridHeight}">
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout Orientation="Vertical" Span="3" HorizontalItemSpacing="6" VerticalItemSpacing="6" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ProgressPhotoThumbnailViewModel">
+                                <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ViewCommand}" CommandParameter="{Binding}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid>
+                                        <Image Source="{Binding Thumbnail}" Aspect="AspectFill" HeightRequest="110" />
+                                        <Label Text="{Binding DateLabel}" FontSize="9" TextColor="White" BackgroundColor="#80000000"
+                                               Padding="4,2" VerticalOptions="End" HorizontalOptions="Fill" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

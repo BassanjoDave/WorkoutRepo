@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="WorkoutTracker.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:WorkoutTracker.Views"
+    Title="Rig Ritual"
+    FlyoutBehavior="Disabled">
+
+    <!-- Blocking profile gate — the app's first screen, outside the tab bar.
+         Route "gate" is where the flow returns via OpenProfileGate() actions. -->
+    <ShellContent
+        Route="gate"
+        ContentTemplate="{DataTemplate views:ProfileGatePage}" />
+
+    <TabBar>
+        <ShellContent Title="Home" Route="home" ContentTemplate="{DataTemplate views:HomePage}" />
+        <!-- Shell's native nested-Tab (a Tab containing multiple ShellContent)
+             renders a switchable top strip on Android/iOS but not on Windows, so
+             Workouts/Library are combined into one page (ExercisePage) with an
+             in-page toggle instead — same pattern as History's Overview/Log tabs. -->
+        <ShellContent Title="Exercise" Route="exercise" ContentTemplate="{DataTemplate views:ExercisePage}" />
+        <ShellContent Title="Nutrition" Route="nutrition" ContentTemplate="{DataTemplate views:NutritionPage}" />
+        <ShellContent Title="History" Route="history" ContentTemplate="{DataTemplate views:HistoryPage}" />
+        <ShellContent Title="Measurements" Route="measurements" ContentTemplate="{DataTemplate views:MeasurementsPage}" />
+        <ShellContent Title="Stacks" Route="stacks" ContentTemplate="{DataTemplate views:StacksPage}" />
+        <ShellContent Title="Profile" Route="profile" ContentTemplate="{DataTemplate views:ProfilePage}" />
+    </TabBar>
+
+</Shell>

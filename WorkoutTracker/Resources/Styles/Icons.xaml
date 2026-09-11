@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Phosphor glyphs used by the current screens, as StaticResource strings per
+  the handoff ("ship Phosphor as a font asset ... use FontImageSource
+  glyphs"). Pair a glyph with FontPhosphorRegular or FontPhosphorFill on a
+  Label/FontImageSource — color and size stay with the caller so one glyph
+  resource works in any context (accent, muted, on a button, etc).
+  Codepoints come from phosphor-icons/core's font mapping. Add more entries
+  here as new screens need new icons — don't bulk-import the whole icon set.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <x:String x:Key="FontPhosphorRegular">PhosphorRegular</x:String>
+    <x:String x:Key="FontPhosphorFill">PhosphorFill</x:String>
+
+    <!-- Regular weight -->
+    <x:String x:Key="IconX">&#xE4F6;</x:String>
+    <x:String x:Key="IconPlus">&#xE3D4;</x:String>
+    <x:String x:Key="IconMoonStars">&#xE58E;</x:String>
+    <x:String x:Key="IconCaretRight">&#xE13A;</x:String>
+    <x:String x:Key="IconTimer">&#xE492;</x:String>
+    <x:String x:Key="IconExport">&#xEAF0;</x:String>
+    <x:String x:Key="IconTable">&#xE476;</x:String>
+    <x:String x:Key="IconCopy">&#xE1CA;</x:String>
+    <x:String x:Key="IconPrinter">&#xE3DC;</x:String>
+    <x:String x:Key="IconShareNetwork">&#xE408;</x:String>
+    <x:String x:Key="IconTrash">&#xE4A6;</x:String>
+    <x:String x:Key="IconSpeakerHigh">&#xE44A;</x:String>
+    <x:String x:Key="IconSpeakerX">&#xE45C;</x:String>
+
+    <!-- Fill weight -->
+    <x:String x:Key="IconFlameFill">&#xE624;</x:String>
+    <x:String x:Key="IconCheckCircleFill">&#xE184;</x:String>
+
+</ResourceDictionary>

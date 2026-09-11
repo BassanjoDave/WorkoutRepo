@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.HistorySummaryView"
+             x:DataType="vm:HistorySummaryViewModel">
+
+    <Border Style="{StaticResource CardBorder}">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding OpenCommand}" />
+        </Border.GestureRecognizers>
+        <HorizontalStackLayout Spacing="8">
+            <Label Text="{StaticResource IconFlameFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                   TextColor="{StaticResource ColorAccent}" FontSize="20" VerticalOptions="Center" />
+            <Label VerticalOptions="Center">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="{Binding StreakCount}" FontFamily="{StaticResource FontHeading}" TextColor="{StaticResource ColorText}" FontSize="13" />
+                        <Span Text=" day streak · " TextColor="{StaticResource ColorText}" FontSize="13" />
+                        <Span Text="{Binding HistoryCount}" TextColor="{StaticResource ColorNeutral500}" FontSize="13" />
+                        <Span Text=" workouts logged" TextColor="{StaticResource ColorNeutral500}" FontSize="13" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+        </HorizontalStackLayout>
+    </Border>
+</ContentView>

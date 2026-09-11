@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.HiitBuilderPage"
+             x:DataType="vm:HiitBuilderViewModel"
+             Title="HIIT Builder">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding RoutineName}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Share with account" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding IsAccountShared}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="Cycles" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding Cycles}" Keyboard="Numeric" />
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                    <Label Text="Rest between cycles (sec)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding RestBetweenCycles}" Keyboard="Numeric" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label Text="SECTIONS" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Sections}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:HiitSectionRowViewModel">
+                        <!-- Not using Style="CardBorder" here — its own Background brush setter
+                             (as opposed to BackgroundColor) paints over a plain BackgroundColor
+                             override on every platform, which is exactly what silently blanked
+                             out the section color before. Setting every property directly avoids
+                             that precedence fight, and skips CardBorder's own elevation shadow
+                             entirely — a shadow just muddies flat, already-saturated section colors. -->
+                        <Border StrokeShape="RoundRectangle 8" Padding="14"
+                                BackgroundColor="{Binding Color, Converter={StaticResource HexToColorConverter}}"
+                                Stroke="{StaticResource ColorDivider}" StrokeThickness="1">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ColorText}" />
+                                        <Label TextColor="{StaticResource ColorText}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding Type}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding Seconds}" />
+                                                    <Span Text="s" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="1" Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                            Style="{StaticResource GhostButton}" TextColor="{StaticResource ColorText}" Shadow="{x:Null}"
+                                            SemanticProperties.Description="Remove section"
+                                            Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                </Grid>
+                                <HorizontalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding ColorPalette}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Border StrokeShape="RoundRectangle 10" WidthRequest="20" HeightRequest="20" Padding="0"
+                                                    BackgroundColor="{Binding ., Converter={StaticResource HexToColorConverter}}"
+                                                    Stroke="White" StrokeThickness="1">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding SelectColorCommand, Source={RelativeSource AncestorType={x:Type vm:HiitSectionRowViewModel}, Mode=FindAncestorBindingContext}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Add section" Style="{StaticResource MetaLabel}" />
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Type" Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Picker ItemsSource="{Binding SectionTypes}" SelectedItem="{Binding NewSectionType}" TextColor="{StaticResource ColorText}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Label (optional)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Entry Text="{Binding NewSectionTitle}" Placeholder="e.g. Burpees — leave blank to just say the type" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Description (optional)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Border Style="{StaticResource InputBorder}">
+                            <Entry Text="{Binding NewSectionDescription}" Placeholder="Shown during the countdown" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Duration (seconds)" Style="{StaticResource MetaLabel}" FontSize="10" />
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding NewSectionSeconds}" Keyboard="Numeric" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddSectionCommand}" VerticalOptions="End" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="SCHEDULE" Style="{StaticResource KickerLabel}" />
+                <Label Text="Assign this workout to your weekly schedule now, or skip and do it later from Profile → Weekly Schedule."
+                       Style="{StaticResource MetaLabel}" />
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding DayCells}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RoutineDayCellViewModel">
+                            <Border Stroke="{StaticResource ColorDivider}" BackgroundColor="Transparent"
+                                    StrokeShape="RoundRectangle 20" Padding="10,6" Margin="0,0,6,6">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Label}" FontSize="11">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="REMINDER" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}" />
+                </Grid>
+                <Label Text="Reminders are turned off in Profile → Workout Reminders. This setting is saved but won't fire until you turn them back on."
+                       Style="{StaticResource MetaLabel}" FontSize="10"
+                       IsVisible="{Binding Reminder.MasterEnabled, Converter={StaticResource InvertedBoolConverter}}" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}">
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding Reminder.OffsetLabels}" SelectedIndex="{Binding Reminder.OffsetIndex}"
+                                TextColor="{StaticResource ColorText}" FontSize="12" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding Reminder.SnoozeEnabled}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding Reminder.SnoozeEnabled}">
+                        <Label Grid.Column="0" Text="Snooze length (minutes)" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                            <Entry Text="{Binding Reminder.SnoozeMinutes}" Keyboard="Numeric" FontSize="12" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

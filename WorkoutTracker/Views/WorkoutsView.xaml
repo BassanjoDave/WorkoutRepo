@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.WorkoutsView"
+             x:DataType="vm:WorkoutsViewModel">
+
+    <ContentView.Resources>
+        <Style x:Key="ChipBorder" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style x:Key="DashedChipBorder" TargetType="Border" BasedOn="{StaticResource ChipBorder}">
+            <Setter Property="StrokeDashArray" Value="2,2" />
+        </Style>
+        <Style x:Key="ChipLabel" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </ContentView.Resources>
+
+    <VerticalStackLayout Spacing="12">
+
+        <!-- Header actions -->
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <Label Grid.Column="0" Text="Workouts" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
+            <Button Grid.Column="1" Text="New HIIT" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnNewHiitClicked" Margin="0,0,6,0" />
+            <Button Grid.Column="2" Text="New" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnNewClicked" />
+        </Grid>
+
+        <!-- Type filter: All / Standard / HIIT -->
+        <HorizontalStackLayout Spacing="6">
+            <Border Style="{StaticResource ChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SetTypeFilterCommand}" CommandParameter="all" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsAllActive}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="All" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsAllActive}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SetTypeFilterCommand}" CommandParameter="standard" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsStandardActive}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Standard" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsStandardActive}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SetTypeFilterCommand}" CommandParameter="hiit" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsHiitActive}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="HIIT" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsHiitActive}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+        </HorizontalStackLayout>
+
+        <!-- Visibility filter: Mine / Account / Manufacturer (multi-toggle, dashed) -->
+        <HorizontalStackLayout Spacing="6">
+            <Border Style="{StaticResource DashedChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleMineCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding ShowMine}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Mine" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding ShowMine}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource DashedChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleAccountCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding ShowAccount}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Account" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding ShowAccount}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource DashedChipBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleManufacturerCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding ShowManufacturer}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Manufacturer" Style="{StaticResource ChipLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding ShowManufacturer}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+        </HorizontalStackLayout>
+
+        <!-- Routine rows -->
+        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Routines}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="vm:RoutineRowViewModel">
+                    <Border Style="{StaticResource CardBorder}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnRoutineTapped" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                <Label Grid.Column="0" Text="{Binding Name}" Style="{StaticResource HeadingLabel}" FontSize="15" VerticalOptions="Center" />
+                                <Button Grid.Column="1" Text="Edit" Style="{StaticResource GhostButton}" FontSize="11"
+                                        IsVisible="{Binding CanEdit}" Clicked="OnEditRoutineClicked" />
+                                <Button Grid.Column="2" Text="Copy to mine" Style="{StaticResource GhostButton}" FontSize="11"
+                                        IsVisible="{Binding CanCopy}" Clicked="OnCopyRoutineClicked" />
+                                <Label Grid.Column="3" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                       TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                            </Grid>
+                            <Label Text="{Binding SourceLabel}" Style="{StaticResource MetaLabel}"
+                                   IsVisible="{Binding SourceLabel, Converter={StaticResource StringToBoolConverter}}" />
+                            <Label Text="{Binding ExerciseCountLabel}" Style="{StaticResource MetaLabel}" />
+                            <FlexLayout Wrap="Wrap">
+                                <Border Style="{StaticResource TagAccentBorder}" Margin="0,0,6,0" IsVisible="{Binding IsHiit}">
+                                    <Label Text="HIIT" Style="{StaticResource TagAccentLabel}" />
+                                </Border>
+                                <Border Style="{StaticResource TagAccentBorder}" Margin="0,0,6,0" IsVisible="{Binding IsCustom}">
+                                    <Label Text="Custom" Style="{StaticResource TagAccentLabel}" />
+                                </Border>
+                                <Border Style="{StaticResource TagAccentBorder}" Margin="0,0,6,0" IsVisible="{Binding OwnerBadge, Converter={StaticResource StringToBoolConverter}}">
+                                    <Label Text="{Binding OwnerBadge}" Style="{StaticResource TagAccentLabel}" />
+                                </Border>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+
+        <Label Text="No routines match these filters." Style="{StaticResource MetaLabel}"
+               IsVisible="{Binding Routines.Count, Converter={StaticResource IsZeroConverter}}"
+               HorizontalTextAlignment="Center" Margin="0,20,0,0" />
+
+    </VerticalStackLayout>
+</ContentView>

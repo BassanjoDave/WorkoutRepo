@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ProgressPhotoViewerPage"
+             x:DataType="vm:ProgressPhotoViewerViewModel"
+             Title="Progress Photo">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="14">
+
+                <Image Source="{Binding FullImage}" Aspect="AspectFit" HeightRequest="360" />
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Date" Style="{StaticResource MetaLabel}" />
+                    <DatePicker Date="{Binding Date}" FontSize="13" IsEnabled="{Binding CanEdit}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Notes (optional)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding Notes}" Placeholder="e.g. after a cut, feeling bloated" IsEnabled="{Binding CanEdit}" />
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18" IsVisible="{Binding CanEdit}">
+            <Button Grid.Column="0" Text="Delete" Style="{StaticResource SecondaryButton}" Command="{Binding DeleteCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="18" IsVisible="{Binding CanEdit, Converter={StaticResource InvertedBoolConverter}}">
+            <Button Text="Back" Style="{StaticResource SecondaryButton}" Command="{Binding BackCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

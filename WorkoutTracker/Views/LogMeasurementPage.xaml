@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.LogMeasurementPage"
+             x:DataType="vm:LogMeasurementViewModel"
+             Title="Log Weigh-In">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="14">
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Date" Style="{StaticResource MetaLabel}" />
+                    <DatePicker Date="{Binding Date}" FontSize="13" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding WeightUnitLabel, StringFormat='Weight ({0})'}" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Weight}" Keyboard="Numeric" /></Border>
+                </VerticalStackLayout>
+
+                <Label Text="BODY MEASUREMENTS (IN)" Style="{StaticResource KickerLabel}" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                    <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                        <Label Text="Neck" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Neck}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
+                        <Label Text="Shoulder" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Shoulder}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                        <Label Text="Chest" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Chest}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
+                        <Label Text="Waist" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Waist}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="4">
+                        <Label Text="Abdomen" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Abdomen}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="4">
+                        <Label Text="Hip" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Hip}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="3" Grid.Column="0" Spacing="4">
+                        <Label Text="L-Bicep" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding LBicep}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="3" Grid.Column="1" Spacing="4">
+                        <Label Text="R-Bicep" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding RBicep}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="4" Grid.Column="0" Spacing="4">
+                        <Label Text="L-Thigh" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding LThigh}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="4" Grid.Column="1" Spacing="4">
+                        <Label Text="R-Thigh" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding RThigh}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="5" Grid.Column="0" Spacing="4">
+                        <Label Text="L-Calf" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding LCalf}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="5" Grid.Column="1" Spacing="4">
+                        <Label Text="R-Calf" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding RCalf}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="CUSTOM" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="+ Add" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding AddCustomSlotCommand}" />
+                </Grid>
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding CustomRows}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CustomMeasurementRowViewModel">
+                            <Grid ColumnDefinitions="*,90,Auto" ColumnSpacing="8">
+                                <Label Grid.Column="0" Text="{Binding Name}" FontSize="13" VerticalOptions="Center" />
+                                <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0">
+                                    <Entry Text="{Binding ValueText}" Keyboard="Numeric" FontSize="12" />
+                                </Border>
+                                <Button Grid.Column="2" Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                        Style="{StaticResource GhostButton}" FontSize="14"
+                                        SemanticProperties.Description="Remove"
+                                        Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Notes (optional)" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding Notes}" Placeholder="e.g. after a cut, feeling bloated" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label Text="Logging again for a date you've already logged updates that entry instead of adding a duplicate."
+                       Style="{StaticResource MetaLabel}" FontSize="10" />
+
+                <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

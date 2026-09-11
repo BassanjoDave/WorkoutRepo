@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.CustomizeHomePage"
+             x:DataType="vm:CustomizeHomeViewModel"
+             Title="Customize Home">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="14">
+                <Label Text="Choose which sections show up on Home, and in what order. Exercise always stays at the top — it's what runs your day picker."
+                       Style="{StaticResource MetaLabel}" />
+
+                <Border Style="{StaticResource CardBorder}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Exercise" FontSize="14" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding IsExerciseEnabled}" />
+                    </Grid>
+                </Border>
+
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Modules}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CustomizeModuleRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                        <Label Grid.Column="0" Text="{Binding Title}" FontSize="14" FontAttributes="Bold" VerticalOptions="Center" />
+                                        <Button Grid.Column="1" Text="↑" Style="{StaticResource GhostButton}" FontSize="12"
+                                                SemanticProperties.Description="Move up"
+                                                Command="{Binding MoveUpCommand}" CommandParameter="{Binding .}" />
+                                        <Button Grid.Column="2" Text="↓" Style="{StaticResource GhostButton}" FontSize="12"
+                                                SemanticProperties.Description="Move down"
+                                                Command="{Binding MoveDownCommand}" CommandParameter="{Binding .}" />
+                                        <Switch Grid.Column="3" IsToggled="{Binding IsEnabled}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsStacksModule}">
+                                        <Label Grid.Column="0" Text="Hide medications from this card" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                                        <Switch Grid.Column="1" IsToggled="{Binding HideMedications}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.RemindersPage"
+             x:DataType="vm:RemindersViewModel"
+             Title="Workout Reminders">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="18" Spacing="16">
+
+                <VerticalStackLayout Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Enable reminders" FontSize="14" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding Enabled}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Text="Master switch for every workout reminder. Turn individual workouts' reminders on from their own edit screen — this just controls whether any of them actually fire."
+                           Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="14" IsVisible="{Binding Enabled}">
+                    <Border Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="AM reminder time" Style="{StaticResource MetaLabel}" />
+                            <TimePicker Time="{Binding AmTime}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="PM reminder time" Style="{StaticResource MetaLabel}" />
+                            <TimePicker Time="{Binding PmTime}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Label Text="These are the AM/PM anchor times a workout's own reminder counts back from (e.g. '15 min before' means 15 minutes before whichever time above applies) — the app doesn't track an exact workout start time, so this is your stand-in for it."
+                           Style="{StaticResource MetaLabel}" FontSize="10" />
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
+            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.RecipeBuilderPage"
+             x:DataType="vm:RecipeBuilderViewModel"
+             Title="Recipe Builder">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Name" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Entry Text="{Binding RecipeName}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="Category" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding CategoryLabels}" SelectedIndex="{Binding CategoryIndex}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                    <Label Text="Servings" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Entry Text="{Binding ServingsText}" Keyboard="Numeric" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Share with account" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding IsAccountShared}" />
+            </Grid>
+
+            <Label Text="INGREDIENTS" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Ingredients}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RecipeIngredientRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <Grid ColumnDefinitions="*,60,80,Auto" ColumnSpacing="8">
+                                <Label Grid.Column="0" Text="{Binding Name}" FontSize="13" VerticalOptions="Center" />
+                                <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0">
+                                    <Entry Text="{Binding QuantityText}" Keyboard="Numeric" FontSize="12" Placeholder="qty" />
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource InputBorder}" Padding="6,0">
+                                    <Picker ItemsSource="{Binding UnitLabels}" SelectedIndex="{Binding UnitIndex}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                                </Border>
+                                <Button Grid.Column="3" Text="{StaticResource IconTrash}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                        Style="{StaticResource GhostButton}" FontSize="14"
+                                        SemanticProperties.Description="Remove ingredient"
+                                        Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Add ingredient" Style="{StaticResource MetaLabel}" />
+                    <Border Style="{StaticResource InputBorder}">
+                        <Picker ItemsSource="{Binding AvailableFoods}" SelectedItem="{Binding SelectedFoodToAdd}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                    </Border>
+                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddIngredientCommand}" HorizontalOptions="Start" />
+                        <Button Grid.Column="1" Text="Can't find it? + Add new food" Style="{StaticResource GhostButton}" FontSize="12"
+                                Command="{Binding AddNewFoodCommand}" HorizontalOptions="Start" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Instructions" Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource InputBorder}">
+                    <Editor Text="{Binding Instructions}" Placeholder="Steps to make this recipe…" AutoSize="TextChanges" MinimumHeightRequest="90" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding PreviewLabel}" Style="{StaticResource MetaLabel}" FontSize="12" />
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource ColorAccent}" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

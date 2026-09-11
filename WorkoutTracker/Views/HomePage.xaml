@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
+             x:Class="WorkoutTracker.Views.HomePage"
+             x:DataType="vm:HomeViewModel"
+             Title="Home">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <views:AppTabBar ActiveRoute="home" />
+
+            <!-- Header banner — brand blue, logo on the right, page name in a
+                 contrasting (white) color so it stays legible against the banner in
+                 either theme (see ColorBanner/ColorBannerText in Colors.Light/Dark.cs). -->
+            <Border StrokeShape="RoundRectangle 10" Stroke="Transparent" BackgroundColor="{StaticResource ColorBanner}" Padding="14,10">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                    <Label Grid.Column="0" Text="Home" Style="{StaticResource HeadingLabel}" TextColor="{StaticResource ColorBannerText}" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="{Binding SyncLabel}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorBannerText}" Opacity="0.85" VerticalOptions="Center" />
+                    <Image Grid.Column="2" Source="logo.png" HeightRequest="26" Aspect="AspectFit" VerticalOptions="Center" />
+                    <Border Grid.Column="3" StrokeShape="RoundRectangle 15" Stroke="Transparent"
+                            BackgroundColor="{Binding ActiveMemberColor}" WidthRequest="30" HeightRequest="30" Padding="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAvatarTapped" />
+                        </Border.GestureRecognizers>
+                        <Label Text="{Binding ActiveMemberInitial}" Style="{StaticResource MetaLabel}"
+                               TextColor="{StaticResource ColorBg}" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Exercise module: Home's permanent anchor (owns the day picker) -->
+            <VerticalStackLayout Spacing="16" IsVisible="{Binding IsExerciseEnabled}">
+
+                <!-- Week strip -->
+                <HorizontalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding WeekStrip}" HorizontalOptions="Fill">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WeekDayCellViewModel">
+                            <VerticalStackLayout Spacing="2" WidthRequest="46">
+                                <Border StrokeShape="RoundRectangle 8" Stroke="{Binding BorderColor}" StrokeThickness="1.5"
+                                        BackgroundColor="{Binding BackgroundColor}"
+                                        Padding="0,8" WidthRequest="46" Shadow="{StaticResource ShadowSm}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding Date}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="{Binding Label}" Style="{StaticResource KickerLabel}" HorizontalTextAlignment="Center" />
+                                        <Ellipse Fill="{Binding DotColor}" WidthRequest="7" HeightRequest="7" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Label Text="TODAY" IsVisible="{Binding IsToday}" Style="{StaticResource KickerLabel}"
+                                       FontSize="8" TextColor="{StaticResource ColorAccent}" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <Label Grid.Column="0" Text="{Binding SelectedDateLabel}" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="Today" Style="{StaticResource GhostButton}" FontSize="11"
+                            Command="{Binding GoToTodayCommand}" IsVisible="{Binding IsSelectedToday, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Button Grid.Column="2" Text="+ Add Workout" Style="{StaticResource GhostButton}" FontSize="11"
+                            Command="{Binding AddWorkoutCommand}" />
+                </Grid>
+
+                <!-- Selected day's workout(s) -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                                      BindableLayout.ItemsSource="{Binding TodaySlots}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TodaySlotViewModel">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="{Binding SlotLabel}" Style="{StaticResource KickerLabel}" />
+                                <Border Style="{StaticResource ElevatedCardBorder}">
+                                    <VerticalStackLayout Spacing="12">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{Binding Name}" Style="{StaticResource TitleLabel}" />
+                                            <Label Text="{Binding CountLabel}" Style="{StaticResource MetaLabel}" />
+                                        </VerticalStackLayout>
+                                        <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding Exercises}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <Border Style="{StaticResource TagAccentBorder}" Margin="0,0,6,6">
+                                                        <Label Text="{Binding .}" Style="{StaticResource TagAccentLabel}" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </FlexLayout>
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Button Grid.Column="0" Text="{Binding StartLabel}" Style="{StaticResource PrimaryOutlineButton}"
+                                                    Clicked="OnStartClicked" HorizontalOptions="Fill" />
+                                            <Button Grid.Column="1" Text="Edit" Style="{StaticResource SecondaryButton}"
+                                                    Clicked="OnEditClicked" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <!-- Rest day -->
+                <Border Style="{StaticResource ElevatedCardBorder}" IsVisible="{Binding IsRestDay}">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="{StaticResource IconMoonStars}" FontFamily="{StaticResource FontPhosphorRegular}"
+                               TextColor="{StaticResource ColorNeutral500}" FontSize="28" HorizontalOptions="Center" />
+                        <Label Text="Rest day" Style="{StaticResource HeadingLabel}" FontSize="16" HorizontalTextAlignment="Center" />
+                        <Label Text="Nothing scheduled for this day. Browse your routines if you feel like training anyway."
+                               Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" WidthRequest="220" />
+                        <Button Text="Browse Workouts" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnBrowseWorkoutsClicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+
+            <!-- Other enabled dashboard modules — populated in code-behind, in the
+                 member's chosen order (see HomePage.xaml.cs and Profile > Customize Home) -->
+            <VerticalStackLayout x:Name="ModuleCardsHost" Spacing="14" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

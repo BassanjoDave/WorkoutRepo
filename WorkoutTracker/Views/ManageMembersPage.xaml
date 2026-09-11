@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.ManageMembersPage"
+             x:DataType="vm:ManageMembersViewModel"
+             Title="Manage Members">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+
+            <Label Text="{Binding SeatUsageLabel}" Style="{StaticResource MetaLabel}" />
+            <Label Text="{Binding PremiumSeatUsageLabel}" Style="{StaticResource MetaLabel}" />
+
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Members}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MemberRowViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Border Grid.Column="0" StrokeShape="RoundRectangle 20" Stroke="Transparent"
+                                            BackgroundColor="{Binding AvatarColor}" WidthRequest="40" HeightRequest="40" Padding="0">
+                                        <Label Text="{Binding Initial}" TextColor="{StaticResource ColorBg}"
+                                               FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                        <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
+                                        <Label Text="{Binding RoleLabel}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="2" Style="{StaticResource TagAccentBorder}" IsVisible="{Binding IsPrimaryHolder}" VerticalOptions="Center">
+                                        <Label Text="Holder" Style="{StaticResource TagAccentLabel}" />
+                                    </Border>
+                                </Grid>
+                                <FlexLayout Wrap="Wrap">
+                                    <Button Text="Edit" Style="{StaticResource SecondaryButton}" FontSize="11" Command="{Binding EditCommand}" Margin="0,0,8,8" />
+                                    <Button Text="Remove" Style="{StaticResource SecondaryButton}" FontSize="11" Command="{Binding RemoveCommand}" Margin="0,0,8,8"
+                                            IsVisible="{Binding IsPrimaryHolder, Converter={StaticResource InvertedBoolConverter}}" />
+                                    <Button Text="Split off into own account" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding SplitOffCommand}" Margin="0,0,8,8"
+                                            IsVisible="{Binding IsPrimaryHolder, Converter={StaticResource InvertedBoolConverter}}" />
+                                    <Button Text="{Binding PremiumLabel}" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                            Command="{Binding TogglePremiumCommand}" IsVisible="{Binding CanManagePremiumSeats}" Margin="0,0,8,8" />
+                                    <Button Text="{Binding ProgressPhotoVisibilityLabel}" Style="{StaticResource SecondaryButton}" FontSize="11"
+                                            Command="{Binding ToggleProgressPhotoVisibilityCommand}" IsVisible="{Binding ShowProgressPhotoControls}" Margin="0,0,8,8" />
+                                    <Button Text="View Photos" Style="{StaticResource GhostButton}" FontSize="11"
+                                            Command="{Binding ViewPhotosCommand}" IsVisible="{Binding ShowViewPhotosButton}" Margin="0,0,8,8" />
+                                </FlexLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Add Dependent" Style="{StaticResource SecondaryButton}" Command="{Binding AddDependentCommand}" />
+                <Button Grid.Column="1" Text="Invite Adult / Teen" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding InviteMemberCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
