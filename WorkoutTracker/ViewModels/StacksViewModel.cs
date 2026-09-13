@@ -24,6 +24,7 @@ public partial class StacksViewModel : ObservableObject
     private MemberData _memberData = new();
 
     [ObservableProperty] public partial ObservableCollection<StackRowViewModel> Stacks { get; set; } = new();
+    [ObservableProperty] public partial bool HasFullAccess { get; set; }
 
     public StacksViewModel(IActiveSessionService session, IWorkoutRepository repo, IStackReminderService reminders, IEntitlementService entitlements)
     {
@@ -42,15 +43,10 @@ public partial class StacksViewModel : ObservableObject
             await Shell.Current.GoToAsync("//gate");
             return;
         }
-        if (!_entitlements.HasPageAccess(account, member.Id, PageEntitlements.Stacks))
-        {
-            // See NutritionViewModel.LoadAsync's comment on this pattern — posted via
-            // InvokeOnMainThreadAsync and awaited (not BeginInvokeOnMainThread's true
-            // fire-and-forget), or an early return here races the still-settling
-            // incoming navigation on Android and corrupts Shell's back stack.
-            await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Stacks}"));
-            return;
-        }
+        // Without Full Access, history still loads and displays normally below —
+        // only adding a new stack is gated (see HasFullAccess and the upgrade
+        // nudge in StacksPage.xaml).
+        HasFullAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Stacks);
         _accountId = account.Id;
         _memberId = member.Id;
 
@@ -76,6 +72,9 @@ public partial class StacksViewModel : ObservableObject
 
     [RelayCommand]
     private async Task AddStack() => await Shell.Current.GoToAsync("stackEditor");
+
+    [RelayCommand]
+    private async Task OpenUpgrade() => await Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Stacks}");
 
     [RelayCommand]
     private async Task Edit(Guid stackId) => await Shell.Current.GoToAsync($"stackEditor?stackId={stackId}");

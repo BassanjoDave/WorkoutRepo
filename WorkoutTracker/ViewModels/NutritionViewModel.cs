@@ -35,6 +35,7 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] public partial string FatLabel { get; set; } = "";
     [ObservableProperty] public partial double FatProgress { get; set; }
     [ObservableProperty] public partial ObservableCollection<MealGroupViewModel> MealGroups { get; set; } = new();
+    [ObservableProperty] public partial bool HasFullAccess { get; set; }
 
     public NutritionViewModel(IActiveSessionService session, IWorkoutRepository repo, IEntitlementService entitlements)
     {
@@ -52,24 +53,10 @@ public partial class NutritionViewModel : ObservableObject
             await Shell.Current.GoToAsync("//gate");
             return;
         }
-        if (!_entitlements.HasPageAccess(account, member.Id, PageEntitlements.Nutrition))
-        {
-            // Posted via InvokeOnMainThreadAsync rather than awaited inline — pushing a
-            // second Shell navigation synchronously from inside OnAppearing, right behind
-            // the tab-switch navigation that triggered it, crashed WinUI natively
-            // (Microsoft.UI.Xaml.dll, 0xc000027b — see the project's WinUI-crash memory).
-            // Posting it as a new main-thread work item lets the tab-switch transition
-            // finish first. Awaited (not BeginInvokeOnMainThread's true fire-and-forget)
-            // so this method doesn't return — and signal OnAppearing/LoadAsync "done" —
-            // before the navigation actually completes: on Android, returning early let
-            // this redirect race the still-settling incoming navigation, corrupting
-            // Shell's back stack so every subsequent back action on the Upgrade page just
-            // reloaded it instead of popping. Confirmed via testing: Android has no WinUI
-            // crash to avoid in the first place, so this only needed to be non-blocking
-            // for Windows' benefit, not literally never awaited.
-            await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Nutrition}"));
-            return;
-        }
+        // Without Full Access, history still loads and displays normally below —
+        // only the ability to log new entries is gated (see HasFullAccess/CanAdd
+        // and the upgrade nudge in NutritionPage.xaml).
+        HasFullAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Nutrition);
         _accountId = account.Id;
         _memberId = member.Id;
         _today = DateOnly.FromDateTime(DateTime.Today);
@@ -134,7 +121,7 @@ public partial class NutritionViewModel : ObservableObject
 
             var mealCalories = entries.Count > 0 ? meal!.Entries.Sum(e => e.Calories) : 0;
             var totalsLabel = entries.Count > 0 ? $"{mealCalories:0} kcal" : "Nothing logged";
-            groups.Add(new MealGroupViewModel(mealType, mealType.ToString(), entries, totalsLabel, AddFoodCommand));
+            groups.Add(new MealGroupViewModel(mealType, mealType.ToString(), entries, totalsLabel, AddFoodCommand, HasFullAccess));
         }
         MealGroups = groups;
     }
@@ -164,6 +151,9 @@ public partial class NutritionViewModel : ObservableObject
 
     [RelayCommand]
     private async Task OpenMacroGoals() => await Shell.Current.GoToAsync("macroGoals");
+
+    [RelayCommand]
+    private async Task OpenUpgrade() => await Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Nutrition}");
 }
 
 public class MealGroupViewModel
@@ -174,14 +164,16 @@ public class MealGroupViewModel
     public string TotalsLabel { get; }
     public bool IsEmpty => Entries.Count == 0;
     public IRelayCommand<MealType> AddCommand { get; }
+    public bool CanAdd { get; }
 
-    public MealGroupViewModel(MealType mealType, string title, ObservableCollection<LoggedEntryRowViewModel> entries, string totalsLabel, IRelayCommand<MealType> addCommand)
+    public MealGroupViewModel(MealType mealType, string title, ObservableCollection<LoggedEntryRowViewModel> entries, string totalsLabel, IRelayCommand<MealType> addCommand, bool canAdd)
     {
         MealType = mealType;
         Title = title;
         Entries = entries;
         TotalsLabel = totalsLabel;
         AddCommand = addCommand;
+        CanAdd = canAdd;
     }
 }
 

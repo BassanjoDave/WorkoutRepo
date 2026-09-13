@@ -61,7 +61,8 @@ public partial class DevSettingsViewModel : ObservableObject
         {
             var accountIndex = await _activeRepo.GetAccountIndexAsync(account.Id);
             var holder = accountIndex?.Members.FirstOrDefault(m => m.Id == account.PrimaryHolderMemberId);
-            if (holder is not null && !await _authGate.VerifyAsync(holder, "Open Developer Settings"))
+            if (accountIndex is not null && holder is not null
+                && !await _authGate.VerifyOrEstablishAsync(holder, accountIndex, _activeRepo, "Open Developer Settings"))
             {
                 await Shell.Current.GoToAsync("..");
                 return;

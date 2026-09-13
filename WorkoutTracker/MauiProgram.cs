@@ -162,6 +162,8 @@ public static class MauiProgram
 		services.AddTransient<StacksSummaryView>();
 		services.AddTransient<OnboardingViewModel>();
 		services.AddTransient<OnboardingPage>();
+		services.AddTransient<NotificationsViewModel>();
+		services.AddTransient<NotificationsPage>();
 		services.AddTransient<UpgradeViewModel>();
 		services.AddTransient<UpgradePage>();
 	}

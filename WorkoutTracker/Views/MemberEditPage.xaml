@@ -55,18 +55,29 @@
                 </Border>
             </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="8" IsVisible="{Binding CanLinkGoogle}">
-                <Label Text="GOOGLE ACCOUNT" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowLinkedIdentityCard}">
+                <Label Text="LINKED SIGN-IN" Style="{StaticResource KickerLabel}" />
                 <Border Style="{StaticResource CardBorder}">
                     <Grid ColumnDefinitions="*,Auto">
                         <Label Grid.Column="0" Text="{Binding LinkedGoogleLabel}" FontSize="13" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="Unlink" Style="{StaticResource SecondaryButton}" FontSize="12"
                                 IsVisible="{Binding IsLinked}" Command="{Binding UnlinkGoogleAccountCommand}" />
                         <Button Grid.Column="1" Text="Link Google Account" Style="{StaticResource PrimaryOutlineButton}" FontSize="12"
-                                IsVisible="{Binding IsLinked, Converter={StaticResource InvertedBoolConverter}}"
+                                IsVisible="{Binding ShowLinkGoogleButton}"
                                 IsEnabled="{Binding IsLinking, Converter={StaticResource InvertedBoolConverter}}"
                                 Command="{Binding LinkGoogleAccountCommand}" />
                     </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding CanProvisionCredential}">
+                <Label Text="INDEPENDENT SIGN-IN" Style="{StaticResource KickerLabel}" />
+                <Label Text="Set up an email and password so this member can sign in on their own device — works for every role, including Child."
+                       Style="{StaticResource MetaLabel}" />
+                <Border Style="{StaticResource CardBorder}">
+                    <Button Text="Set Up Sign-In" Style="{StaticResource PrimaryOutlineButton}" FontSize="12"
+                            IsEnabled="{Binding IsProvisioning, Converter={StaticResource InvertedBoolConverter}}"
+                            Command="{Binding ProvisionCredentialCommand}" />
                 </Border>
             </VerticalStackLayout>
 

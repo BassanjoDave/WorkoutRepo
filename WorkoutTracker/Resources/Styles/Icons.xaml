@@ -34,4 +34,10 @@
     <x:String x:Key="IconFlameFill">&#xE624;</x:String>
     <x:String x:Key="IconCheckCircleFill">&#xE184;</x:String>
 
+    <!-- Plain Unicode glyph, not a Phosphor codepoint — used with the default font,
+         no FontFamily override needed. A real Phosphor bell codepoint can replace
+         this later (verify against phosphor-icons/core's mapping first) without
+         touching any XAML that references IconBell. -->
+    <x:String x:Key="IconBell">&#x1F514;</x:String>
+
 </ResourceDictionary>

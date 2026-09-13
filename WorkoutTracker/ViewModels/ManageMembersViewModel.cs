@@ -20,6 +20,7 @@ public partial class ManageMembersViewModel : ObservableObject
     private readonly ISeatAvailabilityService _seats;
     private readonly IMemberSplitOffService _splitOff;
     private readonly IMemberAuthGateService _authGate;
+    private readonly RemoteApiWorkoutRepository _remoteApi;
 
     private AccountIndex? _accountIndex;
 
@@ -37,13 +38,15 @@ public partial class ManageMembersViewModel : ObservableObject
     [ObservableProperty] public partial ObservableCollection<MemberRowViewModel> Members { get; set; } = new();
 
     public ManageMembersViewModel(IActiveSessionService session, IWorkoutRepository repo,
-        ISeatAvailabilityService seats, IMemberSplitOffService splitOff, IMemberAuthGateService authGate)
+        ISeatAvailabilityService seats, IMemberSplitOffService splitOff, IMemberAuthGateService authGate,
+        RemoteApiWorkoutRepository remoteApi)
     {
         _session = session;
         _repo = repo;
         _seats = seats;
         _splitOff = splitOff;
         _authGate = authGate;
+        _remoteApi = remoteApi;
     }
 
     public async Task LoadAsync()
@@ -62,11 +65,13 @@ public partial class ManageMembersViewModel : ObservableObject
         // Settings lockdown: this is a holder-administrative screen, so it's gated by
         // the PRIMARY HOLDER's own protection setting regardless of who's currently
         // the active profile — closes the gap where anyone who can pick up an
-        // already-unlocked device could otherwise reach it.
+        // already-unlocked device could otherwise reach it. VerifyOrEstablishAsync
+        // (not just VerifyAsync) so a holder who somehow still has no PIN is forced
+        // to set one now rather than this check being a no-op for them.
         if (!_verifiedThisOpen)
         {
             var holder = _accountIndex.Members.FirstOrDefault(m => m.Id == account.PrimaryHolderMemberId);
-            if (holder is not null && !await _authGate.VerifyAsync(holder, "Open Manage Members"))
+            if (holder is not null && !await _authGate.VerifyOrEstablishAsync(holder, _accountIndex, _repo, "Open Manage Members"))
             {
                 await Shell.Current.GoToAsync("..");
                 return;
@@ -98,12 +103,14 @@ public partial class ManageMembersViewModel : ObservableObject
                 // on their own row — that's just the Measurements page.
                 showProgressPhotoControls: canManagePremiumSeats && m.Id != account.PrimaryHolderMemberId,
                 progressPhotosVisibleToHolder: m.EffectiveProgressPhotosVisibleToHolder,
+                hasLinkedIdentity: m.IdentityId is not null && m.Id != account.PrimaryHolderMemberId,
                 editCommand: new AsyncRelayCommand(() => OpenEditAsync(m.Id)),
                 removeCommand: new AsyncRelayCommand(() => RemoveAsync(m.Id)),
                 splitOffCommand: new AsyncRelayCommand(() => SplitOffAsync(m.Id)),
                 togglePremiumCommand: new AsyncRelayCommand(() => TogglePremiumAsync(m.Id)),
                 toggleProgressPhotoVisibilityCommand: new AsyncRelayCommand(() => ToggleProgressPhotoVisibilityAsync(m.Id)),
-                viewPhotosCommand: new AsyncRelayCommand(() => ViewPhotosAsync(m.Id))));
+                viewPhotosCommand: new AsyncRelayCommand(() => ViewPhotosAsync(m.Id)),
+                deleteAccountCommand: new AsyncRelayCommand(() => DeleteMemberAccountAsync(m.Id))));
         }
         Members = members;
     }
@@ -140,9 +147,11 @@ public partial class ManageMembersViewModel : ObservableObject
     {
         if (_accountIndex is null) return;
         var account = _accountIndex.Account;
+        bool nowPremium;
         if (account.PremiumMemberIds.Contains(memberId))
         {
             account.PremiumMemberIds.Remove(memberId);
+            nowPremium = false;
         }
         else
         {
@@ -154,8 +163,14 @@ public partial class ManageMembersViewModel : ObservableObject
                 return;
             }
             account.PremiumMemberIds.Add(memberId);
+            nowPremium = true;
         }
         await _repo.SaveAccountIndexAsync(_accountIndex);
+        await NotificationWriter.NotifyMemberAsync(_repo, account.Id, memberId,
+            nowPremium ? "You now have Full Access" : "Full Access was removed",
+            nowPremium
+                ? "Nutrition, Stacks, and Measurements are unlocked for you."
+                : "You can still see your history, but new entries in Nutrition, Stacks, and Measurements are locked.");
         await LoadAsync();
     }
 
@@ -223,6 +238,29 @@ public partial class ManageMembersViewModel : ObservableObject
             return;
         }
 
+        // Releasing a Child is a policy decision, not a technical one — the underlying
+        // severance (Overrides cleared, role reset to Owner) is already unconditional
+        // for every role. Only the actual account holder may make that call for a
+        // Child (e.g. Alex has ManageMembers=true but is not the holder and must not
+        // be able to release Jamie), and it gets a sterner, separate confirmation on
+        // top of the normal one below.
+        if (member.RolePreset == RolePreset.Child)
+        {
+            var viewer = _session.ActiveMember;
+            if (viewer is null || viewer.Id != _accountIndex.Account.PrimaryHolderMemberId)
+            {
+                await Shell.Current.CurrentPage.DisplayAlertAsync("Holder only",
+                    "Only the account holder can release a Child into their own account.", "OK");
+                return;
+            }
+
+            var understood = await Shell.Current.CurrentPage.DisplayAlertAsync("Releasing a Child",
+                $"{member.DisplayName} will get a fully independent account with no restrictions — you will " +
+                "no longer be able to see or manage their activity in any way, and this can't be reversed from here.",
+                "I understand", "Cancel");
+            if (!understood) return;
+        }
+
         var confirmed = await Shell.Current.CurrentPage.DisplayAlertAsync("Split off into a new account",
             $"{member.DisplayName} will get their own standalone account, carrying their full history and workouts with them. " +
             "This account loses them as a member. This can't be undone from here.", "Split off", "Cancel");
@@ -231,6 +269,45 @@ public partial class ManageMembersViewModel : ObservableObject
         var newAccountId = await _splitOff.SplitOffAsync(_accountIndex.Account.Id, memberId, $"{member.DisplayName}'s Account");
         await Shell.Current.CurrentPage.DisplayAlertAsync("Done",
             $"{member.DisplayName} now has their own account ({newAccountId.ToString()[..8]}…) with their full history intact.", "OK");
+        await LoadAsync();
+    }
+
+    /// <summary>Permanently deletes a dependent's independent sign-in (real Firebase
+    /// account + this account's Identity record) — distinct from and independent of
+    /// RemoveAsync above, which only soft-deletes their roster entry. Their
+    /// MemberData/workout history is untouched either way; this only removes their
+    /// ability to sign in on their own device. See WorkoutTracker.Api Program.cs's
+    /// DELETE .../identity.</summary>
+    private async Task DeleteMemberAccountAsync(Guid memberId)
+    {
+        if (_accountIndex is null) return;
+        var member = _accountIndex.Members.FirstOrDefault(m => m.Id == memberId);
+        if (member is null || member.IdentityId is null) return;
+
+        var confirmed = await Shell.Current.CurrentPage.DisplayAlertAsync("Delete sign-in",
+            $"Permanently delete {member.DisplayName}'s independent sign-in? They'll lose the ability to sign in to this " +
+            "family account on their own device. Their workout history is not affected. This can't be undone.",
+            "Delete", "Cancel");
+        if (!confirmed) return;
+
+        try
+        {
+            await _remoteApi.DeleteDependentIdentityAsync(_accountIndex.Account.Id, memberId);
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.CurrentPage.DisplayAlertAsync("Couldn't delete sign-in", ex.Message, "OK");
+            return;
+        }
+
+        // Mirror the already-completed server change into the local cache ourselves
+        // (same as UnlinkGoogleAccount) rather than re-fetching through IWorkoutRepository,
+        // which may be a local-first cache that hasn't observed this out-of-band
+        // RemoteApiWorkoutRepository call yet.
+        var identityId = member.IdentityId;
+        member.IdentityId = null;
+        _accountIndex.Identities.RemoveAll(i => i.Id == identityId);
+        await _repo.SaveAccountIndexAsync(_accountIndex);
         await LoadAsync();
     }
 }
@@ -259,19 +336,28 @@ public partial class MemberRowViewModel : ObservableObject
     }
     public bool ShowViewPhotosButton => ShowProgressPhotoControls && ProgressPhotosVisibleToHolder;
 
+    /// <summary>True when this member has a real, independent sign-in linked (Google
+    /// or a provisioned email/password credential) AND isn't the primary holder —
+    /// gates the "Delete Sign-In" button, which permanently deletes that Firebase
+    /// account. Deliberately excludes the holder's own row: that's a materially
+    /// bigger action (ProfileViewModel.DeleteAccount) with its own two-step flow,
+    /// not something to expose from a roster row.</summary>
+    public bool HasLinkedIdentity { get; }
+
     public IAsyncRelayCommand EditCommand { get; }
     public IAsyncRelayCommand RemoveCommand { get; }
     public IAsyncRelayCommand SplitOffCommand { get; }
     public IAsyncRelayCommand TogglePremiumCommand { get; }
     public IAsyncRelayCommand ToggleProgressPhotoVisibilityCommand { get; }
     public IAsyncRelayCommand ViewPhotosCommand { get; }
+    public IAsyncRelayCommand DeleteAccountCommand { get; }
 
     public MemberRowViewModel(Guid id, string name, string initial, Color avatarColor, string roleLabel,
         bool isPrimaryHolder, bool canManagePremiumSeats, bool isPremium,
-        bool showProgressPhotoControls, bool progressPhotosVisibleToHolder,
+        bool showProgressPhotoControls, bool progressPhotosVisibleToHolder, bool hasLinkedIdentity,
         IAsyncRelayCommand editCommand, IAsyncRelayCommand removeCommand, IAsyncRelayCommand splitOffCommand,
         IAsyncRelayCommand togglePremiumCommand, IAsyncRelayCommand toggleProgressPhotoVisibilityCommand,
-        IAsyncRelayCommand viewPhotosCommand)
+        IAsyncRelayCommand viewPhotosCommand, IAsyncRelayCommand deleteAccountCommand)
     {
         Id = id;
         Name = name;
@@ -283,11 +369,13 @@ public partial class MemberRowViewModel : ObservableObject
         IsPremium = isPremium;
         ShowProgressPhotoControls = showProgressPhotoControls;
         ProgressPhotosVisibleToHolder = progressPhotosVisibleToHolder;
+        HasLinkedIdentity = hasLinkedIdentity;
         EditCommand = editCommand;
         RemoveCommand = removeCommand;
         SplitOffCommand = splitOffCommand;
         TogglePremiumCommand = togglePremiumCommand;
         ToggleProgressPhotoVisibilityCommand = toggleProgressPhotoVisibilityCommand;
         ViewPhotosCommand = viewPhotosCommand;
+        DeleteAccountCommand = deleteAccountCommand;
     }
 }

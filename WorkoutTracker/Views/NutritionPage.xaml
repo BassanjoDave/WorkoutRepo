@@ -12,6 +12,17 @@
 
             <views:AppTabBar ActiveRoute="nutrition" />
 
+            <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                    BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasFullAccess, Converter={StaticResource InvertedBoolConverter}}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
             <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                 <Label Grid.Column="0" Text="{Binding DateLabel}" Style="{StaticResource HeadingLabel}" VerticalOptions="Center" />
                 <Button Grid.Column="1" Text="Foods" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding OpenFoodLibraryCommand}" />
@@ -51,6 +62,7 @@
                                         <Label Text="{Binding TotalsLabel}" Style="{StaticResource MetaLabel}" />
                                     </VerticalStackLayout>
                                     <Button Grid.Column="1" Text="+ Add" Style="{StaticResource GhostButton}" FontSize="12"
+                                            IsVisible="{Binding CanAdd}"
                                             Command="{Binding AddCommand}" CommandParameter="{Binding MealType}" />
                                 </Grid>
 

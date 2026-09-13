@@ -82,6 +82,8 @@ public class MemberData
     public List<SupplementStack> Stacks { get; set; } = new();
     public List<StackLogEntry> StackLog { get; set; } = new();
 
+    public List<NotificationEntry> Notifications { get; set; } = new();
+
     /// <summary>
     /// Empty means "never customized" — Home falls back to a synthesized
     /// default (every known module, enabled, in a fixed order) rather than

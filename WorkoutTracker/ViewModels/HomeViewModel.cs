@@ -37,6 +37,9 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty] public partial DateOnly SelectedDate { get; set; }
     [ObservableProperty] public partial string SelectedDateLabel { get; set; } = "";
     [ObservableProperty] public partial bool IsSelectedToday { get; set; } = true;
+    [ObservableProperty] public partial int UnreadNotificationCount { get; set; }
+    public bool HasUnreadNotifications => UnreadNotificationCount > 0;
+    partial void OnUnreadNotificationCountChanged(int value) => OnPropertyChanged(nameof(HasUnreadNotifications));
 
     public HomeViewModel(IActiveSessionService session, IWorkoutRepository repo, ISyncStatusService syncStatus,
         IWorkoutReminderService reminders, IHomeWorkoutBridge homeWorkoutBridge, IEntitlementService entitlements)
@@ -96,6 +99,8 @@ public partial class HomeViewModel : ObservableObject
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _shared = await _repo.GetSharedLibraryAsync(account.Id);
         _manufacturer = await _repo.GetManufacturerLibraryAsync();
+
+        UnreadNotificationCount = _memberData.Notifications.Count(n => !n.IsRead);
 
         LoadModuleConfig();
 
@@ -165,6 +170,9 @@ public partial class HomeViewModel : ObservableObject
             .Select(m => m.ModuleId)
             .ToList();
     }
+
+    [RelayCommand]
+    private async Task OpenNotifications() => await Shell.Current.GoToAsync("notifications");
 
     [RelayCommand]
     private void GoToToday() => SelectDay(_today);

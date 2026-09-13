@@ -127,6 +127,37 @@ async Task<(AccountIndex? Index, FirebaseToken? Token, IResult? Error)> Authoriz
     return (existing, token, null);
 }
 
+// Granting or revoking someone else's ability to sign in as a member of this
+// account is more sensitive than the general "any linked identity may read/
+// write this account" check AuthorizeAccountAsync performs — only the
+// account's own primary holder may provision or delete a dependent's
+// credential. Resolves the holder's Member row, then their Identity, then
+// compares its Uid to the caller's verified token.
+bool IsHolder(AccountIndex index, FirebaseToken token)
+{
+    var holder = index.Members.FirstOrDefault(m => m.Id == index.Account.PrimaryHolderMemberId);
+    if (holder?.IdentityId is not Guid holderIdentityId) return false;
+    var holderIdentity = index.Identities.FirstOrDefault(i => i.Id == holderIdentityId);
+    return holderIdentity?.AuthProviderRef == token.Uid;
+}
+
+// Shared with /identities/claim below — links a Firebase Uid to accountId in
+// the server-side directory used by "sign in on a new device and find my
+// account". Idempotent: adding an already-linked account is a no-op.
+async Task ClaimUidForAccountAsync(string uid, string? email, Guid accountId, IDriveDocumentStore store)
+{
+    var directory = await store.GetAsync<IdentityDirectory>("identities/directory.json") ?? new IdentityDirectory();
+    var entry = directory.Entries.FirstOrDefault(x => x.AuthProviderRef == uid);
+    if (entry is null)
+    {
+        entry = new IdentityDirectoryEntry { AuthProviderRef = uid, Email = email };
+        directory.Entries.Add(entry);
+    }
+    entry.Email = email;
+    if (!entry.AccountIds.Contains(accountId)) entry.AccountIds.Add(accountId);
+    await store.SaveAsync("identities/directory.json", directory);
+}
+
 app.MapGet("/accounts/{accountId:guid}", async (Guid accountId, HttpContext ctx, IDriveDocumentStore store) =>
 {
     var (index, _, error) = await AuthorizeAccountAsync(accountId, ctx, store);
@@ -177,6 +208,82 @@ app.MapDelete("/accounts/{accountId:guid}/members/{memberId:guid}", async (Guid 
     if (error is not null) return error;
     await DeleteMemberProgressPhotosAsync(accountId, memberId, store);
     await store.DeleteAsync($"accounts/{accountId}/members/{memberId}.json");
+    return Results.NoContent();
+});
+
+// Provisions a brand-new, independent Firebase account (email+password) for a
+// dependent Member who doesn't have one yet, and immediately claims it to
+// this account — so that dependent can sign in with these exact credentials
+// on their OWN device and land straight in their own member profile (see
+// ProfileGateViewModel.CompleteSignInAsync/FindOwnMemberAsync client-side;
+// no changes were needed there since this produces exactly the same
+// Identity/Member.IdentityId shape LinkGoogleAccount already does). Holder-only:
+// this grants someone else access to the account, unlike ordinary read/write.
+app.MapPost("/accounts/{accountId:guid}/members/{memberId:guid}/credential",
+    async (Guid accountId, Guid memberId, ProvisionCredentialRequest body, HttpContext ctx, IDriveDocumentStore store) =>
+{
+    var (index, token, error) = await AuthorizeAccountAsync(accountId, ctx, store);
+    if (error is not null) return error;
+    if (!IsHolder(index!, token!)) return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    var member = index!.Members.FirstOrDefault(m => m.Id == memberId);
+    if (member is null) return Results.NotFound();
+    if (member.IdentityId is not null) return Results.Conflict("Member already has a linked identity.");
+
+    UserRecord newUser;
+    try
+    {
+        newUser = await FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs
+        {
+            Email = body.Email, Password = body.Password, EmailVerified = false,
+        });
+    }
+    catch (FirebaseAuthException ex) { return Results.BadRequest(ex.Message); }
+
+    var identity = new Identity { Id = Guid.NewGuid(), Email = body.Email, AuthProviderRef = newUser.Uid, CreatedAt = DateTimeOffset.UtcNow };
+    index.Identities.Add(identity);
+    member.IdentityId = identity.Id;
+    await store.SaveAsync($"accounts/{accountId}/index.json", index);
+    await ClaimUidForAccountAsync(newUser.Uid, body.Email, accountId, store);
+    // The client needs this Uid back to build a correct local Identity of its own
+    // (matching MemberEditViewModel.LinkGoogleAccount's pattern) — its own later
+    // SaveAccountIndexAsync/sync-outbox push could otherwise clobber the AuthProviderRef
+    // just written above with a client-built Identity that doesn't know it yet.
+    return Results.Ok(new ProvisionCredentialResponse(newUser.Uid));
+});
+
+// Permanently deletes a dependent's independent sign-in — the real Firebase
+// account, this account's own Identity record, and the global directory
+// entry — without touching their MemberData/workout history or their roster
+// entry (see ManageMembersViewModel.RemoveAsync for the separate, non-
+// destructive "remove from roster" action). Holder-only, same reasoning as
+// the provisioning endpoint above.
+app.MapDelete("/accounts/{accountId:guid}/members/{memberId:guid}/identity",
+    async (Guid accountId, Guid memberId, HttpContext ctx, IDriveDocumentStore store) =>
+{
+    var (index, token, error) = await AuthorizeAccountAsync(accountId, ctx, store);
+    if (error is not null) return error;
+    if (!IsHolder(index!, token!)) return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    var member = index!.Members.FirstOrDefault(m => m.Id == memberId);
+    if (member?.IdentityId is not Guid identityId) return Results.NotFound();
+    var identity = index.Identities.FirstOrDefault(i => i.Id == identityId);
+
+    if (identity?.AuthProviderRef is string uid)
+    {
+        try { await FirebaseAuth.DefaultInstance.DeleteUserAsync(uid); } catch (FirebaseAuthException) { /* already gone */ }
+        var directory = await store.GetAsync<IdentityDirectory>("identities/directory.json");
+        var entry = directory?.Entries.FirstOrDefault(e => e.AuthProviderRef == uid);
+        if (entry is not null && directory is not null)
+        {
+            entry.AccountIds.Remove(accountId);
+            directory.Entries.RemoveAll(e => e.AccountIds.Count == 0);
+            await store.SaveAsync("identities/directory.json", directory);
+        }
+    }
+    if (identity is not null) index.Identities.Remove(identity);
+    member.IdentityId = null;
+    await store.SaveAsync($"accounts/{accountId}/index.json", index);
     return Results.NoContent();
 });
 
@@ -276,17 +383,7 @@ app.MapPost("/identities/claim", async (IdentityClaimRequest body, IDriveDocumen
     if (token is null) return Results.Unauthorized();
 
     var email = token.Claims.TryGetValue("email", out var e) ? e?.ToString() : null;
-    var directory = await store.GetAsync<IdentityDirectory>("identities/directory.json") ?? new IdentityDirectory();
-    var entry = directory.Entries.FirstOrDefault(x => x.AuthProviderRef == token.Uid);
-    if (entry is null)
-    {
-        entry = new IdentityDirectoryEntry { AuthProviderRef = token.Uid, Email = email };
-        directory.Entries.Add(entry);
-    }
-    entry.Email = email;
-    if (!entry.AccountIds.Contains(body.AccountId)) entry.AccountIds.Add(body.AccountId);
-
-    await store.SaveAsync("identities/directory.json", directory);
+    await ClaimUidForAccountAsync(token.Uid, email, body.AccountId, store);
     return Results.NoContent();
 });
 
@@ -295,6 +392,8 @@ app.Run();
 record IdentityLookupRequest(string IdToken);
 record IdentityLookupResponse(List<Guid> AccountIds);
 record IdentityClaimRequest(string IdToken, Guid AccountId);
+record ProvisionCredentialRequest(string Email, string Password);
+record ProvisionCredentialResponse(string Uid);
 
 partial class Program
 {

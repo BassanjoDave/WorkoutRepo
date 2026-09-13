@@ -23,12 +23,22 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     private readonly IFirebaseAuthService _firebaseAuth;
     private readonly IIdentityService _identity;
     private readonly IMemberPinService _pins;
+    private readonly IMemberAuthGateService _authGate;
+    private readonly RemoteApiWorkoutRepository _remoteApi;
 
     private bool _isNew;
     private Guid? _memberId;
     private AccountIndex? _accountIndex;
     private bool _isLoadingAuthMode;
     private DeviceAuthMode _lastAppliedAuthMode = DeviceAuthMode.None;
+
+    /// <summary>Holds a not-yet-saved member's PIN/DeviceAuthMode while _isNew — there's
+    /// no row in _accountIndex.Members to attach it to until Save() succeeds, but the
+    /// PROFILE PROTECTION card needs somewhere to set/verify a PIN before that point
+    /// (a new member can no longer be saved without one — see Save()). Never added to
+    /// _accountIndex.Members itself; Save() copies its DeviceAuthMode/PinHash onto the
+    /// real Member it constructs.</summary>
+    private Member? _draftMember;
 
     // A static field so the SelectedColor default below can reference it in a field
     // initializer; exposed as an instance property underneath since XAML data
@@ -67,6 +77,38 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] public partial bool IsLinking { get; set; }
     [ObservableProperty] public partial string LinkedGoogleLabel { get; set; } = "Not linked";
 
+    /// <summary>The LINKED SIGN-IN card should show whenever there's something to
+    /// show OR do — either a member already has any identity linked (Google or a
+    /// provisioned credential; CanLinkGoogle alone would hide this for a Child, who
+    /// can never satisfy CanLinkGoogle's age gate but absolutely can have a
+    /// provisioned credential), or Google-linking is actually offered. The "Link
+    /// Google Account" button itself stays gated on CanLinkGoogle specifically, so a
+    /// Child never sees that particular action even while this card is visible for
+    /// their provisioned credential.</summary>
+    public bool ShowLinkedIdentityCard => IsLinked || CanLinkGoogle;
+    public bool ShowLinkGoogleButton => CanLinkGoogle && !IsLinked;
+    partial void OnIsLinkedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowLinkedIdentityCard));
+        OnPropertyChanged(nameof(ShowLinkGoogleButton));
+    }
+    partial void OnCanLinkGoogleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowLinkedIdentityCard));
+        OnPropertyChanged(nameof(ShowLinkGoogleButton));
+    }
+
+    /// <summary>Whether the INDEPENDENT SIGN-IN card's "Set up sign-in" action should
+    /// show — unlike CanLinkGoogle, deliberately NOT role-restricted: this is the one
+    /// path that actually lets a Child sign in on their own device (Google linking
+    /// requires the member to interactively OAuth as themselves, which a Child can't/
+    /// shouldn't do; a holder typing an email+password for them has no such
+    /// constraint). Still requires a real, saved memberId (same !_isNew reasoning as
+    /// CanLinkGoogle) and hides once any identity (Google or credential) is already
+    /// linked, since Member.IdentityId only ever holds one at a time.</summary>
+    [ObservableProperty] public partial bool CanProvisionCredential { get; set; }
+    [ObservableProperty] public partial bool IsProvisioning { get; set; }
+
     /// <summary>True when the current viewer may change this member's DeviceAuthMode/PIN —
     /// a member can always manage their own, and the primary holder can manage anyone's
     /// (mirroring the canManagePremiumSeats-style holder check in ManageMembersViewModel).
@@ -79,7 +121,8 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     public ObservableCollection<DeviceAuthMode> AuthModeOptions { get; } = new(Enum.GetValues<DeviceAuthMode>());
 
     public MemberEditViewModel(IActiveSessionService session, IWorkoutRepository repo, ISeatAvailabilityService seats,
-        IGoogleAuthService googleAuth, IFirebaseAuthService firebaseAuth, IIdentityService identity, IMemberPinService pins)
+        IGoogleAuthService googleAuth, IFirebaseAuthService firebaseAuth, IIdentityService identity, IMemberPinService pins,
+        IMemberAuthGateService authGate, RemoteApiWorkoutRepository remoteApi)
     {
         _session = session;
         _repo = repo;
@@ -88,6 +131,8 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         _firebaseAuth = firebaseAuth;
         _identity = identity;
         _pins = pins;
+        _authGate = authGate;
+        _remoteApi = remoteApi;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -120,32 +165,44 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         _ = ApplyAuthModeChangeAsync(value);
     }
 
+    /// <summary>The member a PIN/DeviceAuthMode change should apply to — the real,
+    /// already-saved Member while editing, or the in-memory _draftMember while
+    /// _isNew (there's no row in _accountIndex.Members yet). See _draftMember's
+    /// doc comment for why this can't just be "look it up by _memberId" during
+    /// creation.</summary>
+    private Member? GetEditingMember()
+    {
+        if (!_isNew) return _accountIndex?.Members.FirstOrDefault(m => m.Id == _memberId);
+        if (_draftMember is not null) _draftMember.DisplayName = string.IsNullOrWhiteSpace(Name) ? "this member" : Name.Trim();
+        return _draftMember;
+    }
+
     private async Task ApplyAuthModeChangeAsync(DeviceAuthMode value)
     {
-        if (_accountIndex is null || _memberId is not Guid memberId || !CanManageAuth) return;
-        var member = _accountIndex.Members.FirstOrDefault(m => m.Id == memberId);
+        if (_accountIndex is null || !CanManageAuth) return;
+        var member = GetEditingMember();
         if (member is null) return;
 
         switch (value)
         {
             case DeviceAuthMode.None:
                 _pins.ClearPin(member);
-                await _repo.SaveAccountIndexAsync(_accountIndex);
+                if (!_isNew) await _repo.SaveAccountIndexAsync(_accountIndex);
                 HasPin = false;
                 _lastAppliedAuthMode = DeviceAuthMode.None;
                 break;
 
             case DeviceAuthMode.Biometric:
                 member.DeviceAuthMode = DeviceAuthMode.Biometric;
-                await _repo.SaveAccountIndexAsync(_accountIndex);
+                if (!_isNew) await _repo.SaveAccountIndexAsync(_accountIndex);
                 _lastAppliedAuthMode = DeviceAuthMode.Biometric;
                 break;
 
             case DeviceAuthMode.Pin:
-                if (await PromptAndSetPinAsync(member))
+                if (await _authGate.PromptAndSetPinAsync(member))
                 {
                     member.DeviceAuthMode = DeviceAuthMode.Pin;
-                    await _repo.SaveAccountIndexAsync(_accountIndex);
+                    if (!_isNew) await _repo.SaveAccountIndexAsync(_accountIndex);
                     HasPin = true;
                     _lastAppliedAuthMode = DeviceAuthMode.Pin;
                 }
@@ -162,37 +219,13 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private async Task<bool> PromptAndSetPinAsync(Member member)
-    {
-        var page = Shell.Current?.CurrentPage;
-        if (page is null) return false;
-
-        var pin = await page.DisplayPromptAsync("Set PIN", $"Choose a PIN for {member.DisplayName} (4-8 digits)", keyboard: Keyboard.Numeric, maxLength: 8);
-        if (string.IsNullOrEmpty(pin)) return false; // cancelled
-        if (pin.Length < 4 || !pin.All(char.IsDigit))
-        {
-            await page.DisplayAlertAsync("Invalid PIN", "PIN must be 4-8 digits.", "OK");
-            return false;
-        }
-
-        var confirm = await page.DisplayPromptAsync("Confirm PIN", "Enter the same PIN again", keyboard: Keyboard.Numeric, maxLength: 8);
-        if (confirm != pin)
-        {
-            await page.DisplayAlertAsync("PINs didn't match", "Try again.", "OK");
-            return false;
-        }
-
-        _pins.SetPin(member, pin);
-        return true;
-    }
-
     [RelayCommand]
     private async Task ChangePin()
     {
-        if (_accountIndex is null || _memberId is not Guid memberId || !CanManageAuth) return;
-        var member = _accountIndex.Members.FirstOrDefault(m => m.Id == memberId);
+        if (_accountIndex is null || !CanManageAuth) return;
+        var member = GetEditingMember();
         if (member is null) return;
-        if (await PromptAndSetPinAsync(member)) await _repo.SaveAccountIndexAsync(_accountIndex);
+        if (await _authGate.PromptAndSetPinAsync(member) && !_isNew) await _repo.SaveAccountIndexAsync(_accountIndex);
     }
 
     public async Task LoadAsync()
@@ -206,6 +239,11 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         {
             Title = "Add Member";
             ApplyPresetToCheckboxes(SelectedRole);
+            // A brand-new member can't be saved without a PIN (see Save()), so the
+            // PROFILE PROTECTION card needs to be reachable during creation too —
+            // previously CanManageAuth only ever became true for an existing member.
+            CanManageAuth = true;
+            _draftMember = new Member { Id = Guid.NewGuid(), AccountId = account.Id };
             return;
         }
 
@@ -218,6 +256,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
             IsLinked = identity is not null;
             LinkedGoogleLabel = identity?.Email ?? "Linked";
         }
+        CanProvisionCredential = !IsLinked;
 
         var viewer = _session.ActiveMember;
         CanManageAuth = viewer is not null && (viewer.Id == member.Id || viewer.Id == account.PrimaryHolderMemberId);
@@ -298,6 +337,26 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     {
         if (_accountIndex is null || string.IsNullOrWhiteSpace(Name)) return;
 
+        // Every member needs a PIN/biometric before they're usable — otherwise
+        // anyone with physical access to an already-unlocked device can switch
+        // into them (or, for an admin-capable member, be switched OUT of into
+        // them) with zero verification. See MemberCapabilities.RequiresMandatoryGate
+        // for the stricter case this also finally makes meaningful: an admin-tier
+        // member without a PIN was previously indistinguishable from a harmless one.
+        var pendingAuthMode = _isNew ? _draftMember?.DeviceAuthMode ?? DeviceAuthMode.None : SelectedAuthMode;
+        if (pendingAuthMode == DeviceAuthMode.None)
+        {
+            // Mirrors MemberCapabilities.RequiresMandatoryGate against the live toggle
+            // values rather than the persisted/preset ones, since the whole point is to
+            // catch a toggle the user just flipped on but hasn't saved yet.
+            var requiresGate = ManageMembers || ManageBilling || DeleteContent;
+            var message = requiresGate
+                ? "This member can manage members, manage billing, or delete others' content — a PIN is required before it can be granted."
+                : "Every profile needs a PIN so restrictions on a shared device actually hold. Set one under PROFILE PROTECTION before saving.";
+            await Shell.Current.CurrentPage.DisplayAlertAsync("PIN required", message, "OK");
+            return;
+        }
+
         if (_isNew)
         {
             if (!_seats.HasCapacity(_accountIndex))
@@ -309,7 +368,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
 
             var newMember = new Member
             {
-                Id = Guid.NewGuid(),
+                Id = _draftMember?.Id ?? Guid.NewGuid(),
                 AccountId = _accountIndex.Account.Id,
                 DisplayName = Name.Trim(),
                 AvatarColor = SelectedColor,
@@ -318,6 +377,8 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
                 RolePreset = SelectedRole,
                 Overrides = BuildOverrides(),
                 CreatedAt = DateTimeOffset.UtcNow,
+                DeviceAuthMode = _draftMember?.DeviceAuthMode ?? DeviceAuthMode.None,
+                PinHash = _draftMember?.PinHash,
             };
             _accountIndex.Members.Add(newMember);
             await _repo.SaveAccountIndexAsync(_accountIndex);
@@ -392,6 +453,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
 
             IsLinked = true;
             LinkedGoogleLabel = identity.Email ?? "Linked";
+            CanProvisionCredential = false;
         }
         finally
         {
@@ -410,5 +472,71 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         await _repo.SaveAccountIndexAsync(_accountIndex);
         IsLinked = false;
         LinkedGoogleLabel = "Not linked";
+        CanProvisionCredential = true;
+    }
+
+    /// <summary>Sets up a brand-new, independent email+password sign-in for this
+    /// member (see WorkoutTracker.Api Program.cs's POST .../credential) — the path
+    /// that actually lets a dependent (including a Child, unlike LinkGoogleAccount)
+    /// sign in on their own separate device and land straight in their own profile.
+    /// The holder enters the credential directly here rather than the member setting
+    /// it themselves, since this screen is only reachable by the holder or the member
+    /// being edited, and a Child can't run an invite/reset-email flow independently.</summary>
+    [RelayCommand]
+    private async Task ProvisionCredential()
+    {
+        if (_accountIndex is null || _memberId is not Guid memberId || IsProvisioning) return;
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return;
+
+        var email = await page.DisplayPromptAsync("Independent sign-in", $"Email address for {Name}", keyboard: Keyboard.Email);
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            if (!string.IsNullOrWhiteSpace(email)) await page.DisplayAlertAsync("Invalid email", "Enter a valid email address.", "OK");
+            return;
+        }
+
+        var password = await page.DisplayPromptAsync("Independent sign-in", $"Choose a password for {Name} (6+ characters)");
+        if (string.IsNullOrWhiteSpace(password)) return; // cancelled
+        if (password.Length < 6)
+        {
+            await page.DisplayAlertAsync("Password too short", "Password must be at least 6 characters.", "OK");
+            return;
+        }
+
+        string uid;
+        IsProvisioning = true;
+        try
+        {
+            uid = await _remoteApi.ProvisionDependentCredentialAsync(_accountIndex.Account.Id, memberId, email.Trim(), password);
+        }
+        catch (Exception ex)
+        {
+            await page.DisplayAlertAsync("Couldn't set up sign-in", ex.Message, "OK");
+            return;
+        }
+        finally
+        {
+            IsProvisioning = false;
+        }
+
+        // Build the local Identity with the real Uid the server just returned —
+        // same pattern as LinkGoogleAccount just below, which also has the real Uid
+        // in hand before ever touching _accountIndex. This is safe to push through
+        // the normal SaveAccountIndexAsync/sync-outbox path since it's already
+        // correct, unlike a re-fetch through IWorkoutRepository (which may be a
+        // local-first cache that hasn't observed this out-of-band server write yet).
+        var identity = new Identity { Id = Guid.NewGuid(), Email = email.Trim(), AuthProviderRef = uid, CreatedAt = DateTimeOffset.UtcNow };
+        _accountIndex.Identities.Add(identity);
+        var member = _accountIndex.Members.FirstOrDefault(m => m.Id == memberId);
+        if (member is not null) member.IdentityId = identity.Id;
+        await _repo.SaveAccountIndexAsync(_accountIndex);
+        await NotificationWriter.NotifyMemberAsync(_repo, _accountIndex.Account.Id, memberId,
+            "Your independent sign-in is ready",
+            "You can now sign in to this family account on your own device.");
+
+        IsLinked = true;
+        LinkedGoogleLabel = email.Trim();
+        CanProvisionCredential = false;
     }
 }

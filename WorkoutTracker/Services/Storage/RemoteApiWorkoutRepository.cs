@@ -115,6 +115,42 @@ public class RemoteApiWorkoutRepository : IWorkoutRepository
         response.EnsureSuccessStatusCode();
     }
 
+    /// <summary>Provisions a brand-new, independent Firebase account for a dependent
+    /// Member who doesn't have one yet, and claims it to this account server-side —
+    /// see Program.cs's POST .../credential. Direct-to-server like DeleteAccountAsync
+    /// above: the caller (MemberEditViewModel) needs to know the exact failure reason
+    /// (email already in use, weak password) to show the holder, not a queued
+    /// best-effort result. Throws HttpRequestException with the server's message on
+    /// failure. Returns the new Firebase Uid so the caller can build a correct local
+    /// Identity (AuthProviderRef) itself — mirroring LinkGoogleAccount's pattern —
+    /// rather than re-fetching through IWorkoutRepository, which may hand back a
+    /// stale local cache that hasn't observed this out-of-band write yet.</summary>
+    public async Task<string> ProvisionDependentCredentialAsync(Guid accountId, Guid memberId, string email, string password)
+    {
+        using var response = await SendAsync(HttpMethod.Post, $"accounts/{accountId}/members/{memberId}/credential",
+            new { Email = email, Password = password });
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(string.IsNullOrWhiteSpace(message) ? response.ReasonPhrase : message);
+        }
+        var result = await response.Content.ReadFromJsonAsync<ProvisionCredentialResponse>(JsonOptions);
+        return result?.Uid ?? throw new HttpRequestException("Server didn't return the new identity.");
+    }
+
+    private record ProvisionCredentialResponse(string Uid);
+
+    /// <summary>Permanently deletes a dependent's independent sign-in (the real
+    /// Firebase account plus this account's Identity record) — see Program.cs's
+    /// DELETE .../identity. Does not touch their MemberData/workout history or
+    /// roster entry; that's the separate, non-destructive RemoveAsync in
+    /// ManageMembersViewModel.</summary>
+    public async Task DeleteDependentIdentityAsync(Guid accountId, Guid memberId)
+    {
+        using var response = await SendAsync(HttpMethod.Delete, $"accounts/{accountId}/members/{memberId}/identity");
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<ManufacturerLibrary> GetManufacturerLibraryAsync()
     {
         using var response = await SendAsync(HttpMethod.Get, "library/manufacturer");

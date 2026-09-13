@@ -266,16 +266,17 @@ public partial class ProfileGateViewModel : ObservableObject
     {
         if (tile is null) return;
 
-        if (tile.DeviceAuthMode != DeviceAuthMode.None)
-        {
-            // Re-fetch the real Member (not just the tile DTO, which deliberately
-            // doesn't carry PinHash) to actually verify against — see
-            // IMemberAuthGateService's doc comment for why this check exists.
-            var accountIndex = await _repo.GetAccountIndexAsync(tile.AccountId);
-            var member = accountIndex?.Members.FirstOrDefault(m => m.Id == tile.MemberId);
-            if (member is null) return;
-            if (!await _authGate.VerifyAsync(member, $"Switch to {tile.Name}")) return;
-        }
+        // Re-fetch the real Member (not just the tile DTO, which deliberately
+        // doesn't carry PinHash) to actually verify against — see
+        // IMemberAuthGateService's doc comment for why this check exists.
+        // Unconditional now (not just when tile.DeviceAuthMode != None): every
+        // member is required to have a PIN, so VerifyOrEstablishAsync forces setup
+        // on the spot for a member who somehow still doesn't (a pre-fix account
+        // that hasn't been prompted yet) instead of silently allowing the switch.
+        var accountIndex = await _repo.GetAccountIndexAsync(tile.AccountId);
+        var member = accountIndex?.Members.FirstOrDefault(m => m.Id == tile.MemberId);
+        if (accountIndex is null || member is null) return;
+        if (!await _authGate.VerifyOrEstablishAsync(member, accountIndex, _repo, $"Switch to {tile.Name}")) return;
 
         var result = await _session.SelectMemberAsync(tile.AccountId, tile.MemberId);
         if (result is not null)
@@ -487,6 +488,15 @@ public partial class ProfileGateViewModel : ObservableObject
             RolePreset = RolePreset.Owner, CreatedAt = now, IdentityId = identityId,
         };
         var identity = new Identity { Id = identityId, Email = result.Email, AuthProviderRef = result.Uid, CreatedAt = now };
+
+        // Every member needs a PIN (see MemberEditViewModel.Save()), including a
+        // brand-new Owner — this is the one creation path that doesn't go through
+        // that screen. A cancel here is allowed to proceed anyway (there's no
+        // fallback profile to bounce a first-run signup to); SelectMember's
+        // VerifyOrEstablishAsync backstop will force setup the next time this
+        // profile is switched into if it's still unprotected.
+        if (await _authGate.PromptAndSetPinAsync(member)) member.DeviceAuthMode = DeviceAuthMode.Pin;
+
         await _repo.SaveAccountIndexAsync(new AccountIndex { Account = account, Members = { member }, Identities = { identity } });
         await _repo.SaveMemberDataAsync(accountId, memberId, new MemberData { Schedule = new Schedule { AccountId = accountId, MemberId = memberId } });
 

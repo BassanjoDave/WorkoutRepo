@@ -41,9 +41,21 @@
 
             <views:AppTabBar ActiveRoute="measurements" />
 
+            <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                    BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasFullAccess, Converter={StaticResource InvertedBoolConverter}}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
             <Grid ColumnDefinitions="*,Auto">
                 <Label Grid.Column="0" Text="Body Measurements" Style="{StaticResource HeadingLabel}" VerticalOptions="Center" />
-                <Button Grid.Column="1" Text="+ Log Weigh-In" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding LogMeasurementCommand}" />
+                <Button Grid.Column="1" Text="+ Log Weigh-In" Style="{StaticResource GhostButton}" FontSize="11"
+                        IsVisible="{Binding HasFullAccess}" Command="{Binding LogMeasurementCommand}" />
             </Grid>
 
             <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding MetricChips}" BindableLayout.ItemTemplate="{StaticResource ChipTemplate}" />
@@ -78,7 +90,8 @@
                 <VerticalStackLayout Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
                         <Label Grid.Column="0" Text="Progress Photos" Style="{StaticResource HeadingLabel}" FontSize="15" VerticalOptions="Center" />
-                        <Button Grid.Column="1" Text="+ Add" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding AddProgressPhotoCommand}" />
+                        <Button Grid.Column="1" Text="+ Add" Style="{StaticResource GhostButton}" FontSize="11"
+                                IsVisible="{Binding HasFullAccess}" Command="{Binding AddProgressPhotoCommand}" />
                     </Grid>
 
                     <Label Text="You've reached the 100-photo limit. Delete a photo to add another." Style="{StaticResource MetaLabel}"

@@ -1,4 +1,5 @@
 using WorkoutTracker.Models;
+using WorkoutTracker.Services.Storage;
 
 namespace WorkoutTracker.Services;
 
@@ -17,6 +18,23 @@ public interface IMemberAuthGateService
     /// configured, or the user just passed it. Returns false on a cancelled
     /// prompt, a wrong PIN, or a failed/cancelled biometric scan.</summary>
     Task<bool> VerifyAsync(Member member, string reason);
+
+    /// <summary>Prompts for and sets a brand-new PIN on `member` (two chained
+    /// numeric dialogs: enter, then confirm) — does not persist anything itself,
+    /// callers save the owning AccountIndex once this returns true. Shared by
+    /// MemberEditViewModel's own PIN-management UI and by VerifyOrEstablishAsync
+    /// below, which is the only other place a member's DeviceAuthMode changes.</summary>
+    Task<bool> PromptAndSetPinAsync(Member member);
+
+    /// <summary>Like VerifyAsync, but for DeviceAuthMode.None it no longer just
+    /// says "fine, proceed" — every member is now required to have a PIN, so
+    /// this forces setup right then (an explanatory alert, then
+    /// PromptAndSetPinAsync, then a save) instead of silently letting an
+    /// unprotected member (most dangerously, an unprotected Owner) be switched
+    /// into or administered. Returns false if setup is cancelled — the caller
+    /// (profile switch, or a "settings lockdown" screen) should treat that the
+    /// same as a failed PIN/biometric check.</summary>
+    Task<bool> VerifyOrEstablishAsync(Member member, AccountIndex accountIndex, IWorkoutRepository repo, string reason);
 }
 
 public class MemberAuthGateService : IMemberAuthGateService
@@ -57,5 +75,43 @@ public class MemberAuthGateService : IMemberAuthGateService
             default:
                 return true;
         }
+    }
+
+    public async Task<bool> PromptAndSetPinAsync(Member member)
+    {
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return false;
+
+        var pin = await page.DisplayPromptAsync("Set PIN", $"Choose a PIN for {member.DisplayName} (4-8 digits)", keyboard: Keyboard.Numeric, maxLength: 8);
+        if (string.IsNullOrEmpty(pin)) return false; // cancelled
+        if (pin.Length < 4 || !pin.All(char.IsDigit))
+        {
+            await page.DisplayAlertAsync("Invalid PIN", "PIN must be 4-8 digits.", "OK");
+            return false;
+        }
+
+        var confirm = await page.DisplayPromptAsync("Confirm PIN", "Enter the same PIN again", keyboard: Keyboard.Numeric, maxLength: 8);
+        if (confirm != pin)
+        {
+            await page.DisplayAlertAsync("PINs didn't match", "Try again.", "OK");
+            return false;
+        }
+
+        _pins.SetPin(member, pin);
+        return true;
+    }
+
+    public async Task<bool> VerifyOrEstablishAsync(Member member, AccountIndex accountIndex, IWorkoutRepository repo, string reason)
+    {
+        if (member.DeviceAuthMode != DeviceAuthMode.None) return await VerifyAsync(member, reason);
+
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return false;
+        await page.DisplayAlertAsync("PIN required", $"{member.DisplayName}'s profile isn't protected yet. Set a PIN to continue.", "OK");
+        if (!await PromptAndSetPinAsync(member)) return false;
+
+        member.DeviceAuthMode = DeviceAuthMode.Pin;
+        await repo.SaveAccountIndexAsync(accountIndex);
+        return true;
     }
 }

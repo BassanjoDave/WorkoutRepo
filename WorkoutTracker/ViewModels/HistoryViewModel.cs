@@ -17,10 +17,6 @@ public partial class HistoryViewModel : ObservableObject
 {
     private readonly IActiveSessionService _session;
     private readonly IWorkoutRepository _repo;
-    private readonly IEntitlementService _entitlements;
-
-    private bool _hasNutritionAccess;
-    private bool _hasStacksAccess;
 
     private List<SetLogRow> _allLogRows = new();
     private List<WorkoutSession> _completedSessions = new();
@@ -48,8 +44,10 @@ public partial class HistoryViewModel : ObservableObject
     /// every kind of activity, not just workouts.</summary>
     [ObservableProperty] public partial ObservableCollection<NutritionDayRowViewModel> RecentNutritionDays { get; set; } = new();
     [ObservableProperty] public partial ObservableCollection<NutritionDayRowViewModel> RecentStacksTaken { get; set; } = new();
-    public bool HasRecentNutrition => RecentNutritionDays.Count > 0 && _hasNutritionAccess;
-    public bool HasRecentStacksTaken => RecentStacksTaken.Count > 0 && _hasStacksAccess;
+    // No entitlement check here (or on the tabs themselves) — this is read-only history,
+    // which stays visible for every member regardless of Full Access. See ShowNutrition/ShowStacksHistory.
+    public bool HasRecentNutrition => RecentNutritionDays.Count > 0;
+    public bool HasRecentStacksTaken => RecentStacksTaken.Count > 0;
     partial void OnRecentNutritionDaysChanged(ObservableCollection<NutritionDayRowViewModel> value) => OnPropertyChanged(nameof(HasRecentNutrition));
     partial void OnRecentStacksTakenChanged(ObservableCollection<NutritionDayRowViewModel> value) => OnPropertyChanged(nameof(HasRecentStacksTaken));
 
@@ -79,11 +77,10 @@ public partial class HistoryViewModel : ObservableObject
     private LogSortKey _sortKey = LogSortKey.Date;
     private bool _sortDescending = true;
 
-    public HistoryViewModel(IActiveSessionService session, IWorkoutRepository repo, IEntitlementService entitlements)
+    public HistoryViewModel(IActiveSessionService session, IWorkoutRepository repo)
     {
         _session = session;
         _repo = repo;
-        _entitlements = entitlements;
     }
 
     partial void OnSelectedTabChanged(HistoryTab value)
@@ -114,23 +111,12 @@ public partial class HistoryViewModel : ObservableObject
         LogDateTo = DateTime.Today;
         SelectedTab = HistoryTab.Log;
     }
-    [RelayCommand]
-    private async Task ShowNutrition()
-    {
-        // See NutritionViewModel.LoadAsync's comment on this pattern — posted via
-        // InvokeOnMainThreadAsync and awaited (not BeginInvokeOnMainThread's true
-        // fire-and-forget), or an early return here races the still-settling
-        // incoming navigation on Android and corrupts Shell's back stack.
-        if (!_hasNutritionAccess) { await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Nutrition}")); return; }
-        SelectedTab = HistoryTab.Nutrition;
-    }
-
-    [RelayCommand]
-    private async Task ShowStacksHistory()
-    {
-        if (!_hasStacksAccess) { await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Stacks}")); return; }
-        SelectedTab = HistoryTab.Stacks;
-    }
+    // History is read-only, so both tabs are always reachable regardless of Full
+    // Access — a member without it still gets to see their own past nutrition/
+    // stacks entries, just not the ability to log new ones (that's gated on the
+    // live Nutrition/Stacks pages themselves via HasFullAccess).
+    [RelayCommand] private void ShowNutrition() => SelectedTab = HistoryTab.Nutrition;
+    [RelayCommand] private void ShowStacksHistory() => SelectedTab = HistoryTab.Stacks;
     [RelayCommand] private void ClearLogFilters() { LogSearch = ""; LogDateFrom = DateTime.MinValue; LogDateTo = DateTime.MaxValue; }
 
     [RelayCommand]
@@ -223,9 +209,6 @@ public partial class HistoryViewModel : ObservableObject
             await Shell.Current.GoToAsync("//gate");
             return;
         }
-        _hasNutritionAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Nutrition);
-        _hasStacksAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Stacks);
-
         var shared = await _repo.GetSharedLibraryAsync(account.Id);
         var manufacturer = await _repo.GetManufacturerLibraryAsync();
         Exercise? FindExercise(Guid id) =>

@@ -21,6 +21,12 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] public partial Color ActiveMemberColor { get; set; } = Colors.Gray;
     [ObservableProperty] public partial bool IsLbs { get; set; } = true;
     [ObservableProperty] public partial bool CanManageMembers { get; set; }
+    /// <summary>True when the active member still has DeviceAuthMode.None — shows a
+    /// courtesy banner nudging them to set a PIN. Purely a nudge: the actual
+    /// enforcement backstop is IMemberAuthGateService.VerifyOrEstablishAsync, which
+    /// forces setup at the moment of risk (a profile switch or an admin screen)
+    /// regardless of whether this banner was ever seen or acted on.</summary>
+    [ObservableProperty] public partial bool NeedsPinSetup { get; set; }
     /// <summary>Only the primary holder can delete the whole account — everyone
     /// else's way out is Manage Members' existing "Remove" action, which only
     /// affects their own membership, not the family's shared data.</summary>
@@ -58,6 +64,7 @@ public partial class ProfileViewModel : ObservableObject
         ActiveMemberColor = Color.FromArgb(member.AvatarColor);
         CanManageMembers = member.EffectiveCapabilities().ManageMembers;
         IsPrimaryHolder = member.Id == account.PrimaryHolderMemberId;
+        NeedsPinSetup = member.DeviceAuthMode == DeviceAuthMode.None;
 
         BiometricUnlockAvailable = _biometrics.IsSupported && await _biometrics.IsAvailableAsync();
         _suppressBiometricToggleHandler = true;

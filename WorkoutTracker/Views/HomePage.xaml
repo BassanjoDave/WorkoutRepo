@@ -16,11 +16,25 @@
                  contrasting (white) color so it stays legible against the banner in
                  either theme (see ColorBanner/ColorBannerText in Colors.Light/Dark.cs). -->
             <Border StrokeShape="RoundRectangle 10" Stroke="Transparent" BackgroundColor="{StaticResource ColorBanner}" Padding="14,10">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
                     <Label Grid.Column="0" Text="Home" Style="{StaticResource HeadingLabel}" TextColor="{StaticResource ColorBannerText}" VerticalOptions="Center" />
                     <Label Grid.Column="1" Text="{Binding SyncLabel}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorBannerText}" Opacity="0.85" VerticalOptions="Center" />
-                    <Image Grid.Column="2" Source="logo.png" HeightRequest="26" Aspect="AspectFit" VerticalOptions="Center" />
-                    <Border Grid.Column="3" StrokeShape="RoundRectangle 15" Stroke="Transparent"
+                    <Grid Grid.Column="2" WidthRequest="26" HeightRequest="26">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenNotificationsCommand}" />
+                        </Grid.GestureRecognizers>
+                        <Label Text="{StaticResource IconBell}" FontSize="18" TextColor="{StaticResource ColorBannerText}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Border StrokeShape="RoundRectangle 8" Stroke="Transparent" BackgroundColor="{StaticResource ColorAccent}"
+                                WidthRequest="16" HeightRequest="16" Padding="0"
+                                HorizontalOptions="End" VerticalOptions="Start"
+                                IsVisible="{Binding HasUnreadNotifications}">
+                            <Label Text="{Binding UnreadNotificationCount}" FontSize="10" TextColor="White" FontAttributes="Bold"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+                    <Image Grid.Column="3" Source="logo.png" HeightRequest="26" Aspect="AspectFit" VerticalOptions="Center" />
+                    <Border Grid.Column="4" StrokeShape="RoundRectangle 15" Stroke="Transparent"
                             BackgroundColor="{Binding ActiveMemberColor}" WidthRequest="30" HeightRequest="30" Padding="0">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnAvatarTapped" />

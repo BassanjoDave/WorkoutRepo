@@ -46,6 +46,8 @@
                                             Command="{Binding ToggleProgressPhotoVisibilityCommand}" IsVisible="{Binding ShowProgressPhotoControls}" Margin="0,0,8,8" />
                                     <Button Text="View Photos" Style="{StaticResource GhostButton}" FontSize="11"
                                             Command="{Binding ViewPhotosCommand}" IsVisible="{Binding ShowViewPhotosButton}" Margin="0,0,8,8" />
+                                    <Button Text="Delete Sign-In" Style="{StaticResource GhostButton}" FontSize="11"
+                                            Command="{Binding DeleteAccountCommand}" IsVisible="{Binding HasLinkedIdentity}" Margin="0,0,8,8" />
                                 </FlexLayout>
                             </VerticalStackLayout>
                         </Border>

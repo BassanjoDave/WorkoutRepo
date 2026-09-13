@@ -35,6 +35,7 @@ public partial class MeasurementsViewModel : ObservableObject
     [ObservableProperty] public partial ObservableCollection<ProgressPhotoThumbnailViewModel> ProgressPhotos { get; set; } = new();
     [ObservableProperty] public partial bool IsAtPhotoCap { get; set; }
     [ObservableProperty] public partial double ProgressPhotosGridHeight { get; set; }
+    [ObservableProperty] public partial bool HasFullAccess { get; set; }
 
     // Order matches the log page's layout groupings.
     private static readonly string[] BuiltInMetrics =
@@ -75,15 +76,10 @@ public partial class MeasurementsViewModel : ObservableObject
             await Shell.Current.GoToAsync("//gate");
             return;
         }
-        if (!_entitlements.HasPageAccess(account, member.Id, PageEntitlements.Measurements))
-        {
-            // See NutritionViewModel.LoadAsync's comment on this pattern — posted via
-            // InvokeOnMainThreadAsync and awaited (not BeginInvokeOnMainThread's true
-            // fire-and-forget), or an early return here races the still-settling
-            // incoming navigation on Android and corrupts Shell's back stack.
-            await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Measurements}"));
-            return;
-        }
+        // Without Full Access, history still loads and displays normally below —
+        // only logging a new weigh-in/photo is gated (see HasFullAccess and the
+        // upgrade nudge in MeasurementsPage.xaml).
+        HasFullAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Measurements);
 
         _accountId = account.Id;
         _memberId = member.Id;
@@ -158,6 +154,9 @@ public partial class MeasurementsViewModel : ObservableObject
 
     [RelayCommand]
     private async Task LogMeasurement() => await Shell.Current.GoToAsync("logMeasurement");
+
+    [RelayCommand]
+    private async Task OpenUpgrade() => await Shell.Current.GoToAsync($"upgrade?page={PageEntitlements.Measurements}");
 
     private void LoadProgressPhotos(List<ProgressPhotoEntry> photos)
     {
