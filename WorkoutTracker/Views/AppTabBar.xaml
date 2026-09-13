@@ -4,28 +4,37 @@
              x:Class="WorkoutTracker.Views.AppTabBar"
              x:Name="Root">
 
-    <!--
-      Replaces Shell's native TabBar chrome (hidden globally via the ContentPage
-      style in Styles.xaml). On Windows, Shell's TabBar collapses tabs that don't
-      fit the window width behind a "..." overflow menu instead of wrapping, which
-      made whichever tab landed in that overflow effectively invisible/undiscoverable.
-      A plain FlexLayout of buttons wraps onto a second row instead, so every tab
-      stays visible and reachable regardless of window width.
-    -->
-    <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-        <Button x:Name="HomeButton" Text="Home" CommandParameter="home" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="ExerciseButton" Text="Exercise" CommandParameter="exercise" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="NutritionButton" Text="Nutrition" CommandParameter="nutrition" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="HistoryButton" Text="History" CommandParameter="history" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="MeasurementsButton" Text="Measurements" CommandParameter="measurements" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="StacksButton" Text="Stacks" CommandParameter="stacks" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-        <Button x:Name="ProfileButton" Text="Profile" CommandParameter="profile" Clicked="OnTabClicked"
-                Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-    </FlexLayout>
+    <VerticalStackLayout Spacing="10">
+
+        <!-- App header — the app logo, shown once per page above the tab row (not
+             repeated inside each page's own banner — see HomePage.xaml's comment). -->
+        <Border Style="{StaticResource CardBorder}" Padding="10" HorizontalOptions="Fill">
+            <Image Source="logo.png" HeightRequest="40" Aspect="AspectFit" HorizontalOptions="Fill" />
+        </Border>
+
+        <!--
+          Replaces Shell's native TabBar chrome (hidden globally via the ContentPage
+          style in Styles.xaml). On Windows, Shell's TabBar collapses tabs that don't
+          fit the window width behind a "..." overflow menu instead of wrapping, which
+          made whichever tab landed in that overflow effectively invisible/undiscoverable.
+          A plain FlexLayout of buttons wraps onto a second row instead, so every tab
+          stays visible and reachable regardless of window width.
+        -->
+        <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+            <Button x:Name="HomeButton" Text="Home" CommandParameter="home" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="ExerciseButton" Text="Exercise" CommandParameter="exercise" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="NutritionButton" Text="Nutrition" CommandParameter="nutrition" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="HistoryButton" Text="History" CommandParameter="history" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="MeasurementsButton" Text="Measurements" CommandParameter="measurements" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="StacksButton" Text="Stacks" CommandParameter="stacks" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+            <Button x:Name="ProfileButton" Text="Profile" CommandParameter="profile" Clicked="OnTabClicked"
+                    Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
+        </FlexLayout>
+    </VerticalStackLayout>
 </ContentView>

@@ -8,6 +8,10 @@
 
     <ScrollView>
     <VerticalStackLayout Padding="32,40,32,20" Spacing="26">
+        <Border Style="{StaticResource CardBorder}" Padding="16" HorizontalOptions="Fill">
+            <Image Source="logo.png" HeightRequest="90" Aspect="AspectFit" HorizontalOptions="Fill" />
+        </Border>
+
         <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
             <Label Text="Switch account" Style="{StaticResource HeadingLabel}" HorizontalTextAlignment="Center"
                    IsVisible="{Binding CanCancel}" />

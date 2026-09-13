@@ -107,9 +107,11 @@
             <Border Style="{StaticResource CardBorder}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Add exercise" Style="{StaticResource MetaLabel}" />
+                    <Label Text="Category" Style="{StaticResource MetaLabel}" FontSize="10" />
                     <Border Style="{StaticResource InputBorder}">
                         <Picker ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" TextColor="{StaticResource ColorText}" FontSize="12" />
                     </Border>
+                    <Label Text="Exercise" Style="{StaticResource MetaLabel}" FontSize="10" />
                     <Border Style="{StaticResource InputBorder}">
                         <Picker ItemsSource="{Binding AvailableExercises}" SelectedItem="{Binding SelectedExerciseToAdd}" TextColor="{StaticResource ColorText}" />
                     </Border>

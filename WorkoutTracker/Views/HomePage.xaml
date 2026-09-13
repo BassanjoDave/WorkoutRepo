@@ -12,11 +12,12 @@
 
             <views:AppTabBar ActiveRoute="home" />
 
-            <!-- Header banner — brand blue, logo on the right, page name in a
-                 contrasting (white) color so it stays legible against the banner in
-                 either theme (see ColorBanner/ColorBannerText in Colors.Light/Dark.cs). -->
+            <!-- Header banner — brand blue, page name in a contrasting (white) color
+                 so it stays legible against the banner in either theme (see
+                 ColorBanner/ColorBannerText in Colors.Light/Dark.cs). The app logo
+                 lives in AppTabBar (the shared app header above), not repeated here. -->
             <Border StrokeShape="RoundRectangle 10" Stroke="Transparent" BackgroundColor="{StaticResource ColorBanner}" Padding="14,10">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <Label Grid.Column="0" Text="Home" Style="{StaticResource HeadingLabel}" TextColor="{StaticResource ColorBannerText}" VerticalOptions="Center" />
                     <Label Grid.Column="1" Text="{Binding SyncLabel}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorBannerText}" Opacity="0.85" VerticalOptions="Center" />
                     <Grid Grid.Column="2" WidthRequest="26" HeightRequest="26">
@@ -33,8 +34,7 @@
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                     </Grid>
-                    <Image Grid.Column="3" Source="logo.png" HeightRequest="26" Aspect="AspectFit" VerticalOptions="Center" />
-                    <Border Grid.Column="4" StrokeShape="RoundRectangle 15" Stroke="Transparent"
+                    <Border Grid.Column="3" StrokeShape="RoundRectangle 15" Stroke="Transparent"
                             BackgroundColor="{Binding ActiveMemberColor}" WidthRequest="30" HeightRequest="30" Padding="0">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnAvatarTapped" />
