@@ -14,7 +14,9 @@
         <!-- Static brand mark above the carousel, unaffected by which slide is showing.
              Save the wordmark logo file as Resources/Images/logo.png for this to render —
              MAUI auto-includes anything dropped into Resources/Images. -->
-        <Image Grid.Row="1" Source="logo.png" HeightRequest="56" Aspect="AspectFit" HorizontalOptions="Center" />
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="16" HorizontalOptions="Fill">
+            <Image Source="logo.png" Aspect="AspectFit" HorizontalOptions="Fill" VerticalOptions="Center" />
+        </Border>
 
         <CarouselView Grid.Row="2" ItemsSource="{Binding Slides}" Position="{Binding CurrentIndex, Mode=TwoWay}"
                       IndicatorView="SlideIndicator" VerticalOptions="Center">
