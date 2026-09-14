@@ -20,8 +20,6 @@ public partial class RemindersViewModel : ObservableObject
     private bool _suppressPermissionCheck;
 
     [ObservableProperty] public partial bool Enabled { get; set; }
-    [ObservableProperty] public partial TimeSpan AmTime { get; set; } = new(7, 0, 0);
-    [ObservableProperty] public partial TimeSpan PmTime { get; set; } = new(17, 0, 0);
 
     public bool IsSupported => _reminders.IsSupported;
 
@@ -86,8 +84,6 @@ public partial class RemindersViewModel : ObservableObject
 
         _suppressPermissionCheck = true;
         Enabled = _memberData.Reminders.Enabled;
-        AmTime = _memberData.Reminders.AmTime.ToTimeSpan();
-        PmTime = _memberData.Reminders.PmTime.ToTimeSpan();
         _suppressPermissionCheck = false;
     }
 
@@ -99,8 +95,6 @@ public partial class RemindersViewModel : ObservableObject
     private async Task Save()
     {
         _memberData.Reminders.Enabled = Enabled;
-        _memberData.Reminders.AmTime = TimeOnly.FromTimeSpan(AmTime);
-        _memberData.Reminders.PmTime = TimeOnly.FromTimeSpan(PmTime);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
 
         await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);

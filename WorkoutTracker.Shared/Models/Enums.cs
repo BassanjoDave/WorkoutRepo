@@ -32,9 +32,6 @@ public enum Slot { Am, Pm }
 
 public enum SessionStatus { InProgress, Completed }
 
-/// <summary>How long before a routine's AM/PM slot anchor time its personal reminder fires.</summary>
-public enum ReminderOffset { AtTime, FiveMinutesBefore, FifteenMinutesBefore, ThirtyMinutesBefore, OneHourBefore }
-
 public enum ExerciseEquipment { BowflexMachine, Bodyweight, Kettlebell, VibrationPlate, Stretch, CardioMachine, Custom, Dumbbell, Barbell, WeightBench, ResistanceBand }
 
 public enum ExerciseCategory { Chest, Shoulders, Back, Arms, Abs, Legs, FullBody, Cardio, VibrationPlate }

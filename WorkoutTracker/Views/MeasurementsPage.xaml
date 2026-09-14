@@ -7,6 +7,10 @@
              x:DataType="vm:MeasurementsViewModel"
              Title="Measurements">
 
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding BackCommand}" />
+    </Shell.BackButtonBehavior>
+
     <ContentPage.Resources>
         <Style x:Key="ToggleChip" TargetType="Border">
             <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />

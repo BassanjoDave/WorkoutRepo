@@ -16,10 +16,11 @@ namespace WorkoutTracker.Services;
 /// Schedules local, device-side notifications for the routines a member has
 /// personally turned a reminder on for (MemberData.RoutineReminders) — one
 /// notification per (weekday, slot, routine) that's both scheduled and has an
-/// enabled reminder, fired at that slot's AM/PM anchor time minus the
-/// routine's own offset. No server or push infrastructure involved: this only
-/// works while the app has been opened at least once to register the
-/// schedule, same as any local-notification approach.
+/// enabled reminder, fired at that routine's own ReminderTime, repeating
+/// weekly unless RepeatWeekly is off (fire once, then stop). No server or
+/// push infrastructure involved: this only works while the app has been
+/// opened at least once to register the schedule, same as any
+/// local-notification approach.
 ///
 /// Android/iOS use Plugin.LocalNotification, which schedules with the OS —
 /// reminders fire even if the app isn't running. Windows has no equivalent
@@ -74,12 +75,12 @@ public class WorkoutReminderService : IWorkoutReminderService
         foreach (Weekday day in Enum.GetValues<Weekday>())
         {
             memberData.Schedule.Days.TryGetValue(day, out var slots);
-            await ScheduleSlotAsync(day, Slot.Am, slots?.Am, memberData.Reminders.AmTime, memberData.RoutineReminders, findRoutineName);
-            await ScheduleSlotAsync(day, Slot.Pm, slots?.Pm, memberData.Reminders.PmTime, memberData.RoutineReminders, findRoutineName);
+            await ScheduleSlotAsync(day, Slot.Am, slots?.Am, memberData.RoutineReminders, findRoutineName);
+            await ScheduleSlotAsync(day, Slot.Pm, slots?.Pm, memberData.RoutineReminders, findRoutineName);
         }
     }
 
-    private static async Task ScheduleSlotAsync(Weekday day, Slot slot, List<Guid>? routineIds, TimeOnly anchorTime,
+    private static async Task ScheduleSlotAsync(Weekday day, Slot slot, List<Guid>? routineIds,
         Dictionary<Guid, RoutineReminderSettings> routineReminders, Func<Guid, string?> findRoutineName)
     {
         if (routineIds is null || routineIds.Count == 0) return;
@@ -101,8 +102,8 @@ public class WorkoutReminderService : IWorkoutReminderService
                 ReturningData = payload,
                 Schedule = new NotificationRequestSchedule
                 {
-                    NotifyTime = NextOccurrence(day, anchorTime, OffsetMinutes(reminder.Offset)),
-                    RepeatType = NotificationRepeat.Weekly,
+                    NotifyTime = NextOccurrence(day, reminder.ReminderTime),
+                    RepeatType = reminder.RepeatWeekly ? NotificationRepeat.Weekly : NotificationRepeat.No,
                 },
             };
             // Only notifications in this category get the Snooze action button — see ReminderCategory below.
@@ -199,13 +200,18 @@ public class WorkoutReminderService : IWorkoutReminderService
         foreach (Weekday day in Enum.GetValues<Weekday>())
         {
             memberData.Schedule.Days.TryGetValue(day, out var slots);
-            ScheduleSlot(day, Slot.Am, slots?.Am, memberData.Reminders.AmTime, memberData.RoutineReminders, findRoutineName);
-            ScheduleSlot(day, Slot.Pm, slots?.Pm, memberData.Reminders.PmTime, memberData.RoutineReminders, findRoutineName);
+            ScheduleSlot(day, Slot.Am, slots?.Am, memberData.RoutineReminders, findRoutineName);
+            ScheduleSlot(day, Slot.Pm, slots?.Pm, memberData.RoutineReminders, findRoutineName);
         }
         return Task.CompletedTask;
     }
 
-    private void ScheduleSlot(Weekday day, Slot slot, List<Guid>? routineIds, TimeOnly anchorTime,
+    // RepeatWeekly isn't distinguished here: this fallback only ever schedules a single
+    // timer for the next upcoming occurrence (see the type-level doc comment — it only
+    // fires while the app is actually running, unlike the real OS-level scheduling
+    // Android/iOS get), so "weekly" already just means "recomputed next time
+    // RescheduleAllAsync runs" rather than a true recurring OS timer either way.
+    private void ScheduleSlot(Weekday day, Slot slot, List<Guid>? routineIds,
         Dictionary<Guid, RoutineReminderSettings> routineReminders, Func<Guid, string?> findRoutineName)
     {
         if (routineIds is null || routineIds.Count == 0) return;
@@ -217,7 +223,7 @@ public class WorkoutReminderService : IWorkoutReminderService
             if (name is null) continue;
 
             var description = ReminderText(name, slot);
-            var fireAt = NextOccurrence(day, anchorTime, OffsetMinutes(reminder.Offset));
+            var fireAt = NextOccurrence(day, reminder.ReminderTime);
             var delay = fireAt - DateTimeOffset.Now;
             if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
 
@@ -283,21 +289,12 @@ public class WorkoutReminderService : IWorkoutReminderService
     private static string ReminderText(string routineName, Slot slot) =>
         $"Time for {routineName} ({(slot == Slot.Am ? "AM" : "PM")})";
 
-    private static int OffsetMinutes(ReminderOffset offset) => offset switch
-    {
-        ReminderOffset.FiveMinutesBefore => 5,
-        ReminderOffset.FifteenMinutesBefore => 15,
-        ReminderOffset.ThirtyMinutesBefore => 30,
-        ReminderOffset.OneHourBefore => 60,
-        _ => 0,
-    };
-
-    private static DateTimeOffset NextOccurrence(Weekday day, TimeOnly anchorTime, int offsetMinutes)
+    private static DateTimeOffset NextOccurrence(Weekday day, TimeOnly reminderTime)
     {
         var today = DateTime.Today;
         var daysUntil = ((int)day - (int)today.DayOfWeek + 7) % 7;
-        var anchor = today.AddDays(daysUntil).Add(anchorTime.ToTimeSpan());
-        var candidate = new DateTimeOffset(anchor.AddMinutes(-offsetMinutes));
+        var anchor = today.AddDays(daysUntil).Add(reminderTime.ToTimeSpan());
+        var candidate = new DateTimeOffset(anchor);
         return candidate <= DateTimeOffset.Now ? candidate.AddDays(7) : candidate;
     }
 

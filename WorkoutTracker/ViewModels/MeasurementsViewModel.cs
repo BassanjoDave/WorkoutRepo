@@ -65,6 +65,16 @@ public partial class MeasurementsViewModel : ObservableObject
         _photoCapture = photoCapture;
     }
 
+    /// <summary>
+    /// Measurements is a hidden TabBar ShellContent reached via an absolute
+    /// "//measurements" navigation (see ProfileViewModel.OpenMeasurements),
+    /// which replaces the nav stack and leaves nothing to pop back to. Wired
+    /// as this page's Shell.BackButtonBehavior, same fix UpgradePage already
+    /// uses for the identical problem.
+    /// </summary>
+    [RelayCommand]
+    private async Task Back() => await Shell.Current.GoToAsync("//profile");
+
     partial void OnSelectedBodyMetricChanged(string value) => RebuildBodyMetricChart();
 
     public async Task LoadAsync()

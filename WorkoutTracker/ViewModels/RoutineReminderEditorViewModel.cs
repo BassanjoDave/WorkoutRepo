@@ -17,24 +17,13 @@ public partial class RoutineReminderEditorViewModel : ObservableObject
     private bool _suppressPermissionCheck;
 
     [ObservableProperty] public partial bool Enabled { get; set; }
-    [ObservableProperty] public partial ReminderOffset Offset { get; set; } = ReminderOffset.AtTime;
+    [ObservableProperty] public partial TimeSpan ReminderTime { get; set; } = new(7, 0, 0);
+    [ObservableProperty] public partial bool RepeatWeekly { get; set; } = true;
     [ObservableProperty] public partial bool SnoozeEnabled { get; set; } = true;
     [ObservableProperty] public partial int SnoozeMinutes { get; set; } = 10;
 
     /// <summary>The shared Profile > Workout Reminders switch. When false, the page hosting this editor should disable (grey out) its reminder controls — the values above stay exactly as set.</summary>
     [ObservableProperty] public partial bool MasterEnabled { get; set; }
-
-    // Display strings, in ReminderOffset declaration order, so OffsetIndex below
-    // can convert straight to/from the enum with a cast instead of a converter.
-    public string[] OffsetLabels { get; } = { "At time of workout", "5 minutes before", "15 minutes before", "30 minutes before", "1 hour before" };
-
-    public int OffsetIndex
-    {
-        get => (int)Offset;
-        set => Offset = (ReminderOffset)value;
-    }
-
-    partial void OnOffsetChanged(ReminderOffset value) => OnPropertyChanged(nameof(OffsetIndex));
 
     public RoutineReminderEditorViewModel(IWorkoutReminderService reminders)
     {
@@ -48,14 +37,16 @@ public partial class RoutineReminderEditorViewModel : ObservableObject
         if (memberData.RoutineReminders.TryGetValue(routineId, out var settings))
         {
             Enabled = settings.Enabled;
-            Offset = settings.Offset;
+            ReminderTime = settings.ReminderTime.ToTimeSpan();
+            RepeatWeekly = settings.RepeatWeekly;
             SnoozeEnabled = settings.SnoozeEnabled;
             SnoozeMinutes = settings.SnoozeMinutes;
         }
         else
         {
             Enabled = false;
-            Offset = ReminderOffset.AtTime;
+            ReminderTime = new TimeSpan(7, 0, 0);
+            RepeatWeekly = true;
             SnoozeEnabled = true;
             SnoozeMinutes = 10;
         }
@@ -67,7 +58,8 @@ public partial class RoutineReminderEditorViewModel : ObservableObject
         memberData.RoutineReminders[routineId] = new RoutineReminderSettings
         {
             Enabled = Enabled,
-            Offset = Offset,
+            ReminderTime = TimeOnly.FromTimeSpan(ReminderTime),
+            RepeatWeekly = RepeatWeekly,
             SnoozeEnabled = SnoozeEnabled,
             SnoozeMinutes = SnoozeMinutes,
         };

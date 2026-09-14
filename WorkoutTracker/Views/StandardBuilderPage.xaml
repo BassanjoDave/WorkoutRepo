@@ -158,10 +158,16 @@
                        Style="{StaticResource MetaLabel}" FontSize="10"
                        IsVisible="{Binding Reminder.MasterEnabled, Converter={StaticResource InvertedBoolConverter}}" />
                 <VerticalStackLayout Spacing="8" IsVisible="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}">
-                    <Border Style="{StaticResource InputBorder}">
-                        <Picker ItemsSource="{Binding Reminder.OffsetLabels}" SelectedIndex="{Binding Reminder.OffsetIndex}"
-                                TextColor="{StaticResource ColorText}" FontSize="12" />
-                    </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Reminder time" FontSize="13" VerticalOptions="Center" />
+                        <TimePicker Grid.Column="1" Time="{Binding Reminder.ReminderTime}" FontSize="13" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Repeat weekly" FontSize="13" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding Reminder.RepeatWeekly}" />
+                    </Grid>
+                    <Label Text="Fires on every day this workout is scheduled. Turn Repeat weekly off to fire just once, at the next scheduled occurrence, then stop."
+                           Style="{StaticResource MetaLabel}" FontSize="10" />
                     <Grid ColumnDefinitions="*,Auto">
                         <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
                         <Switch Grid.Column="1" IsToggled="{Binding Reminder.SnoozeEnabled}" />

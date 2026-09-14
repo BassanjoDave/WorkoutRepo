@@ -143,24 +143,18 @@ public class CustomMeasurementSlot
     public string Name { get; set; } = "";
 }
 
-/// <summary>
-/// A local reminder fires at AmTime/PmTime on any weekday that has a routine
-/// assigned to that slot — see IWorkoutReminderService. The app has no
-/// concept of an exact workout start time (just an AM/PM bucket), so these
-/// times are the member's own stand-in for "when AM/PM usually happens."
-/// </summary>
+/// <summary>Master on/off switch for every per-routine reminder — see IWorkoutReminderService and MemberData.RoutineReminders.</summary>
 public class ReminderSettings
 {
     public bool Enabled { get; set; }
-    public TimeOnly AmTime { get; set; } = new(7, 0);
-    public TimeOnly PmTime { get; set; } = new(17, 0);
 }
 
 /// <summary>One member's personal reminder for one routine. See MemberData.RoutineReminders.</summary>
 public class RoutineReminderSettings
 {
     public bool Enabled { get; set; } = true;
-    public ReminderOffset Offset { get; set; } = ReminderOffset.AtTime;
+    public TimeOnly ReminderTime { get; set; } = new(7, 0);
+    public bool RepeatWeekly { get; set; } = true;
     public bool SnoozeEnabled { get; set; } = true;
     public int SnoozeMinutes { get; set; } = 10;
 }

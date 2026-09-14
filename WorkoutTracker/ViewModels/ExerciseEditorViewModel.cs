@@ -18,6 +18,7 @@ public partial class ExerciseEditorViewModel : ObservableObject
 {
     private readonly IActiveSessionService _session;
     private readonly IWorkoutRepository _repo;
+    private readonly IPendingExerciseBridge _pendingExerciseBridge;
 
     private static readonly string[] CategoryValues =
         { "Chest", "Shoulders", "Back", "Arms", "Abs", "Legs", "Full Body", "Cardio", "Vibration Plate" };
@@ -39,10 +40,11 @@ public partial class ExerciseEditorViewModel : ObservableObject
     [ObservableProperty] public partial string ErrorMessage { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<ExercisePhotoRowViewModel> Photos { get; set; } = new();
 
-    public ExerciseEditorViewModel(IActiveSessionService session, IWorkoutRepository repo)
+    public ExerciseEditorViewModel(IActiveSessionService session, IWorkoutRepository repo, IPendingExerciseBridge pendingExerciseBridge)
     {
         _session = session;
         _repo = repo;
+        _pendingExerciseBridge = pendingExerciseBridge;
     }
 
     /// <summary>Offers camera or gallery, copies the chosen photo into local app storage, and defaults the first two labels to Start/Finish.</summary>
@@ -135,6 +137,7 @@ public partial class ExerciseEditorViewModel : ObservableObject
 
         shared.Exercises.Add(exercise);
         await _repo.SaveSharedLibraryAsync(account.Id, shared);
+        _pendingExerciseBridge.SetPendingExerciseId(exercise.Id);
         await Shell.Current.GoToAsync("..");
     }
 

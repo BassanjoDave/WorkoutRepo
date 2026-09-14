@@ -74,6 +74,7 @@ public static class MauiProgram
 		services.AddSingleton<IMemberAuthGateService, MemberAuthGateService>();
 		services.AddSingleton<IRecipeDraftBridge, RecipeDraftBridge>();
 		services.AddSingleton<IHomeWorkoutBridge, HomeWorkoutBridge>();
+		services.AddSingleton<IPendingExerciseBridge, PendingExerciseBridge>();
 		services.AddSingleton<IGoogleAuthService, GoogleAuthService>();
 		services.AddSingleton<IAppRestartService, AppRestartService>();
 		services.AddSingleton<IIdentityService, IdentityService>();

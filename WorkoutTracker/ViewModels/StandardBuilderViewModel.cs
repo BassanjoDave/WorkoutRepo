@@ -21,6 +21,10 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     private readonly IWorkoutRepository _repo;
     private readonly IWorkoutReminderService _reminders;
     private readonly IHomeWorkoutBridge _homeWorkoutBridge;
+    private readonly IPendingExerciseBridge _pendingExerciseBridge;
+
+    /// <summary>Sentinel row appended to AvailableExercises so the picker can offer "+ Add custom exercise…" — see OnSelectedExerciseToAddChanged.</summary>
+    private static readonly Guid AddCustomExerciseSentinelId = Guid.Empty;
 
     private Guid? _editingRoutineId;
     private bool _fromHome;
@@ -60,16 +64,25 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     [ObservableProperty] public partial ObservableCollection<RoutineDayCellViewModel> DayCells { get; set; } = new();
 
     public StandardBuilderViewModel(IActiveSessionService session, IWorkoutRepository repo, IWorkoutReminderService reminders,
-        IHomeWorkoutBridge homeWorkoutBridge)
+        IHomeWorkoutBridge homeWorkoutBridge, IPendingExerciseBridge pendingExerciseBridge)
     {
         _session = session;
         _repo = repo;
         _reminders = reminders;
         _homeWorkoutBridge = homeWorkoutBridge;
+        _pendingExerciseBridge = pendingExerciseBridge;
         Reminder = new RoutineReminderEditorViewModel(reminders);
     }
 
     partial void OnSelectedCategoryChanged(string value) => RebuildAvailableExercises();
+
+    /// <summary>Picking the "+ Add custom exercise…" row pushes the exercise editor instead of adding anything — resets the picker so that row doesn't linger as "selected" while the member is away.</summary>
+    partial void OnSelectedExerciseToAddChanged(ExercisePickerOption? value)
+    {
+        if (value is null || value.Id != AddCustomExerciseSentinelId) return;
+        SelectedExerciseToAdd = null;
+        _ = Shell.Current.GoToAsync("exerciseEditor");
+    }
 
     private static string CategoryLabel(ExerciseCategory c) => c switch
     {
@@ -90,7 +103,35 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             var kind = e.IsVibrationPlate ? SessionRowKind.Vibration : e.IsCardio ? SessionRowKind.Cardio : SessionRowKind.Standard;
             AvailableExercises.Add(new ExercisePickerOption(e.Id, e.Name, e.Equipment is ExerciseEquipment.BowflexMachine or ExerciseEquipment.Kettlebell, kind));
         }
+        AvailableExercises.Add(new ExercisePickerOption(AddCustomExerciseSentinelId, "+ Add custom exercise…", false, SessionRowKind.Standard));
         SelectedExerciseToAdd = AvailableExercises.FirstOrDefault(o => o.Id == previousSelection);
+    }
+
+    /// <summary>
+    /// Called instead of LoadAsync when StandardBuilderPage reappears after
+    /// pushing "exerciseEditor" for the picker's "+ Add custom exercise…" row
+    /// (see StandardBuilderPage.xaml.cs) — LoadAsync would re-fetch and
+    /// overwrite the in-progress routine (name, added exercises, schedule
+    /// days, reminder), which is exactly what this flow must preserve. Only
+    /// refreshes the exercise list and auto-selects the exercise the member
+    /// just created; a no-op if nothing was actually created (e.g. the member
+    /// cancelled, or this page reappeared for some other reason).
+    /// </summary>
+    public async Task RefreshAfterReturnAsync()
+    {
+        var pendingId = _pendingExerciseBridge.ConsumePendingExerciseId();
+        if (pendingId is null) return;
+
+        var account = _session.ActiveAccount;
+        var member = _session.ActiveMember;
+        if (account is null || member is null) return;
+
+        _shared = await _repo.GetSharedLibraryAsync(account.Id);
+        _allExercises = _shared.Exercises.Concat(_manufacturer.Exercises)
+            .Where(e => e.Visibility == Visibility.Manufacturer || e.OwnerMemberId == member.Id || e.Visibility == Visibility.Account)
+            .ToList();
+        RebuildAvailableExercises();
+        SelectedExerciseToAdd = AvailableExercises.FirstOrDefault(o => o.Id == pendingId);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
