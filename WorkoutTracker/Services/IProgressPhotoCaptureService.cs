@@ -1,3 +1,4 @@
+using Microsoft.Maui.ApplicationModel;
 using SkiaSharp;
 
 namespace WorkoutTracker.Services;
@@ -39,6 +40,23 @@ public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
         {
             if (choice == "Take Photo")
             {
+                // Requesting this ourselves first (rather than letting
+                // CapturePhotoAsync's own internal check run first) is
+                // deliberate: on some devices/Android versions, granting the
+                // OS prompt that CapturePhotoAsync triggers internally still
+                // leaves it throwing PermissionException on the very next
+                // call because its own status check reads a stale snapshot —
+                // confirmed on a real Galaxy A11 (Android 10), where the
+                // system Settings page already showed Camera as granted but
+                // "Take Photo" kept failing with the permission error
+                // regardless. Requesting up front, ourselves, sidesteps that.
+                var status = await Permissions.RequestAsync<Permissions.Camera>();
+                if (status != PermissionStatus.Granted)
+                {
+                    await page.DisplayAlertAsync("Permission needed",
+                        "Camera permission is required to take a photo. If you've already granted it in Settings, try fully closing and reopening the app.", "OK");
+                    return null;
+                }
                 result = await MediaPicker.Default.CapturePhotoAsync();
             }
             else
@@ -64,13 +82,68 @@ public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
         if (result is null) return null;
 
         await using var sourceStream = await result.OpenReadAsync();
-        using var original = SKBitmap.Decode(sourceStream);
+        using var codec = SKCodec.Create(sourceStream);
+        using var original = codec is null ? SKBitmap.Decode(sourceStream) : SKBitmap.Decode(codec);
         if (original is null) return null;
 
-        using var resized = ResizeToLongestEdge(original, MaxLongestEdge);
+        // Camera/gallery images commonly carry an EXIF orientation tag rather
+        // than storing pixels upright — SKBitmap.Decode ignores it, which is
+        // why an unrotated capture showed up sideways (confirmed on a real
+        // device: a photo taken in portrait rendered rotated 90°).
+        using var oriented = codec is null ? original.Copy() : ApplyExifOrientation(original, codec.EncodedOrigin);
+
+        using var resized = ResizeToLongestEdge(oriented, MaxLongestEdge);
         using var image = SKImage.FromBitmap(resized);
         using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, JpegQuality);
         return encoded.ToArray();
+    }
+
+    /// <summary>Redraws the decoded bitmap upright per its EXIF orientation tag. A no-op copy for the common TopLeft (already-upright) case.</summary>
+    private static SKBitmap ApplyExifOrientation(SKBitmap bitmap, SKEncodedOrigin origin)
+    {
+        if (origin == SKEncodedOrigin.TopLeft) return bitmap.Copy();
+
+        var swapsDimensions = origin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var result = new SKBitmap(swapsDimensions ? height : width, swapsDimensions ? width : height);
+
+        using var canvas = new SKCanvas(result);
+        switch (origin)
+        {
+            case SKEncodedOrigin.TopRight: // mirrored horizontally
+                canvas.Translate(width, 0);
+                canvas.Scale(-1, 1);
+                break;
+            case SKEncodedOrigin.BottomRight: // upside down
+                canvas.Translate(width, height);
+                canvas.RotateDegrees(180);
+                break;
+            case SKEncodedOrigin.BottomLeft: // mirrored vertically
+                canvas.Translate(0, height);
+                canvas.Scale(1, -1);
+                break;
+            case SKEncodedOrigin.LeftTop: // mirrored + rotated 90° CW
+                canvas.RotateDegrees(90);
+                canvas.Scale(1, -1);
+                break;
+            case SKEncodedOrigin.RightTop: // rotated 90° CW — the common "portrait photo" case
+                canvas.Translate(height, 0);
+                canvas.RotateDegrees(90);
+                break;
+            case SKEncodedOrigin.RightBottom: // mirrored + rotated 90° CCW
+                canvas.Translate(height, width);
+                canvas.RotateDegrees(90);
+                canvas.Scale(-1, 1);
+                break;
+            case SKEncodedOrigin.LeftBottom: // rotated 90° CCW
+                canvas.Translate(0, width);
+                canvas.RotateDegrees(-90);
+                break;
+        }
+        canvas.DrawBitmap(bitmap, 0, 0);
+        return result;
     }
 
     private static SKBitmap ResizeToLongestEdge(SKBitmap source, int maxLongestEdge)
