@@ -226,7 +226,9 @@
          card would make that lettering disappear — this pins the background so
          the logo stays legible in both themes. -->
     <Style x:Key="LogoCardBorder" TargetType="Border" BasedOn="{StaticResource CardBorder}">
-        <Setter Property="Background" Value="#06233C" />
+        <Setter Property="Background">
+            <SolidColorBrush Color="#06233C" />
+        </Setter>
     </Style>
 
     <!-- .addItem — deliberately NOT CardBorder: an accent-outlined, unfilled
