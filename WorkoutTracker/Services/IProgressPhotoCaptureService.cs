@@ -15,8 +15,10 @@ public interface IProgressPhotoCaptureService
     /// resizes+compresses the result. Returns null if the user cancels, the
     /// platform doesn't support the chosen option, or permission is denied —
     /// caller shows its own message (mirrors ExerciseEditorViewModel.AddPhoto's
-    /// exception handling, reused verbatim here).</summary>
-    Task<byte[]?> CaptureAsync();
+    /// exception handling, reused verbatim here). <paramref name="title"/> lets
+    /// callers other than Measurements (e.g. a profile-picture picker) show
+    /// wording that actually matches what's being captured.</summary>
+    Task<byte[]?> CaptureAsync(string title = "Add Progress Photo");
 }
 
 public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
@@ -24,12 +26,12 @@ public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
     private const int MaxLongestEdge = 1200;
     private const int JpegQuality = 80;
 
-    public async Task<byte[]?> CaptureAsync()
+    public async Task<byte[]?> CaptureAsync(string title = "Add Progress Photo")
     {
         var page = Shell.Current?.CurrentPage;
         if (page is null) return null;
 
-        var choice = await page.DisplayActionSheetAsync("Add Progress Photo", "Cancel", null, "Take Photo", "Choose from Library");
+        var choice = await page.DisplayActionSheetAsync(title, "Cancel", null, "Take Photo", "Choose from Library");
         if (choice is null || choice == "Cancel") return null;
 
         FileResult? result;

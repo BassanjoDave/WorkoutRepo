@@ -34,6 +34,9 @@ public enum SessionStatus { InProgress, Completed }
 
 public enum ExerciseEquipment { BowflexMachine, Bodyweight, Kettlebell, VibrationPlate, Stretch, CardioMachine, Custom, Dumbbell, Barbell, WeightBench, ResistanceBand }
 
+/// <summary>Whether a member's avatar renders their uploaded photo or falls back to the initial-letter circle. Never Photo while Member.AvatarPhotoBlobFileName is null.</summary>
+public enum AvatarDisplay { Initial, Photo }
+
 public enum ExerciseCategory { Chest, Shoulders, Back, Arms, Abs, Legs, FullBody, Cardio, VibrationPlate }
 
 /// <summary>The folder-tree grouping used by the Library's equipment preferences screen.</summary>

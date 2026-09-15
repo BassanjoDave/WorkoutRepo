@@ -26,6 +26,8 @@ public partial class HomeViewModel : ObservableObject
 
     [ObservableProperty] public partial string ActiveMemberInitial { get; set; } = "";
     [ObservableProperty] public partial Color ActiveMemberColor { get; set; } = Colors.Gray;
+    [ObservableProperty] public partial bool ActiveMemberUsesPhoto { get; set; }
+    [ObservableProperty] public partial ImageSource? ActiveMemberPhoto { get; set; }
     [ObservableProperty] public partial ObservableCollection<WeekDayCellViewModel> WeekStrip { get; set; } = new();
     [ObservableProperty] public partial bool IsRestDay { get; set; }
     [ObservableProperty] public partial bool IsExerciseEnabled { get; set; } = true;
@@ -95,6 +97,16 @@ public partial class HomeViewModel : ObservableObject
 
         ActiveMemberInitial = member.Initial;
         ActiveMemberColor = Color.FromArgb(member.AvatarColor);
+        ActiveMemberUsesPhoto = member.AvatarDisplay == AvatarDisplay.Photo && member.AvatarPhotoBlobFileName is not null;
+        if (ActiveMemberUsesPhoto)
+        {
+            var blobFileName = member.AvatarPhotoBlobFileName!;
+            ActiveMemberPhoto = ImageSource.FromStream(async _ =>
+            {
+                var bytes = await _repo.GetProgressPhotoBlobAsync(account.Id, member.Id, blobFileName);
+                return bytes is null ? null : new MemoryStream(bytes);
+            });
+        }
 
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _shared = await _repo.GetSharedLibraryAsync(account.Id);

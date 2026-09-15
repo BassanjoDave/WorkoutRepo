@@ -12,7 +12,7 @@ namespace WorkoutTracker.Services;
 public static class ThemeSettings
 {
     private const string PreferenceKey = "SelectedTheme";
-    public const string DefaultTheme = "Dark";
+    public const string DefaultTheme = "Light";
 
     public static readonly (string Id, string DisplayName)[] Available =
     {

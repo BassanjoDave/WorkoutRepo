@@ -19,6 +19,8 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] public partial string ActiveMemberName { get; set; } = "";
     [ObservableProperty] public partial string ActiveMemberInitial { get; set; } = "";
     [ObservableProperty] public partial Color ActiveMemberColor { get; set; } = Colors.Gray;
+    [ObservableProperty] public partial bool ActiveMemberUsesPhoto { get; set; }
+    [ObservableProperty] public partial ImageSource? ActiveMemberPhoto { get; set; }
     [ObservableProperty] public partial bool IsLbs { get; set; } = true;
     [ObservableProperty] public partial bool CanManageMembers { get; set; }
     /// <summary>True when the active member still has DeviceAuthMode.None — shows a
@@ -62,6 +64,16 @@ public partial class ProfileViewModel : ObservableObject
         ActiveMemberName = member.DisplayName;
         ActiveMemberInitial = member.Initial;
         ActiveMemberColor = Color.FromArgb(member.AvatarColor);
+        ActiveMemberUsesPhoto = member.AvatarDisplay == AvatarDisplay.Photo && member.AvatarPhotoBlobFileName is not null;
+        if (ActiveMemberUsesPhoto)
+        {
+            var blobFileName = member.AvatarPhotoBlobFileName!;
+            ActiveMemberPhoto = ImageSource.FromStream(async _ =>
+            {
+                var bytes = await _repo.GetProgressPhotoBlobAsync(account.Id, member.Id, blobFileName);
+                return bytes is null ? null : new MemoryStream(bytes);
+            });
+        }
         CanManageMembers = member.EffectiveCapabilities().ManageMembers;
         IsPrimaryHolder = member.Id == account.PrimaryHolderMemberId;
         NeedsPinSetup = member.DeviceAuthMode == DeviceAuthMode.None;

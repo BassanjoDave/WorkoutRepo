@@ -12,9 +12,28 @@
             <Border StrokeShape="RoundRectangle 36" Stroke="Transparent"
                     BackgroundColor="{Binding SelectedColor, Converter={StaticResource HexToColorConverter}}"
                     WidthRequest="72" HeightRequest="72" Padding="0" HorizontalOptions="Center">
-                <Label Text="{Binding PreviewInitial}" Style="{StaticResource HeadingLabel}"
-                       TextColor="{StaticResource ColorBg}" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
+                <Grid>
+                    <Label Text="{Binding PreviewInitial}" Style="{StaticResource HeadingLabel}"
+                           TextColor="{StaticResource ColorBg}" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center"
+                           IsVisible="{Binding UsePhotoAvatar, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Image Source="{Binding PhotoPreview}" Aspect="AspectFill" IsVisible="{Binding UsePhotoAvatar}" />
+                </Grid>
             </Border>
+
+            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Button Text="+ Add Photo" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding AddPhotoCommand}"
+                            IsVisible="{Binding HasPhoto, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Button Text="Change Photo" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding AddPhotoCommand}"
+                            IsVisible="{Binding HasPhoto}" />
+                    <Button Text="Remove Photo" Style="{StaticResource GhostButton}" FontSize="12"
+                            IsVisible="{Binding HasPhoto}" Command="{Binding RemovePhotoCommand}" />
+                </HorizontalStackLayout>
+                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasPhoto}" HorizontalOptions="Center">
+                    <Label Grid.Column="0" Text="Show photo instead of initial" FontSize="12" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding UsePhotoAvatar}" />
+                </Grid>
+            </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="4">
                 <Label Text="Name" Style="{StaticResource MetaLabel}" />

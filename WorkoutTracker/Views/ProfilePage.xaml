@@ -18,8 +18,12 @@
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenEditProfileCommand}" />
                     </Border.GestureRecognizers>
-                    <Label Text="{Binding ActiveMemberInitial}" Style="{StaticResource HeadingLabel}"
-                           TextColor="{StaticResource ColorBg}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid>
+                        <Label Text="{Binding ActiveMemberInitial}" Style="{StaticResource HeadingLabel}"
+                               TextColor="{StaticResource ColorBg}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center"
+                               IsVisible="{Binding ActiveMemberUsesPhoto, Converter={StaticResource InvertedBoolConverter}}" />
+                        <Image Source="{Binding ActiveMemberPhoto}" Aspect="AspectFill" IsVisible="{Binding ActiveMemberUsesPhoto}" />
+                    </Grid>
                 </Border>
                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
                     <VerticalStackLayout.GestureRecognizers>

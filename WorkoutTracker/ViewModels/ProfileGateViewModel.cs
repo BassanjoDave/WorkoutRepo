@@ -233,7 +233,7 @@ public partial class ProfileGateViewModel : ObservableObject
             if (accountIndex is null) continue;
             foreach (var member in accountIndex.Members.Where(m => m.Status == MemberStatus.Active))
             {
-                members.Add(new MemberTileViewModel(accountId, member, SelectMemberCommand));
+                members.Add(new MemberTileViewModel(accountId, member, SelectMemberCommand, _repo));
             }
         }
         Members = members;
@@ -520,10 +520,12 @@ public class MemberTileViewModel
     public string Name { get; }
     public string Initial { get; }
     public Color AvatarColor { get; }
+    public bool UsesPhoto { get; }
+    public ImageSource? AvatarPhoto { get; }
     public DeviceAuthMode DeviceAuthMode { get; }
     public IRelayCommand<MemberTileViewModel> SelectCommand { get; }
 
-    public MemberTileViewModel(Guid accountId, Member member, IRelayCommand<MemberTileViewModel> selectCommand)
+    public MemberTileViewModel(Guid accountId, Member member, IRelayCommand<MemberTileViewModel> selectCommand, IWorkoutRepository repo)
     {
         AccountId = accountId;
         MemberId = member.Id;
@@ -532,5 +534,17 @@ public class MemberTileViewModel
         AvatarColor = Color.FromArgb(member.AvatarColor);
         DeviceAuthMode = member.DeviceAuthMode;
         SelectCommand = selectCommand;
+
+        UsesPhoto = member.AvatarDisplay == AvatarDisplay.Photo && member.AvatarPhotoBlobFileName is not null;
+        if (UsesPhoto)
+        {
+            var blobFileName = member.AvatarPhotoBlobFileName!;
+            var memberId = member.Id;
+            AvatarPhoto = ImageSource.FromStream(async _ =>
+            {
+                var bytes = await repo.GetProgressPhotoBlobAsync(accountId, memberId, blobFileName);
+                return bytes is null ? null : new MemoryStream(bytes);
+            });
+        }
     }
 }

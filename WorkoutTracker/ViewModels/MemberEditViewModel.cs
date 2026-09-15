@@ -25,12 +25,19 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     private readonly IMemberPinService _pins;
     private readonly IMemberAuthGateService _authGate;
     private readonly RemoteApiWorkoutRepository _remoteApi;
+    private readonly IProgressPhotoCaptureService _photoCapture;
 
     private bool _isNew;
     private Guid? _memberId;
     private AccountIndex? _accountIndex;
     private bool _isLoadingAuthMode;
     private DeviceAuthMode _lastAppliedAuthMode = DeviceAuthMode.None;
+
+    /// <summary>The blob filename already saved on the member being edited, if any — used to know what to delete when a new photo replaces it or Remove Photo is used.</summary>
+    private string? _existingPhotoBlobFileName;
+    /// <summary>A newly captured photo not yet persisted — Save() writes it to the blob store and only then assigns Member.AvatarPhotoBlobFileName.</summary>
+    private byte[]? _pendingPhotoBytes;
+    private bool _photoRemoved;
 
     /// <summary>Holds a not-yet-saved member's PIN/DeviceAuthMode while _isNew — there's
     /// no row in _accountIndex.Members to attach it to until Save() succeeds, but the
@@ -56,6 +63,10 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     /// binding converter in use elsewhere for this.</summary>
     public string PreviewInitial => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[..1].ToUpperInvariant();
     partial void OnNameChanged(string value) => OnPropertyChanged(nameof(PreviewInitial));
+
+    [ObservableProperty] public partial bool HasPhoto { get; set; }
+    [ObservableProperty] public partial bool UsePhotoAvatar { get; set; }
+    [ObservableProperty] public partial ImageSource? PhotoPreview { get; set; }
     [ObservableProperty] public partial DateTime DateOfBirth { get; set; } = DateTime.Today.AddYears(-10);
     [ObservableProperty] public partial bool HasDateOfBirth { get; set; }
     [ObservableProperty] public partial RolePreset SelectedRole { get; set; } = RolePreset.Adult;
@@ -122,7 +133,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
 
     public MemberEditViewModel(IActiveSessionService session, IWorkoutRepository repo, ISeatAvailabilityService seats,
         IGoogleAuthService googleAuth, IFirebaseAuthService firebaseAuth, IIdentityService identity, IMemberPinService pins,
-        IMemberAuthGateService authGate, RemoteApiWorkoutRepository remoteApi)
+        IMemberAuthGateService authGate, RemoteApiWorkoutRepository remoteApi, IProgressPhotoCaptureService photoCapture)
     {
         _session = session;
         _repo = repo;
@@ -133,6 +144,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         _pins = pins;
         _authGate = authGate;
         _remoteApi = remoteApi;
+        _photoCapture = photoCapture;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -228,6 +240,64 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         if (await _authGate.PromptAndSetPinAsync(member) && !_isNew) await _repo.SaveAccountIndexAsync(_accountIndex);
     }
 
+    /// <summary>Captures a photo but doesn't persist it — Save() writes the blob and assigns it to the Member, mirroring every other field on this page staying staged until Save.</summary>
+    [RelayCommand]
+    private async Task AddPhoto()
+    {
+        var bytes = await _photoCapture.CaptureAsync("Add Profile Photo");
+        if (bytes is null) return;
+
+        _pendingPhotoBytes = bytes;
+        _photoRemoved = false;
+        PhotoPreview = ImageSource.FromStream(_ => Task.FromResult<Stream>(new MemoryStream(bytes)));
+        HasPhoto = true;
+        UsePhotoAvatar = true;
+    }
+
+    [RelayCommand]
+    private void RemovePhoto()
+    {
+        _pendingPhotoBytes = null;
+        _photoRemoved = true;
+        PhotoPreview = null;
+        HasPhoto = false;
+        UsePhotoAvatar = false;
+    }
+
+    /// <summary>
+    /// Applies whatever photo action was staged (capture, removal, or just a
+    /// preference flip) to the given Member — shared by both Save() branches
+    /// since a photo can be added while creating a new member too. Must run
+    /// before SaveAccountIndexAsync since it sets AvatarPhotoBlobFileName/
+    /// AvatarDisplay on the Member that call persists.
+    /// </summary>
+    private async Task ApplyPhotoAsync(Member member, Guid accountId)
+    {
+        if (_pendingPhotoBytes is byte[] bytes)
+        {
+            var newBlobFileName = $"{Guid.NewGuid()}.jpg";
+            await _repo.SaveProgressPhotoBlobAsync(accountId, member.Id, newBlobFileName, bytes);
+            if (_existingPhotoBlobFileName is string oldBlobFileName)
+            {
+                try { await _repo.DeleteProgressPhotoBlobAsync(accountId, member.Id, oldBlobFileName); }
+                catch { /* best-effort cleanup; an orphaned blob costs storage, not correctness */ }
+            }
+            member.AvatarPhotoBlobFileName = newBlobFileName;
+            member.AvatarDisplay = AvatarDisplay.Photo;
+        }
+        else if (_photoRemoved && _existingPhotoBlobFileName is string blobFileName)
+        {
+            try { await _repo.DeleteProgressPhotoBlobAsync(accountId, member.Id, blobFileName); }
+            catch { /* best-effort cleanup */ }
+            member.AvatarPhotoBlobFileName = null;
+            member.AvatarDisplay = AvatarDisplay.Initial;
+        }
+        else
+        {
+            member.AvatarDisplay = UsePhotoAvatar && member.AvatarPhotoBlobFileName is not null ? AvatarDisplay.Photo : AvatarDisplay.Initial;
+        }
+    }
+
     public async Task LoadAsync()
     {
         var account = _session.ActiveAccount;
@@ -269,6 +339,21 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
         Title = $"Edit {member.DisplayName}";
         Name = member.DisplayName;
         SelectedColor = member.AvatarColor;
+
+        _existingPhotoBlobFileName = member.AvatarPhotoBlobFileName;
+        HasPhoto = _existingPhotoBlobFileName is not null;
+        UsePhotoAvatar = member.AvatarDisplay == AvatarDisplay.Photo;
+        if (_existingPhotoBlobFileName is string blobFileName)
+        {
+            var photoAccountId = account.Id;
+            var photoMemberId = member.Id;
+            PhotoPreview = ImageSource.FromStream(async _ =>
+            {
+                var bytes = await _repo.GetProgressPhotoBlobAsync(photoAccountId, photoMemberId, blobFileName);
+                return bytes is null ? null : new MemoryStream(bytes);
+            });
+        }
+
         if (member.DateOfBirth is DateOnly dob)
         {
             HasDateOfBirth = true;
@@ -380,6 +465,7 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
                 DeviceAuthMode = _draftMember?.DeviceAuthMode ?? DeviceAuthMode.None,
                 PinHash = _draftMember?.PinHash,
             };
+            await ApplyPhotoAsync(newMember, _accountIndex.Account.Id);
             _accountIndex.Members.Add(newMember);
             await _repo.SaveAccountIndexAsync(_accountIndex);
             await _repo.SaveMemberDataAsync(_accountIndex.Account.Id, newMember.Id, new MemberData());
@@ -394,7 +480,19 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
             member.DateOfBirth = HasDateOfBirth ? DateOnly.FromDateTime(DateOfBirth) : null;
             member.RolePreset = SelectedRole;
             member.Overrides = BuildOverrides();
+            await ApplyPhotoAsync(member, _accountIndex.Account.Id);
             await _repo.SaveAccountIndexAsync(_accountIndex);
+
+            // Refresh IActiveSessionService's cached ActiveMember when it's the member
+            // just edited — otherwise Home/Profile keep rendering the pre-edit Initial/
+            // AvatarDisplay/photo for the rest of the app session, since ActiveMember is
+            // a separate in-memory reference from the AccountIndex fetched above. Mirrors
+            // DevSettingsViewModel.SaveEntitlements()'s identical re-select-after-save fix
+            // for the same underlying staleness (confirmed by testing there).
+            if (_session.ActiveMember?.Id == member.Id)
+            {
+                await _session.SelectMemberAsync(_accountIndex.Account.Id, member.Id);
+            }
         }
 
         await Shell.Current.GoToAsync("..");

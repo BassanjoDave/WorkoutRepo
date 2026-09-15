@@ -23,8 +23,12 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                     <Border Grid.Column="0" StrokeShape="RoundRectangle 20" Stroke="Transparent"
                                             BackgroundColor="{Binding AvatarColor}" WidthRequest="40" HeightRequest="40" Padding="0">
-                                        <Label Text="{Binding Initial}" TextColor="{StaticResource ColorBg}"
-                                               FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Grid>
+                                            <Label Text="{Binding Initial}" TextColor="{StaticResource ColorBg}"
+                                                   FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"
+                                                   IsVisible="{Binding UsesPhoto, Converter={StaticResource InvertedBoolConverter}}" />
+                                            <Image Source="{Binding AvatarPhoto}" Aspect="AspectFill" IsVisible="{Binding UsesPhoto}" />
+                                        </Grid>
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                         <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />

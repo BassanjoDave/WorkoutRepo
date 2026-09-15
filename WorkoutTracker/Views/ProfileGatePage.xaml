@@ -97,11 +97,15 @@
                         <Border StrokeShape="RoundRectangle 30" Stroke="Transparent"
                                 BackgroundColor="{Binding AvatarColor}"
                                 WidthRequest="60" HeightRequest="60">
-                            <Label Text="{Binding Initial}"
-                                   Style="{StaticResource HeadingLabel}"
-                                   TextColor="{StaticResource ColorBg}"
-                                   FontSize="22"
-                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                            <Grid>
+                                <Label Text="{Binding Initial}"
+                                       Style="{StaticResource HeadingLabel}"
+                                       TextColor="{StaticResource ColorBg}"
+                                       FontSize="22"
+                                       HorizontalOptions="Center" VerticalOptions="Center"
+                                       IsVisible="{Binding UsesPhoto, Converter={StaticResource InvertedBoolConverter}}" />
+                                <Image Source="{Binding AvatarPhoto}" Aspect="AspectFill" IsVisible="{Binding UsesPhoto}" />
+                            </Grid>
                         </Border>
                         <Label Text="{Binding Name}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorText}"
                                HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" WidthRequest="70" />

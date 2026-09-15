@@ -90,11 +90,25 @@ public partial class ManageMembersViewModel : ObservableObject
         var members = new ObservableCollection<MemberRowViewModel>();
         foreach (var m in _accountIndex.Members.Where(m => m.Status == MemberStatus.Active))
         {
+            var usesPhoto = m.AvatarDisplay == AvatarDisplay.Photo && m.AvatarPhotoBlobFileName is not null;
+            ImageSource? avatarPhoto = null;
+            if (usesPhoto)
+            {
+                var blobFileName = m.AvatarPhotoBlobFileName!;
+                var photoMemberId = m.Id;
+                avatarPhoto = ImageSource.FromStream(async _ =>
+                {
+                    var bytes = await _repo.GetProgressPhotoBlobAsync(account.Id, photoMemberId, blobFileName);
+                    return bytes is null ? null : new MemoryStream(bytes);
+                });
+            }
             members.Add(new MemberRowViewModel(
                 m.Id,
                 m.DisplayName,
                 m.Initial,
                 Color.FromArgb(m.AvatarColor),
+                usesPhoto,
+                avatarPhoto,
                 m.RolePreset.ToString(),
                 isPrimaryHolder: m.Id == account.PrimaryHolderMemberId,
                 canManagePremiumSeats: canManagePremiumSeats,
@@ -318,6 +332,8 @@ public partial class MemberRowViewModel : ObservableObject
     public string Name { get; }
     public string Initial { get; }
     public Color AvatarColor { get; }
+    public bool UsesPhoto { get; }
+    public ImageSource? AvatarPhoto { get; }
     public string RoleLabel { get; }
     public bool IsPrimaryHolder { get; }
     public bool CanManagePremiumSeats { get; }
@@ -352,7 +368,7 @@ public partial class MemberRowViewModel : ObservableObject
     public IAsyncRelayCommand ViewPhotosCommand { get; }
     public IAsyncRelayCommand DeleteAccountCommand { get; }
 
-    public MemberRowViewModel(Guid id, string name, string initial, Color avatarColor, string roleLabel,
+    public MemberRowViewModel(Guid id, string name, string initial, Color avatarColor, bool usesPhoto, ImageSource? avatarPhoto, string roleLabel,
         bool isPrimaryHolder, bool canManagePremiumSeats, bool isPremium,
         bool showProgressPhotoControls, bool progressPhotosVisibleToHolder, bool hasLinkedIdentity,
         IAsyncRelayCommand editCommand, IAsyncRelayCommand removeCommand, IAsyncRelayCommand splitOffCommand,
@@ -363,6 +379,8 @@ public partial class MemberRowViewModel : ObservableObject
         Name = name;
         Initial = initial;
         AvatarColor = avatarColor;
+        UsesPhoto = usesPhoto;
+        AvatarPhoto = avatarPhoto;
         RoleLabel = roleLabel;
         IsPrimaryHolder = isPrimaryHolder;
         CanManagePremiumSeats = canManagePremiumSeats;

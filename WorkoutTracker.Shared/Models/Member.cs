@@ -16,6 +16,18 @@ public class Member
     public string DisplayName { get; set; } = "";
     public string AvatarColor { get; set; } = "";
     public string Initial { get; set; } = "";
+
+    /// <summary>
+    /// Filename of this member's uploaded avatar photo, stored via
+    /// IWorkoutRepository's progress-photo blob methods — there's no
+    /// dedicated "profile photo" storage server-side, just a generic
+    /// per-member photo blob keyed by filename, so this reuses it rather
+    /// than duplicating a byte-identical endpoint. Null = no photo uploaded.
+    /// </summary>
+    public string? AvatarPhotoBlobFileName { get; set; }
+
+    /// <summary>Never Photo while AvatarPhotoBlobFileName is null.</summary>
+    public AvatarDisplay AvatarDisplay { get; set; } = AvatarDisplay.Initial;
     public DateOnly? DateOfBirth { get; set; }
     public MemberStatus Status { get; set; } = MemberStatus.Active;
     public RolePreset RolePreset { get; set; } = RolePreset.Adult;
