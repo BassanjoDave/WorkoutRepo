@@ -104,7 +104,7 @@
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardBorder}">
+            <Border Style="{StaticResource AddItemBorder}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Add exercise" Style="{StaticResource MetaLabel}" />
                     <Label Text="Category" Style="{StaticResource MetaLabel}" FontSize="10" />

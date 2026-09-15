@@ -8,7 +8,7 @@
 
         <!-- App header — the app logo, shown once per page above the tab row (not
              repeated inside each page's own banner — see HomePage.xaml's comment). -->
-        <Border Style="{StaticResource CardBorder}" Padding="10" HorizontalOptions="Fill">
+        <Border Style="{StaticResource LogoCardBorder}" Padding="10" HorizontalOptions="Fill">
             <Image Source="logo.png" HeightRequest="40" Aspect="AspectFit" HorizontalOptions="Fill" />
         </Border>
 

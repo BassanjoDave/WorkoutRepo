@@ -220,6 +220,28 @@
         <Setter Property="Padding" Value="18" />
     </Style>
 
+    <!-- .logoCard — same shape as CardBorder, but a fixed navy background rather
+         than the theme's surface color. The RIG RITUAL wordmark artwork has
+         white lettering baked in, so a theme-following (light-in-Light-theme)
+         card would make that lettering disappear — this pins the background so
+         the logo stays legible in both themes. -->
+    <Style x:Key="LogoCardBorder" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+        <Setter Property="Background" Value="#06233C" />
+    </Style>
+
+    <!-- .addItem — deliberately NOT CardBorder: an accent-outlined, unfilled
+         area (page background, not the raised card surface) so an "add
+         something new" picker/action zone reads as distinct from an actual
+         content card sitting right next to it (e.g. an already-added
+         exercise row in the Workout Builder). -->
+    <Style x:Key="AddItemBorder" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+        <Setter Property="StrokeThickness" Value="1.5" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+
     <!-- ══════════ Inputs — Entry has no border of its own; wrap it in this Border ══════════ -->
 
     <Style TargetType="Entry">
