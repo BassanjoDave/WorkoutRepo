@@ -57,6 +57,13 @@ public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
                         "Camera permission is required to take a photo. If you've already granted it in Settings, try fully closing and reopening the app.", "OK");
                     return null;
                 }
+
+                // Requesting permission right after the action sheet closes can
+                // race the sheet's own dismissal — the Activity reference the
+                // request resolves against can be mid-transition. A short delay
+                // here is a known mitigation for exactly the "already granted
+                // but still throws" symptom this is working around.
+                await Task.Delay(250);
                 result = await MediaPicker.Default.CapturePhotoAsync();
             }
             else
@@ -74,9 +81,16 @@ public class ProgressPhotoCaptureService : IProgressPhotoCaptureService
             await page.DisplayAlertAsync("Not supported", "This device doesn't support that option.", "OK");
             return null;
         }
-        catch (PermissionException)
+        catch (PermissionException ex)
         {
-            await page.DisplayAlertAsync("Permission needed", "Camera/Photos permission is required to add a progress photo.", "OK");
+            // Showing the raw exception message here (rather than a fixed
+            // string) is deliberate: this has fired on a real device even
+            // after both our own pre-check above and the device's own
+            // Settings page confirmed the permission was granted, so the
+            // generic wording alone gave no way to tell WHY MediaPicker
+            // still thinks it's denied. If this still reproduces, the
+            // message itself is the next diagnostic clue.
+            await page.DisplayAlertAsync("Permission needed", $"Camera/Photos permission is required to add a photo.\n\n{ex.Message}", "OK");
             return null;
         }
         if (result is null) return null;
