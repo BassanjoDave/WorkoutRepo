@@ -6,6 +6,11 @@
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+	<!-- Confirmed via a real Galaxy A11 (Android 10) exception: MediaPicker.CapturePhotoAsync
+	     throws "You need to declare ... android.permission.WRITE_EXTERNAL_STORAGE" without this,
+	     even with Camera permission granted — capped the same as READ_EXTERNAL_STORAGE since it's
+	     meaningless (and flagged by Play policy if undeclared-cap) on API 33+ scoped storage. -->
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 	<uses-permission android:name="android.permission.USE_BIOMETRIC" />
 	<uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>
