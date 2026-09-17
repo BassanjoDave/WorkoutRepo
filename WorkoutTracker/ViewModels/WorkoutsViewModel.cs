@@ -102,6 +102,7 @@ public partial class WorkoutsViewModel : ObservableObject
             OwnerNameSnapshot = _memberName,
             SourceRoutineId = source.Id,
             SourceNameSnapshot = source.OwnerNameSnapshot ?? source.Name,
+            SourceExerciseKeysSnapshot = RoutineNamingHelper.ExerciseKeysFor(source.Type, source.Exercises.Select(e => e.ExerciseId), source.Sections),
             Name = source.Name,
             Visibility = Visibility.Private,
             Type = source.Type,

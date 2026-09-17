@@ -422,6 +422,18 @@ public partial class MemberEditViewModel : ObservableObject, IQueryAttributable
     {
         if (_accountIndex is null || string.IsNullOrWhiteSpace(Name)) return;
 
+        // The "copy to mine" workout naming convention ("[member]'s [title]") relies
+        // on member names being unique within the account — otherwise two different
+        // "Dave"s could produce identically-named, indistinguishable workouts.
+        var trimmedName = Name.Trim();
+        var nameTaken = _accountIndex.Members.Any(m => m.Id != _memberId && string.Equals(m.DisplayName, trimmedName, StringComparison.OrdinalIgnoreCase));
+        if (nameTaken)
+        {
+            await Shell.Current.CurrentPage.DisplayAlertAsync("Name already used",
+                $"Another member of this account is already named \"{trimmedName}\". Choose a different name.", "OK");
+            return;
+        }
+
         // Every member needs a PIN/biometric before they're usable — otherwise
         // anyone with physical access to an already-unlocked device can switch
         // into them (or, for an admin-capable member, be switched OUT of into

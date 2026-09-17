@@ -6,48 +6,50 @@
              x:DataType="vm:DevSettingsViewModel"
              Title="Developer Settings">
 
-    <VerticalStackLayout Padding="18" Spacing="14">
-        <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
-                Command="{Binding BackCommand}" HorizontalOptions="Start" />
-        <Label Text="Remote API key (temporary — replaced by Google Sign-In later)" Style="{StaticResource MetaLabel}" />
-        <Border Style="{StaticResource InputBorder}">
-            <Entry Text="{Binding ApiKeyInput}" IsPassword="True" Placeholder="Paste API key" />
-        </Border>
-        <Button Text="Save Key" Style="{StaticResource SecondaryButton}" Command="{Binding SaveKeyCommand}" />
-        <Button Text="Test Remote Connection" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding TestConnectionCommand}" />
-        <Button Text="Force Sync Now" Style="{StaticResource SecondaryButton}" Command="{Binding ForceSyncCommand}" />
-        <Label Text="{Binding StatusMessage}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorText}" />
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+            <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
+                    Command="{Binding BackCommand}" HorizontalOptions="Start" />
+            <Label Text="Remote API key (temporary — replaced by Google Sign-In later)" Style="{StaticResource MetaLabel}" />
+            <Border Style="{StaticResource InputBorder}">
+                <Entry Text="{Binding ApiKeyInput}" IsPassword="True" Placeholder="Paste API key" />
+            </Border>
+            <Button Text="Save Key" Style="{StaticResource SecondaryButton}" Command="{Binding SaveKeyCommand}" />
+            <Button Text="Test Remote Connection" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding TestConnectionCommand}" />
+            <Button Text="Force Sync Now" Style="{StaticResource SecondaryButton}" Command="{Binding ForceSyncCommand}" />
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorText}" />
 
-        <Label Text="Entitlements (Stage 1 stand-in for real billing)" Style="{StaticResource MetaLabel}" />
-        <Border Style="{StaticResource CardBorder}">
-            <VerticalStackLayout Spacing="8">
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="No Ads" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding EntitlementNoAds}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="Nutrition" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding EntitlementNutrition}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="Stacks" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding EntitlementStacks}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="Measurements" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding EntitlementMeasurements}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="Full Access" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding EntitlementFullAccess}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="Premium seat count" VerticalOptions="Center" />
-                    <Entry Grid.Column="1" Text="{Binding PremiumSeatCountInput}" Keyboard="Numeric" WidthRequest="60" />
-                </Grid>
-                <Button Text="Save Entitlements" Style="{StaticResource SecondaryButton}" Command="{Binding SaveEntitlementsCommand}" />
-                <Label Text="{Binding EntitlementStatus}" Style="{StaticResource MetaLabel}" />
-            </VerticalStackLayout>
-        </Border>
-    </VerticalStackLayout>
+            <Label Text="Entitlements (Stage 1 stand-in for real billing)" Style="{StaticResource MetaLabel}" />
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="No Ads" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding EntitlementNoAds}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Nutrition" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding EntitlementNutrition}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Stacks" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding EntitlementStacks}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Measurements" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding EntitlementMeasurements}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Full Access" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding EntitlementFullAccess}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Premium seat count" VerticalOptions="Center" />
+                        <Entry Grid.Column="1" Text="{Binding PremiumSeatCountInput}" Keyboard="Numeric" WidthRequest="60" />
+                    </Grid>
+                    <Button Text="Save Entitlements" Style="{StaticResource SecondaryButton}" Command="{Binding SaveEntitlementsCommand}" />
+                    <Label Text="{Binding EntitlementStatus}" Style="{StaticResource MetaLabel}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

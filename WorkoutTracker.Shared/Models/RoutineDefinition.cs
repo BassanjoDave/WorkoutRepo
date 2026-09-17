@@ -16,6 +16,16 @@ public class RoutineDefinition
     public Guid? SourceRoutineId { get; set; }
     public string? SourceNameSnapshot { get; set; }
 
+    /// <summary>The source's exercise "identity" set (exercise ids for Standard,
+    /// Exercise-type section titles for HIIT) captured at fork time — see
+    /// RoutineNamingHelper. Non-null only while this fork still counts as
+    /// "the same workout, just my numbers": present from the moment a copy is
+    /// made, cleared the first time an exercise is actually added or removed,
+    /// at which point the fork is promoted to a fully independent custom
+    /// workout (auto-renamed to "[owner]'s [title]" if the name hasn't
+    /// already been changed away from the source's).</summary>
+    public List<string>? SourceExerciseKeysSnapshot { get; set; }
+
     public string Name { get; set; } = "";
     public Visibility Visibility { get; set; } = Visibility.Private;
     public RoutineType Type { get; set; } = RoutineType.Standard;
@@ -78,6 +88,34 @@ public class HiitSection
 /// reads as go regardless of light/dark mode) that the builder lets a member override
 /// per section (HiitBuilderViewModel.HiitSectionRowViewModel.SelectColorCommand).
 /// </summary>
+/// <summary>
+/// The "copy to mine" naming convention: a straight copy of a manufacturer or
+/// another member's routine displays under the source's own name (it's still
+/// considered that same workout, just with this member's numbers) until the
+/// member actually adds or removes an exercise, at which point it becomes
+/// their own custom workout and gets auto-renamed "[member]'s [title]" —
+/// unless they'd already renamed it away from the source's name themselves.
+/// </summary>
+public static class RoutineNamingHelper
+{
+    /// <summary>The exercise "identity" list to diff against — exercise ids for a
+    /// Standard routine, Exercise-type section titles for HIIT (HiitSection has
+    /// no exercise id of its own).</summary>
+    public static List<string> ExerciseKeysFor(RoutineType type, IEnumerable<Guid> standardExerciseIds, IEnumerable<HiitSection>? hiitSections) =>
+        type == RoutineType.Hiit
+            ? (hiitSections ?? Enumerable.Empty<HiitSection>()).Where(s => s.Type == "Exercise").Select(s => s.Title).ToList()
+            : standardExerciseIds.Select(id => id.ToString()).ToList();
+
+    public static bool HasDivergedFromSource(List<string>? sourceKeysSnapshot, IReadOnlyCollection<string> currentKeys) =>
+        sourceKeysSnapshot is not null && !sourceKeysSnapshot.ToHashSet().SetEquals(currentKeys);
+
+    public static string ApplyOwnerPrefix(string ownerName, string title)
+    {
+        var prefix = $"{ownerName}'s ";
+        return title.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? title : prefix + title;
+    }
+}
+
 public static class HiitSectionColors
 {
     public const string WarmUp = "#87CEFA";

@@ -160,13 +160,33 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             return;
         }
 
+        // A "copy to mine" fork still displays under the source's own name until
+        // an exercise is actually added or removed — see RoutineNamingHelper.
+        // Once that happens it's promoted to a fully independent custom workout:
+        // auto-renamed "[member]'s [title]" (unless already renamed away from
+        // the source's name) and no longer exempted from the uniqueness check below.
+        var currentKeys = RoutineNamingHelper.ExerciseKeysFor(RoutineType.Hiit, Enumerable.Empty<Guid>(), BuildSections());
+        var stillShadowingSource = existing?.SourceExerciseKeysSnapshot is not null;
+        if (stillShadowingSource && RoutineNamingHelper.HasDivergedFromSource(existing!.SourceExerciseKeysSnapshot, currentKeys))
+        {
+            if (string.Equals(trimmedName, existing.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                trimmedName = RoutineNamingHelper.ApplyOwnerPrefix(_memberName, trimmedName);
+                RoutineName = trimmedName;
+            }
+            existing.SourceExerciseKeysSnapshot = null;
+            stillShadowingSource = false;
+        }
+
         // Excludes the routine actually being overwritten in place, but NOT a
         // manufacturer routine being forked (existing is null then) — forking
         // into a same-named private copy would leave two identically-named
         // routines visible to this member, exactly the confusion this guards against.
+        // Also skipped while stillShadowingSource: matching the source's name on
+        // an unmodified copy is the intended behavior, not a collision.
         var others = _shared.Routines.Concat(_manufacturer.Routines)
             .Where(r => existing is null || r.Id != existing.Id).ToList();
-        if (others.Any(r => string.Equals(r.Name, trimmedName, StringComparison.OrdinalIgnoreCase)))
+        if (!stillShadowingSource && others.Any(r => string.Equals(r.Name, trimmedName, StringComparison.OrdinalIgnoreCase)))
         {
             var suggestion = SuggestUniqueName(trimmedName, others);
             var useSuggestion = await page.DisplayAlertAsync("Name already used",
@@ -174,6 +194,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
                 $"Use \"{suggestion}\"", "Let me rename it");
             if (!useSuggestion) return;
             RoutineName = suggestion;
+            trimmedName = suggestion;
         }
 
         var justThisOccurrence = false;
@@ -217,6 +238,14 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             return;
         }
 
+        // Same shadow-the-source naming rule as the Copy to Mine path above, applied
+        // to the other way a manufacturer routine gets forked: editing it directly
+        // from Home. Since this fork doesn't exist yet, there's no `existing` to
+        // carry a snapshot — the manufacturer original itself is the baseline.
+        Guid? manufacturerForkSourceId = null;
+        string? manufacturerForkSourceName = null;
+        List<string>? manufacturerForkSourceKeys = null;
+
         if (_isManufacturerFork)
         {
             // Move every one of this member's own schedule references from the
@@ -226,6 +255,26 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             // just-this-occurrence branch above already forks independently and
             // never reaches here, so this can't double up with it.)
             var oldId = _routineId;
+            var manufacturerSource = _manufacturer.Routines.FirstOrDefault(r => r.Id == oldId);
+            if (manufacturerSource is not null)
+            {
+                var sourceKeys = RoutineNamingHelper.ExerciseKeysFor(RoutineType.Hiit, Enumerable.Empty<Guid>(), manufacturerSource.Sections);
+                if (RoutineNamingHelper.HasDivergedFromSource(sourceKeys, currentKeys))
+                {
+                    if (string.Equals(trimmedName, manufacturerSource.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        trimmedName = RoutineNamingHelper.ApplyOwnerPrefix(_memberName, trimmedName);
+                        RoutineName = trimmedName;
+                    }
+                }
+                else
+                {
+                    manufacturerForkSourceId = manufacturerSource.Id;
+                    manufacturerForkSourceName = manufacturerSource.OwnerNameSnapshot ?? manufacturerSource.Name;
+                    manufacturerForkSourceKeys = sourceKeys;
+                }
+            }
+
             _routineId = Guid.NewGuid();
             foreach (var daySlots in _memberData.Schedule.Days.Values)
             {
@@ -236,7 +285,11 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
                 oneTime.RoutineId = _routineId;
         }
 
-        var routine = existing ?? new RoutineDefinition { Id = _routineId, AccountId = _accountId, OwnerMemberId = _memberId, OwnerNameSnapshot = _memberName };
+        var routine = existing ?? new RoutineDefinition
+        {
+            Id = _routineId, AccountId = _accountId, OwnerMemberId = _memberId, OwnerNameSnapshot = _memberName,
+            SourceRoutineId = manufacturerForkSourceId, SourceNameSnapshot = manufacturerForkSourceName, SourceExerciseKeysSnapshot = manufacturerForkSourceKeys,
+        };
         routine.Name = RoutineName.Trim();
         routine.Visibility = IsAccountShared ? Visibility.Account : Visibility.Private;
         routine.Type = RoutineType.Hiit;
