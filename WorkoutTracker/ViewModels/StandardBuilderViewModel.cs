@@ -278,6 +278,12 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         // the source's name) and no longer exempted from the uniqueness check below.
         var currentKeys = RoutineNamingHelper.ExerciseKeysFor(RoutineType.Standard, ExerciseRows.Select(r => r.ExerciseId), null);
         var stillShadowingSource = existing?.SourceExerciseKeysSnapshot is not null;
+        // TEMP DIAGNOSTIC — captured before any mutation below, surfaced in the
+        // "Name already used" alert if the naming-convention logic doesn't fire
+        // as expected. Remove once the reported bug (rename not applying) is found.
+        var namingDebug = $"[debug] hadSnapshot={stillShadowingSource}, snapshotCount={existing?.SourceExerciseKeysSnapshot?.Count.ToString() ?? "n/a"}, " +
+            $"currentCount={currentKeys.Count}, diverged={(stillShadowingSource && RoutineNamingHelper.HasDivergedFromSource(existing!.SourceExerciseKeysSnapshot, currentKeys))}, " +
+            $"existingName=\"{existing?.Name}\", trimmedName=\"{trimmedName}\"";
         if (stillShadowingSource && RoutineNamingHelper.HasDivergedFromSource(existing!.SourceExerciseKeysSnapshot, currentKeys))
         {
             if (string.Equals(trimmedName, existing.Name, StringComparison.OrdinalIgnoreCase))
@@ -301,7 +307,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         {
             var suggestion = SuggestUniqueName(trimmedName, others);
             var useSuggestion = await page.DisplayAlertAsync("Name already used",
-                $"A workout named \"{trimmedName}\" already exists. Use \"{suggestion}\" instead?",
+                $"A workout named \"{trimmedName}\" already exists. Use \"{suggestion}\" instead?\n\n{namingDebug}",
                 $"Use \"{suggestion}\"", "Let me rename it");
             if (!useSuggestion) return;
             RoutineName = suggestion;
