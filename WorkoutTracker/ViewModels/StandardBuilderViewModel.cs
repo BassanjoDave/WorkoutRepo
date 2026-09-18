@@ -43,12 +43,12 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     /// <summary>
     /// Set only when opened from a running session's Edit button — see
     /// SessionViewModel.EditWorkout. When present, Save asks whether the
-    /// change applies to just this date/slot (forks a private copy and
+    /// change applies to just this date/time (forks a private copy and
     /// one-time-assigns it) or to every future occurrence (edits the shared
     /// routine as normal).
     /// </summary>
     private DateOnly? _occDate;
-    private Slot? _occSlot;
+    private TimeOnly? _occTime;
 
     // Field, not property, would silently break XAML binding — see HiitBuilderViewModel.SectionTypes.
     private static readonly string[] Categories =
@@ -61,7 +61,6 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     [ObservableProperty] public partial string SelectedCategory { get; set; } = "All";
     [ObservableProperty] public partial ObservableCollection<ExercisePickerOption> AvailableExercises { get; set; } = new();
     [ObservableProperty] public partial ExercisePickerOption? SelectedExerciseToAdd { get; set; }
-    [ObservableProperty] public partial ObservableCollection<RoutineDayCellViewModel> DayCells { get; set; } = new();
 
     // Staged detail fields for the exercise about to be added — filled in here, in the
     // Add Exercise card itself, rather than only after it lands in the list below.
@@ -167,7 +166,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     {
         _editingRoutineId = query.TryGetValue("routineId", out var id) ? Guid.Parse((string)id) : null;
         _occDate = query.TryGetValue("occDate", out var od) ? DateOnly.Parse((string)od) : null;
-        _occSlot = query.TryGetValue("occSlot", out var os) ? Enum.Parse<Slot>((string)os) : null;
+        _occTime = query.TryGetValue("occTime", out var ot) ? TimeOnly.ParseExact((string)ot, "HH:mm") : null;
         _fromHome = query.TryGetValue("fromHome", out var fh) && (string)fh == "true";
     }
 
@@ -192,10 +191,9 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         RebuildAvailableExercises();
 
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
-        // Assigned now (not at Save time) so the day grid and the eventual
-        // routine share one id whether this is a fresh workout or an edit.
+        // Assigned now (not at Save time) so the schedule/reminder editor and the
+        // eventual routine share one id whether this is a fresh workout or an edit.
         _routineId = _editingRoutineId ?? Guid.NewGuid();
-        DayCells = new ObservableCollection<RoutineDayCellViewModel>(RoutineDayScheduleHelper.BuildCells(_memberData.Schedule, _routineId));
         Reminder.Load(_memberData, _routineId);
 
         if (_editingRoutineId is not Guid routineId) return;
@@ -385,14 +383,14 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         }
 
         var justThisOccurrence = false;
-        if (_occDate is not null && _occSlot is not null)
+        if (_occDate is not null && _occTime is not null)
         {
             justThisOccurrence = await page.DisplayAlertAsync("Save changes",
                 "Apply this change to just this occurrence, or to every future occurrence of this workout?",
                 "Just this occurrence", "All future occurrences");
         }
 
-        if (justThisOccurrence && _occDate is DateOnly occDate && _occSlot is Slot occSlot)
+        if (justThisOccurrence && _occDate is DateOnly occDate && _occTime is TimeOnly occTime)
         {
             var fork = new RoutineDefinition
             {
@@ -412,10 +410,10 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             await _repo.SaveSharedLibraryAsync(_accountId, _shared);
 
             // Replace any earlier one-time fork of this same original routine
-            // for this exact date/slot, but leave unrelated one-time workouts alone.
-            _memberData.Schedule.OneTimeOverrides.RemoveAll(o => o.Date == occDate && o.Slot == occSlot &&
+            // for this exact date/time, but leave unrelated one-time workouts alone.
+            _memberData.Schedule.OneTimeOverrides.RemoveAll(o => o.Date == occDate && o.Time == occTime &&
                 (o.RoutineId == _editingRoutineId || _shared.Routines.FirstOrDefault(r => r.Id == o.RoutineId)?.SourceRoutineId == _editingRoutineId));
-            _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = occDate, Slot = occSlot, RoutineId = fork.Id });
+            _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = occDate, Time = occTime, RoutineId = fork.Id });
             _memberData.Schedule.UpdatedAt = now;
             Reminder.ApplyTo(_memberData, fork.Id);
             await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
@@ -435,12 +433,12 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
 
         if (_isManufacturerFork)
         {
-            // Move every one of this member's own schedule references from the
-            // manufacturer routine's id to a fresh private id — ApplyCellsToSchedule
-            // below re-adds _routineId per the (unchanged) DayCells selection, so
-            // this only needs to strip the OLD id out from under it. (The
-            // just-this-occurrence branch above already forks independently and
-            // never reaches here, so this can't double up with it.)
+            // Move this member's own RoutineSchedule entry (if any) from the
+            // manufacturer routine's id to a fresh private id — Reminder.ApplyTo
+            // below writes it back under _routineId per the (unchanged) editor
+            // state, so this only needs to strip the OLD id's entry out from under
+            // it first. (The just-this-occurrence branch above already forks
+            // independently and never reaches here, so this can't double up with it.)
             var oldId = _routineId;
             var manufacturerSource = _manufacturer.Routines.FirstOrDefault(r => r.Id == oldId);
             if (manufacturerSource is not null)
@@ -463,11 +461,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             }
 
             _routineId = Guid.NewGuid();
-            foreach (var daySlots in _memberData.Schedule.Days.Values)
-            {
-                daySlots.Am.Remove(oldId);
-                daySlots.Pm.Remove(oldId);
-            }
+            _memberData.RoutineSchedules.Remove(oldId);
             foreach (var oneTime in _memberData.Schedule.OneTimeOverrides.Where(o => o.RoutineId == oldId))
                 oneTime.RoutineId = _routineId;
         }
@@ -487,7 +481,6 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         if (isNew) _shared.Routines.Add(routine);
         await _repo.SaveSharedLibraryAsync(_accountId, _shared);
 
-        RoutineDayScheduleHelper.ApplyCellsToSchedule(_memberData.Schedule, _routineId, DayCells);
         Reminder.ApplyTo(_memberData, _routineId);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
         await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);

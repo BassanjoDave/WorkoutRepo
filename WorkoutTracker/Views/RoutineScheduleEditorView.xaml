@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.RoutineScheduleEditorView"
+             x:DataType="vm:RoutineReminderEditorViewModel">
+
+    <ContentView.Resources>
+        <Style x:Key="RepeatChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+    </ContentView.Resources>
+
+    <VerticalStackLayout Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+            <Label Grid.Column="0" Text="SCHEDULE &amp; REMINDER" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+            <Switch Grid.Column="1" IsToggled="{Binding IsScheduled}" />
+        </Grid>
+        <Label Text="Not on a recurring schedule — still runnable any time from the Rituals list."
+               Style="{StaticResource MetaLabel}" FontSize="10"
+               IsVisible="{Binding IsScheduled, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <VerticalStackLayout Spacing="10" IsVisible="{Binding IsScheduled}">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Time" FontSize="13" VerticalOptions="Center" />
+                <TimePicker Grid.Column="1" Time="{Binding Time}" FontSize="13" />
+            </Grid>
+
+            <Label Text="Repeat" Style="{StaticResource MetaLabel}" FontSize="10" />
+            <HorizontalStackLayout Spacing="6">
+                <Border Style="{StaticResource RepeatChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetRepeatCommand}" CommandParameter="EveryDay" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding Repeat}" Value="EveryDay">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Every day" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Repeat}" Value="EveryDay">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Style="{StaticResource RepeatChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetRepeatCommand}" CommandParameter="EveryNDays" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding Repeat}" Value="EveryNDays">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Every N days" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Repeat}" Value="EveryNDays">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Style="{StaticResource RepeatChip}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetRepeatCommand}" CommandParameter="WeeklyOnDays" />
+                    </Border.GestureRecognizers>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding Repeat}" Value="WeeklyOnDays">
+                            <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="Weekly on days" FontSize="12">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Repeat}" Value="WeeklyOnDays">
+                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+            </HorizontalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsEveryNDays}">
+                <Label Grid.Column="0" Text="Every how many days?" FontSize="13" VerticalOptions="Center" />
+                <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                    <Entry Text="{Binding IntervalDays}" Keyboard="Numeric" FontSize="12" />
+                </Border>
+            </Grid>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsWeeklyOnDays}">
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding WeekdayChips}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WeekdayChipViewModel">
+                            <Border Style="{StaticResource RepeatChip}" Margin="0,0,6,6" Padding="10,6">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Label}" FontSize="11">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="Every how many weeks?" FontSize="13" VerticalOptions="Center" />
+                    <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                        <Entry Text="{Binding IntervalWeeks}" Keyboard="Numeric" FontSize="12" />
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Ends" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding HasEndDate}" />
+            </Grid>
+            <DatePicker Date="{Binding EndDate}" FontSize="13" IsVisible="{Binding HasEndDate}" />
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Remind me" FontSize="13" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding ReminderEnabled}" IsEnabled="{Binding MasterEnabled}" />
+            </Grid>
+            <Label Text="Reminders are turned off in Profile → Workout Reminders. This setting is saved but won't fire until you turn them back on."
+                   Style="{StaticResource MetaLabel}" FontSize="10"
+                   IsVisible="{Binding MasterEnabled, Converter={StaticResource InvertedBoolConverter}}" />
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding ReminderEnabled}" IsEnabled="{Binding MasterEnabled}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding SnoozeEnabled}" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding SnoozeEnabled}">
+                    <Label Grid.Column="0" Text="Snooze length (minutes)" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                    <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                        <Entry Text="{Binding SnoozeMinutes}" Keyboard="Numeric" FontSize="12" />
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

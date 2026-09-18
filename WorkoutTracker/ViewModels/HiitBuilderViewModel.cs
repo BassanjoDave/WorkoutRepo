@@ -30,7 +30,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
 
     /// <summary>Set only when opened from a running HIIT session's Edit button — see HiitPlayerViewModel.EditWorkout.</summary>
     private DateOnly? _occDate;
-    private Slot? _occSlot;
+    private TimeOnly? _occTime;
 
     // MAUI's XAML binding only resolves properties, not fields — this must
     // stay a property or the section-type Picker silently binds to nothing.
@@ -46,7 +46,6 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] public partial string NewSectionTitle { get; set; } = "";
     [ObservableProperty] public partial string NewSectionDescription { get; set; } = "";
     [ObservableProperty] public partial int NewSectionSeconds { get; set; } = 30;
-    [ObservableProperty] public partial ObservableCollection<RoutineDayCellViewModel> DayCells { get; set; } = new();
 
     public HiitBuilderViewModel(IActiveSessionService session, IWorkoutRepository repo, IWorkoutReminderService reminders,
         IHomeWorkoutBridge homeWorkoutBridge)
@@ -62,7 +61,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     {
         _editingRoutineId = query.TryGetValue("routineId", out var id) ? Guid.Parse((string)id) : null;
         _occDate = query.TryGetValue("occDate", out var od) ? DateOnly.Parse((string)od) : null;
-        _occSlot = query.TryGetValue("occSlot", out var os) ? Enum.Parse<Slot>((string)os) : null;
+        _occTime = query.TryGetValue("occTime", out var ot) ? TimeOnly.ParseExact((string)ot, "HH:mm") : null;
         _fromHome = query.TryGetValue("fromHome", out var fh) && (string)fh == "true";
     }
 
@@ -83,7 +82,6 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
         _manufacturer = await _repo.GetManufacturerLibraryAsync();
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _routineId = _editingRoutineId ?? Guid.NewGuid();
-        DayCells = new ObservableCollection<RoutineDayCellViewModel>(RoutineDayScheduleHelper.BuildCells(_memberData.Schedule, _routineId));
         Reminder.Load(_memberData, _routineId);
 
         if (_editingRoutineId is not Guid routineId) return;
@@ -206,14 +204,14 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
         }
 
         var justThisOccurrence = false;
-        if (_occDate is not null && _occSlot is not null)
+        if (_occDate is not null && _occTime is not null)
         {
             justThisOccurrence = await page.DisplayAlertAsync("Save changes",
                 "Apply this change to just this occurrence, or to every future occurrence of this workout?",
                 "Just this occurrence", "All future occurrences");
         }
 
-        if (justThisOccurrence && _occDate is DateOnly occDate && _occSlot is Slot occSlot)
+        if (justThisOccurrence && _occDate is DateOnly occDate && _occTime is TimeOnly occTime)
         {
             var fork = new RoutineDefinition
             {
@@ -234,9 +232,9 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             _shared.Routines.Add(fork);
             await _repo.SaveSharedLibraryAsync(_accountId, _shared);
 
-            _memberData.Schedule.OneTimeOverrides.RemoveAll(o => o.Date == occDate && o.Slot == occSlot &&
+            _memberData.Schedule.OneTimeOverrides.RemoveAll(o => o.Date == occDate && o.Time == occTime &&
                 (o.RoutineId == _editingRoutineId || _shared.Routines.FirstOrDefault(r => r.Id == o.RoutineId)?.SourceRoutineId == _editingRoutineId));
-            _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = occDate, Slot = occSlot, RoutineId = fork.Id });
+            _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = occDate, Time = occTime, RoutineId = fork.Id });
             _memberData.Schedule.UpdatedAt = now;
             Reminder.ApplyTo(_memberData, fork.Id);
             await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
@@ -256,12 +254,12 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
 
         if (_isManufacturerFork)
         {
-            // Move every one of this member's own schedule references from the
-            // manufacturer routine's id to a fresh private id — ApplyCellsToSchedule
-            // below re-adds _routineId per the (unchanged) DayCells selection, so
-            // this only needs to strip the OLD id out from under it. (The
-            // just-this-occurrence branch above already forks independently and
-            // never reaches here, so this can't double up with it.)
+            // Move this member's own RoutineSchedule entry (if any) from the
+            // manufacturer routine's id to a fresh private id — Reminder.ApplyTo
+            // below writes it back under _routineId per the (unchanged) editor
+            // state, so this only needs to strip the OLD id's entry out from under
+            // it first. (The just-this-occurrence branch above already forks
+            // independently and never reaches here, so this can't double up with it.)
             var oldId = _routineId;
             var manufacturerSource = _manufacturer.Routines.FirstOrDefault(r => r.Id == oldId);
             if (manufacturerSource is not null)
@@ -284,11 +282,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             }
 
             _routineId = Guid.NewGuid();
-            foreach (var daySlots in _memberData.Schedule.Days.Values)
-            {
-                daySlots.Am.Remove(oldId);
-                daySlots.Pm.Remove(oldId);
-            }
+            _memberData.RoutineSchedules.Remove(oldId);
             foreach (var oneTime in _memberData.Schedule.OneTimeOverrides.Where(o => o.RoutineId == oldId))
                 oneTime.RoutineId = _routineId;
         }
@@ -310,7 +304,6 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
         if (isNew) _shared.Routines.Add(routine);
         await _repo.SaveSharedLibraryAsync(_accountId, _shared);
 
-        RoutineDayScheduleHelper.ApplyCellsToSchedule(_memberData.Schedule, _routineId, DayCells);
         Reminder.ApplyTo(_memberData, _routineId);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
         await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);

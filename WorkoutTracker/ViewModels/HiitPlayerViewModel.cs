@@ -23,7 +23,7 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
     private readonly IHiitSoundService _sounds;
 
     private Guid _routineId;
-    private Slot _slot = Slot.Am;
+    private TimeOnly _time = new(7, 0);
     private DateOnly _date;
     private Guid _accountId;
     private Guid _memberId;
@@ -69,7 +69,7 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         _routineId = Guid.Parse((string)query["routineId"]);
-        _slot = query.TryGetValue("slot", out var s) ? Enum.Parse<Slot>((string)s) : Slot.Am;
+        _time = query.TryGetValue("time", out var t) ? TimeOnly.ParseExact((string)t, "HH:mm") : new TimeOnly(7, 0);
         _date = query.TryGetValue("date", out var d) ? DateOnly.Parse((string)d) : DateOnly.FromDateTime(DateTime.Today);
     }
 
@@ -292,7 +292,7 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
             RoutineDefinitionId = _routineId,
             RoutineNameSnapshot = _routineName,
             Date = _date,
-            Slot = _slot,
+            Time = _time,
             Status = SessionStatus.Completed,
             CompletedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -316,7 +316,7 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
         IsRunning = false;
         StartButtonLabel = "Resume";
         _timer?.Stop();
-        await Shell.Current.GoToAsync($"hiitBuilder?routineId={_routineId}&occDate={_date:yyyy-MM-dd}&occSlot={_slot}");
+        await Shell.Current.GoToAsync($"hiitBuilder?routineId={_routineId}&occDate={_date:yyyy-MM-dd}&occTime={_time:HH\\:mm}");
     }
 
     public void Dispose() => _timer?.Stop();

@@ -25,7 +25,10 @@ public partial class WorkoutsView : ContentView
     {
         if ((sender as Border)?.BindingContext is not RoutineRowViewModel routine) return;
         var route = routine.IsHiit ? "hiitPlayer" : "session";
-        await Shell.Current.GoToAsync($"{route}?routineId={routine.Id}&slot=Am");
+        // Starting a routine directly from the Rituals list (not from a scheduled
+        // Home slot) has no "assigned" time to carry over — use right now.
+        var now = TimeOnly.FromDateTime(DateTime.Now);
+        await Shell.Current.GoToAsync($"{route}?routineId={routine.Id}&time={now:HH\\:mm}");
     }
 
     private async void OnEditRoutineClicked(object? sender, EventArgs e)

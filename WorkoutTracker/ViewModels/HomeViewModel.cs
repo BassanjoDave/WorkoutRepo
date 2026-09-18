@@ -133,7 +133,7 @@ public partial class HomeViewModel : ObservableObject
         {
             var day = startOfWeek.AddDays(i);
             var dateOnly = DateOnly.FromDateTime(day);
-            var hasWorkout = ScheduleResolver.HasAnyWorkout(_memberData.Schedule, dateOnly);
+            var hasWorkout = ScheduleResolver.HasAnyWorkout(_memberData, dateOnly);
             var logged = completedDates.Contains(dateOnly);
             var isToday = dateOnly == _today;
             weekStrip.Add(new WeekDayCellViewModel(dateOnly, day.ToString("ddd")[..1].ToUpperInvariant(), isToday, hasWorkout, logged, SelectDayCommand));
@@ -202,7 +202,7 @@ public partial class HomeViewModel : ObservableObject
     private async Task ToggleCompleted(TodaySlotViewModel slot)
     {
         var existingSession = _memberData.Sessions.FirstOrDefault(s =>
-            s.RoutineDefinitionId == slot.RoutineId && s.Date == slot.Date && s.Slot == slot.Slot);
+            s.RoutineDefinitionId == slot.RoutineId && s.Date == slot.Date && s.Time == slot.Time);
 
         if (existingSession is { Status: SessionStatus.Completed })
         {
@@ -221,7 +221,7 @@ public partial class HomeViewModel : ObservableObject
                 RoutineDefinitionId = slot.RoutineId,
                 RoutineNameSnapshot = slot.Name,
                 Date = slot.Date,
-                Slot = slot.Slot,
+                Time = slot.Time,
                 Status = SessionStatus.Completed,
                 CompletedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
@@ -248,43 +248,37 @@ public partial class HomeViewModel : ObservableObject
             _shared.Exercises.FirstOrDefault(e => e.Id == id) ?? _manufacturer.Exercises.FirstOrDefault(e => e.Id == id);
 
         // Incomplete workouts first (so what's left to do is what you see first),
-        // earliest slot first within each group — AM naturally sorts before PM.
+        // earliest time first within that — ScheduleResolver already returns
+        // occurrences ordered by time.
         var built = new List<(bool IsCompleted, TodaySlotViewModel ViewModel)>();
-        foreach (var (slot, routineIds) in new[]
-                 {
-                     (Slot.Am, ScheduleResolver.RoutinesFor(_memberData.Schedule, date, Slot.Am, FindRoutine)),
-                     (Slot.Pm, ScheduleResolver.RoutinesFor(_memberData.Schedule, date, Slot.Pm, FindRoutine)),
-                 })
+        foreach (var (routineId, time) in ScheduleResolver.RoutinesFor(_memberData, date, FindRoutine))
         {
-            foreach (var routineId in routineIds)
+            var routine = FindRoutine(routineId);
+            if (routine is null) continue;
+
+            var exerciseNames = routine.Exercises.Select(e => FindExercise(e.ExerciseId)?.Name ?? "Exercise").ToList();
+            var existingSession = _memberData.Sessions.FirstOrDefault(s =>
+                s.RoutineDefinitionId == routineId && s.Date == date && s.Time == time);
+            var isCompleted = existingSession?.Status == SessionStatus.Completed;
+            var startLabel = existingSession switch
             {
-                var routine = FindRoutine(routineId);
-                if (routine is null) continue;
+                null => "Start",
+                { Status: SessionStatus.Completed } => "Completed",
+                _ => "Resume",
+            };
 
-                var exerciseNames = routine.Exercises.Select(e => FindExercise(e.ExerciseId)?.Name ?? "Exercise").ToList();
-                var existingSession = _memberData.Sessions.FirstOrDefault(s =>
-                    s.RoutineDefinitionId == routineId && s.Date == date && s.Slot == slot);
-                var isCompleted = existingSession?.Status == SessionStatus.Completed;
-                var startLabel = existingSession switch
-                {
-                    null => "Start",
-                    { Status: SessionStatus.Completed } => "Completed",
-                    _ => "Resume",
-                };
-
-                built.Add((isCompleted, new TodaySlotViewModel(
-                    routineId,
-                    date,
-                    slot,
-                    routine.Type == RoutineType.Hiit,
-                    slot == Slot.Am ? "AM" : "PM",
-                    routine.Name,
-                    $"{exerciseNames.Count} exercises",
-                    exerciseNames,
-                    startLabel,
-                    isCompleted,
-                    ToggleCompletedCommand)));
-            }
+            built.Add((isCompleted, new TodaySlotViewModel(
+                routineId,
+                date,
+                time,
+                routine.Type == RoutineType.Hiit,
+                time.ToString("h:mm tt"),
+                routine.Name,
+                $"{exerciseNames.Count} exercises",
+                exerciseNames,
+                startLabel,
+                isCompleted,
+                ToggleCompletedCommand)));
         }
 
         // Replacing the whole collection (rather than Clear() + Add() in place) avoids
@@ -292,7 +286,7 @@ public partial class HomeViewModel : ObservableObject
         // empty state crashes natively inside WinUI's own child-collection handling
         // (see the same fix in WorkoutsViewModel.Rebuild()).
         var todaySlots = new ObservableCollection<TodaySlotViewModel>();
-        foreach (var (_, slotVm) in built.OrderBy(t => t.IsCompleted).ThenBy(t => t.ViewModel.Slot))
+        foreach (var (_, slotVm) in built.OrderBy(t => t.IsCompleted).ThenBy(t => t.ViewModel.Time))
         {
             todaySlots.Add(slotVm);
         }
@@ -302,9 +296,10 @@ public partial class HomeViewModel : ObservableObject
 
     /// <summary>
     /// Offers every Standard/HIIT routine the member can see (plus an option to
-    /// create a new one on the spot if the one they want isn't listed yet), asks
-    /// AM or PM, then asks whether this is a one-time addition (just SelectedDate)
-    /// or a standing weekly assignment (every weekday-of-SelectedDate, that slot).
+    /// create a new one on the spot if the one they want isn't listed yet), then
+    /// asks whether this is a one-time addition (just SelectedDate, at a time
+    /// entered on the spot) or a recurring schedule (handed off to the routine's
+    /// own builder page, where the full time+recurrence editor lives).
     /// </summary>
     [RelayCommand]
     private async Task AddWorkout()
@@ -346,40 +341,43 @@ public partial class HomeViewModel : ObservableObject
         await AssignRoutineToScheduleAsync(page, routine);
     }
 
-    /// <summary>Asks AM/PM and one-time-vs-recurring for a specific routine already
-    /// chosen, then applies it to the schedule. Shared by AddWorkout's own picker and
-    /// the "add the workout you just created?" prompt after returning from a builder.</summary>
+    /// <summary>Asks one-time-vs-recurring for a specific routine already chosen. A
+    /// recurring schedule is handed off to the routine's own builder page — there's
+    /// exactly one place that edits a RoutineSchedule (time + recurrence + snooze),
+    /// not a second copy of that editor squeezed into an action sheet. A one-time
+    /// add stays a fast inline path: just a time, for just this date. Shared by
+    /// AddWorkout's own picker and the "add the workout you just created?" prompt
+    /// after returning from a builder.</summary>
     private async Task AssignRoutineToScheduleAsync(Page page, RoutineDefinition routine)
     {
-        var slotChoice = await page.DisplayActionSheetAsync("Add to which slot?", "Cancel", null, "AM", "PM");
-        if (slotChoice is null || slotChoice == "Cancel") return;
-        var slot = slotChoice == "AM" ? Slot.Am : Slot.Pm;
-
-        var weekday = (Weekday)SelectedDate.DayOfWeek;
         var dateLabel = IsSelectedToday ? "today" : SelectedDate.ToDateTime(TimeOnly.MinValue).ToString("MMM d");
-        var recurringLabel = $"Every {weekday} {(slot == Slot.Am ? "AM" : "PM")}";
+        var oneTimeLabel = $"Just {dateLabel}";
         var frequencyChoice = await page.DisplayActionSheetAsync(
-            "One-time, or every week?", "Cancel", null, $"Just {dateLabel}", recurringLabel);
+            "One-time, or does this recur?", "Cancel", null, oneTimeLabel, "Set up a recurring schedule…");
         if (frequencyChoice is null || frequencyChoice == "Cancel") return;
 
-        if (frequencyChoice == recurringLabel)
+        if (frequencyChoice != oneTimeLabel)
         {
-            if (!_memberData.Schedule.Days.TryGetValue(weekday, out var daySlots))
-            {
-                daySlots = new DaySlots();
-                _memberData.Schedule.Days[weekday] = daySlots;
-            }
-            var list = slot == Slot.Am ? daySlots.Am : daySlots.Pm;
-            if (!list.Contains(routine.Id)) list.Add(routine.Id);
+            var route = routine.Type == RoutineType.Hiit ? "hiitBuilder" : "standardBuilder";
+            await Shell.Current!.GoToAsync($"{route}?routineId={routine.Id}");
+            return;
         }
-        else
+
+        TimeOnly time;
+        while (true)
         {
-            _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = SelectedDate, Slot = slot, RoutineId = routine.Id });
+            var timeText = await page.DisplayPromptAsync("What time?",
+                $"Enter a time for {dateLabel} (e.g. 6:30 AM)", "Add", "Cancel", initialValue: "7:00 AM");
+            if (timeText is null) return; // cancelled
+            if (TimeOnly.TryParse(timeText, out time)) break;
+            await page.DisplayAlertAsync("Couldn't read that time", "Try a format like \"6:30 AM\" or \"18:30\".", "OK");
         }
+
+        _memberData.Schedule.OneTimeOverrides.Add(new OneTimeAssignment { Date = SelectedDate, Time = time, RoutineId = routine.Id });
         _memberData.Schedule.UpdatedAt = DateTimeOffset.UtcNow;
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
 
-        var hasWorkout = ScheduleResolver.HasAnyWorkout(_memberData.Schedule, SelectedDate);
+        var hasWorkout = ScheduleResolver.HasAnyWorkout(_memberData, SelectedDate);
         var cell = WeekStrip.FirstOrDefault(c => c.Date == SelectedDate);
         cell?.SetHasWorkout(hasWorkout);
         SelectDay(SelectedDate);
@@ -451,9 +449,9 @@ public partial class TodaySlotViewModel : ObservableObject
 {
     public Guid RoutineId { get; }
     public DateOnly Date { get; }
-    public Slot Slot { get; }
+    public TimeOnly Time { get; }
     public bool IsHiit { get; }
-    public string SlotLabel { get; }
+    public string TimeLabel { get; }
     public string Name { get; }
     public string CountLabel { get; }
     public List<string> Exercises { get; }
@@ -462,14 +460,14 @@ public partial class TodaySlotViewModel : ObservableObject
     [ObservableProperty] public partial string StartLabel { get; set; }
     [ObservableProperty] public partial bool IsCompleted { get; set; }
 
-    public TodaySlotViewModel(Guid routineId, DateOnly date, Slot slot, bool isHiit, string slotLabel, string name, string countLabel,
+    public TodaySlotViewModel(Guid routineId, DateOnly date, TimeOnly time, bool isHiit, string timeLabel, string name, string countLabel,
         List<string> exercises, string startLabel, bool isCompleted, IRelayCommand<TodaySlotViewModel> toggleCompletedCommand)
     {
         RoutineId = routineId;
         Date = date;
-        Slot = slot;
+        Time = time;
         IsHiit = isHiit;
-        SlotLabel = slotLabel;
+        TimeLabel = timeLabel;
         Name = name;
         CountLabel = countLabel;
         Exercises = exercises;

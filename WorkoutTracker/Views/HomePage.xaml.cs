@@ -95,7 +95,7 @@ public partial class HomePage : ContentPage
         if ((sender as Button)?.BindingContext is not TodaySlotViewModel slot) return;
         if (!await ConfirmIfNotTodayAsync()) return;
         var route = slot.IsHiit ? "hiitPlayer" : "session";
-        await Shell.Current.GoToAsync($"{route}?routineId={slot.RoutineId}&slot={slot.Slot}&date={_viewModel.SelectedDate:yyyy-MM-dd}");
+        await Shell.Current.GoToAsync($"{route}?routineId={slot.RoutineId}&time={slot.Time:HH\\:mm}&date={_viewModel.SelectedDate:yyyy-MM-dd}");
     }
 
     private async void OnEditClicked(object? sender, EventArgs e)

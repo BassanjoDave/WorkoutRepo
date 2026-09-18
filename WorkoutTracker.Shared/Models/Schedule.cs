@@ -2,37 +2,63 @@ namespace WorkoutTracker.Models;
 
 public enum Weekday { Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday }
 
-/// <summary>One member's weekly AM/PM routine assignments.</summary>
+/// <summary>One member's one-off (non-recurring) routine assignments — the recurring
+/// side lives on MemberData.RoutineSchedules now, keyed by routine rather than by day.</summary>
 public class Schedule
 {
     public Guid AccountId { get; set; }
     public Guid MemberId { get; set; }
-    public Dictionary<Weekday, DaySlots> Days { get; set; } = new();
 
     /// <summary>
-    /// Assignments that apply to one specific calendar date/slot only, taking
-    /// priority over the recurring Days entry for that weekday/slot when
+    /// Assignments that apply to one specific calendar date/time only, taking
+    /// priority over a routine's recurring RoutineSchedule for that date when
     /// present. Used for "just this one day" workouts added from Home, and
     /// for "just this occurrence" edits made mid-session (a forked routine
     /// assigned here instead of mutating the recurring routine everyone/every
-    /// week sees).
+    /// week sees) — see ScheduleResolver.RoutinesFor's SourceRoutineId check.
     /// </summary>
     public List<OneTimeAssignment> OneTimeOverrides { get; set; } = new();
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
-public class DaySlots
-{
-    public List<Guid> Am { get; set; } = new();
-    public List<Guid> Pm { get; set; } = new();
-}
-
 public class OneTimeAssignment
 {
     public DateOnly Date { get; set; }
-    public Slot Slot { get; set; }
+    public TimeOnly Time { get; set; }
     public Guid RoutineId { get; set; }
+}
+
+/// <summary>One member's personal recurrence + reminder for one routine — merges what
+/// used to be two loosely-linked things (an AM/PM day-of-week grid entry, and a
+/// separate reminder time) into one Outlook-style "time + recurrence + snooze"
+/// record. Presence in MemberData.RoutineSchedules means the routine recurs;
+/// absence means it's unscheduled (still runnable ad hoc from the Rituals list).
+/// Independent of who owns the routine definition — see MemberData.RoutineSchedules.</summary>
+public class RoutineSchedule
+{
+    public TimeOnly Time { get; set; } = new(7, 0);
+    public RecurrenceKind Kind { get; set; } = RecurrenceKind.WeeklyOnDays;
+
+    /// <summary>WeeklyOnDays only — which weekdays it recurs on.</summary>
+    public List<Weekday> Weekdays { get; set; } = new();
+
+    /// <summary>EveryNDays only — every N days (1 = every day).</summary>
+    public int IntervalDays { get; set; } = 1;
+
+    /// <summary>WeeklyOnDays only — every N weeks (1 = every week).</summary>
+    public int IntervalWeeks { get; set; } = 1;
+
+    /// <summary>Anchor date for interval math — set once when the schedule is created,
+    /// not normally re-edited afterward.</summary>
+    public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>Null means "no end" — recurs indefinitely.</summary>
+    public DateOnly? EndDate { get; set; }
+
+    public bool ReminderEnabled { get; set; } = true;
+    public bool SnoozeEnabled { get; set; } = true;
+    public int SnoozeMinutes { get; set; } = 10;
 }
 
 /// <summary>Per-member data bundle — the shape of one members/{memberId}.json document.</summary>
@@ -61,17 +87,17 @@ public class MemberData
     public ReminderSettings Reminders { get; set; } = new();
 
     /// <summary>
-    /// A member's own reminder for a routine they use, keyed by RoutineId —
-    /// independent of who owns the routine definition or which day/slot it's
-    /// scheduled under, and independent of the shared Reminders master switch.
-    /// Presence in this dictionary means "I've set up a reminder for this
-    /// routine"; absence means no reminder, regardless of Reminders.Enabled.
-    /// Turning the master switch off never removes these entries — it only
-    /// stops anything from actually being scheduled — so re-enabling it brings
-    /// every per-routine reminder straight back without the member re-entering
-    /// anything. See IWorkoutReminderService.
+    /// A member's own recurring schedule + reminder for a routine they use,
+    /// keyed by RoutineId — independent of who owns the routine definition,
+    /// and independent of the shared Reminders master switch. Presence means
+    /// "this routine recurs for me"; absence means it's unscheduled (still
+    /// runnable ad hoc). Turning the master switch off never removes these
+    /// entries — it only stops anything from actually notifying — so
+    /// re-enabling it brings every per-routine reminder straight back without
+    /// the member re-entering anything. See IWorkoutReminderService,
+    /// ScheduleResolver.
     /// </summary>
-    public Dictionary<Guid, RoutineReminderSettings> RoutineReminders { get; set; } = new();
+    public Dictionary<Guid, RoutineSchedule> RoutineSchedules { get; set; } = new();
 
     public List<LoggedMeal> Meals { get; set; } = new();
     public MacroGoals MacroGoals { get; set; } = new();
@@ -143,20 +169,10 @@ public class CustomMeasurementSlot
     public string Name { get; set; } = "";
 }
 
-/// <summary>Master on/off switch for every per-routine reminder — see IWorkoutReminderService and MemberData.RoutineReminders.</summary>
+/// <summary>Master on/off switch for every per-routine reminder — see IWorkoutReminderService and MemberData.RoutineSchedules.</summary>
 public class ReminderSettings
 {
     public bool Enabled { get; set; }
-}
-
-/// <summary>One member's personal reminder for one routine. See MemberData.RoutineReminders.</summary>
-public class RoutineReminderSettings
-{
-    public bool Enabled { get; set; } = true;
-    public TimeOnly ReminderTime { get; set; } = new(7, 0);
-    public bool RepeatWeekly { get; set; } = true;
-    public bool SnoozeEnabled { get; set; } = true;
-    public int SnoozeMinutes { get; set; } = 10;
 }
 
 public class HiitSettings

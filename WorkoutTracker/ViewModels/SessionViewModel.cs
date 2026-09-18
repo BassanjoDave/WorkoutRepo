@@ -9,7 +9,7 @@ namespace WorkoutTracker.ViewModels;
 
 /// <summary>
 /// The session runner: creates or resumes one member's WorkoutSession for a
-/// routine/date/slot. This never reads or writes RoutineDefinition — that's
+/// routine/date/time. This never reads or writes RoutineDefinition — that's
 /// the whole point of the definition/instance split. Pre-fill for a fresh
 /// session comes from this member's own most recent WorkoutSession for the
 /// same routine, never from another member's log and never from the routine
@@ -24,7 +24,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     private readonly IHiitSoundService _sounds;
 
     private Guid _routineId;
-    private Slot _slot;
+    private TimeOnly _time;
     private DateOnly _date;
     private Guid _accountId;
     private Guid _memberId;
@@ -44,7 +44,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     [ObservableProperty] public partial ObservableCollection<string> NewPersonalRecords { get; set; } = new();
 
     public Guid RoutineId => _routineId;
-    public Slot Slot => _slot;
+    public TimeOnly Time => _time;
     public DateOnly Date => _date;
 
     public SessionViewModel(IActiveSessionService session, IWorkoutRepository repo, IHiitSoundService sounds)
@@ -57,7 +57,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         _routineId = Guid.Parse((string)query["routineId"]);
-        _slot = Enum.Parse<Slot>((string)query["slot"]);
+        _time = TimeOnly.ParseExact((string)query["time"], "HH:mm");
         _date = query.TryGetValue("date", out var d) ? DateOnly.Parse((string)d) : DateOnly.FromDateTime(DateTime.Today);
     }
 
@@ -82,7 +82,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
 
         _existingSession = _memberData.Sessions.FirstOrDefault(s =>
-            s.RoutineDefinitionId == _routineId && s.Date == _date && s.Slot == _slot);
+            s.RoutineDefinitionId == _routineId && s.Date == _date && s.Time == _time);
 
         // Pre-fill source: this member's own latest session for this routine —
         // never the routine definition, and never another member's session.
@@ -231,7 +231,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
                 RoutineDefinitionId = _routineId,
                 RoutineNameSnapshot = RoutineName,
                 Date = _date,
-                Slot = _slot,
+                Time = _time,
                 Status = SessionStatus.Completed,
                 CompletedAt = now,
                 UpdatedAt = now,
@@ -290,13 +290,13 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     /// <summary>
     /// Opens the builder for this routine mid-session. The builder itself asks,
     /// on Save, whether the change should apply to just this occurrence (forks
-    /// a private copy and one-time-assigns it to this date/slot) or to every
+    /// a private copy and one-time-assigns it to this date/time) or to every
     /// future occurrence (edits the shared routine normally) — see
     /// StandardBuilderViewModel.Save.
     /// </summary>
     [RelayCommand]
     private async Task EditWorkout() =>
-        await Shell.Current.GoToAsync($"standardBuilder?routineId={_routineId}&occDate={_date:yyyy-MM-dd}&occSlot={_slot}");
+        await Shell.Current.GoToAsync($"standardBuilder?routineId={_routineId}&occDate={_date:yyyy-MM-dd}&occTime={_time:HH\\:mm}");
 
     /// <summary>Manual "I just finished a set" convenience — starts a countdown so the next set doesn't start too soon.</summary>
     [RelayCommand]

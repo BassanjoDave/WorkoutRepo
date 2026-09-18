@@ -1,7 +1,7 @@
 namespace WorkoutTracker.Models;
 
 /// <summary>
-/// One performed instance of a routine, by one member, on one date/slot. This
+/// One performed instance of a routine, by one member, on one date/time. This
 /// is what Finish Workout writes to — never the RoutineDefinition. Pre-fill
 /// for a new session reads the member's own latest WorkoutSession for the
 /// same RoutineDefinitionId, so two members sharing a routine never see or
@@ -15,7 +15,7 @@ public class WorkoutSession
     public Guid RoutineDefinitionId { get; set; }
     public string RoutineNameSnapshot { get; set; } = "";
     public DateOnly Date { get; set; }
-    public Slot Slot { get; set; }
+    public TimeOnly Time { get; set; }
     public SessionStatus Status { get; set; } = SessionStatus.InProgress;
     public DateTimeOffset? CompletedAt { get; set; }
     public List<SessionExerciseEntry> Entries { get; set; } = new();
@@ -57,7 +57,7 @@ public class SetLogRow
 {
     public Guid MemberId { get; set; }
     public DateOnly Date { get; set; }
-    public Slot Slot { get; set; }
+    public TimeOnly Time { get; set; }
     public Guid RoutineDefinitionId { get; set; }
     public string RoutineName { get; set; } = "";
     public Guid ExerciseId { get; set; }

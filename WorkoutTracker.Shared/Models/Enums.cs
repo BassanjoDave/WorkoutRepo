@@ -28,7 +28,8 @@ public enum RecipeCategory { Breakfast, Entree, SideDish, Salad, Soup, Appetizer
 /// </summary>
 public enum MeasurementUnit { Gram, Ounce, Pound, Milliliter, Teaspoon, Tablespoon, Cup, Whole }
 
-public enum Slot { Am, Pm }
+/// <summary>How a RoutineSchedule recurs. See RoutineSchedule/ScheduleResolver.OccursOn.</summary>
+public enum RecurrenceKind { EveryNDays, WeeklyOnDays }
 
 public enum SessionStatus { InProgress, Completed }
 

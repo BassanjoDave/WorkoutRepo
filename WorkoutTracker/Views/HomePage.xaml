@@ -92,7 +92,7 @@
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:TodaySlotViewModel">
                             <VerticalStackLayout Spacing="10">
-                                <Label Text="{Binding SlotLabel}" Style="{StaticResource KickerLabel}" />
+                                <Label Text="{Binding TimeLabel}" Style="{StaticResource KickerLabel}" />
                                 <Border Style="{StaticResource ElevatedCardBorder}">
                                     <VerticalStackLayout Spacing="12">
                                         <Grid ColumnDefinitions="*,Auto">

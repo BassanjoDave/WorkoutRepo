@@ -182,10 +182,10 @@ public partial class HistoryViewModel : ObservableObject
     private string BuildCsv()
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Date,Slot,Exercise,Set,Reps,Weight,Workout");
+        sb.AppendLine("Date,Time,Exercise,Set,Reps,Weight,Workout");
         foreach (var row in LogRows)
         {
-            sb.AppendLine(string.Join(",", CsvField(row.DateLabel), CsvField(row.Ampm), CsvField(row.ExerciseName),
+            sb.AppendLine(string.Join(",", CsvField(row.DateLabel), CsvField(row.TimeLabel), CsvField(row.ExerciseName),
                 CsvField(row.Sets), CsvField(row.Reps), CsvField(row.Weight), CsvField(row.RoutineName)));
         }
         return sb.ToString();
@@ -261,7 +261,7 @@ public partial class HistoryViewModel : ObservableObject
             var name = entry.Label ?? FindExercise(entry.ExerciseId)?.Name ?? "Exercise";
             SetLogRow Row(int setIndex, string sets, string reps, string weight) => new()
             {
-                MemberId = member.Id, Date = s.Date, Slot = s.Slot, RoutineDefinitionId = s.RoutineDefinitionId,
+                MemberId = member.Id, Date = s.Date, Time = s.Time, RoutineDefinitionId = s.RoutineDefinitionId,
                 RoutineName = s.RoutineNameSnapshot, ExerciseId = entry.ExerciseId, ExerciseName = name,
                 SetIndex = setIndex, Sets = sets, Reps = reps, Weight = weight,
             };
@@ -568,7 +568,7 @@ public partial class HistoryViewModel : ObservableObject
         {
             LogRows.Add(new LogRowViewModel(
                 r.Date.ToDateTime(TimeOnly.MinValue).ToString("MMM d"),
-                r.Slot == Slot.Am ? "AM" : "PM",
+                r.Time.ToString("h:mm tt"),
                 r.ExerciseName, r.Sets, r.Reps, r.Weight, r.RoutineName));
         }
         LogEmpty = LogRows.Count == 0;
@@ -624,17 +624,17 @@ public class NutritionDayRowViewModel
 public class LogRowViewModel
 {
     public string DateLabel { get; }
-    public string Ampm { get; }
+    public string TimeLabel { get; }
     public string ExerciseName { get; }
     public string Sets { get; }
     public string Reps { get; }
     public string Weight { get; }
     public string RoutineName { get; }
 
-    public LogRowViewModel(string dateLabel, string ampm, string exerciseName, string sets, string reps, string weight, string routineName)
+    public LogRowViewModel(string dateLabel, string timeLabel, string exerciseName, string sets, string reps, string weight, string routineName)
     {
         DateLabel = dateLabel;
-        Ampm = ampm;
+        TimeLabel = timeLabel;
         ExerciseName = exerciseName;
         Sets = sets;
         Reps = reps;

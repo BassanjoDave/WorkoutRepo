@@ -4,42 +4,43 @@
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
              x:Class="WorkoutTracker.Views.ScheduleEditorPage"
              x:DataType="vm:ScheduleEditorViewModel"
-             Title="Edit Schedule">
+             Title="My Schedule">
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="18" Spacing="14" BindableLayout.ItemsSource="{Binding Days}">
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+            <Label Text="Every routine with a recurring schedule. Tap one to change its time, recurrence, or reminder."
+                   Style="{StaticResource MetaLabel}" />
+
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Rows}">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ScheduleDayRowViewModel">
+                    <DataTemplate x:DataType="vm:ScheduleOverviewRowViewModel">
                         <Border Style="{StaticResource CardBorder}">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="{Binding DayLabel}" Style="{StaticResource HeadingLabel}" FontSize="14" />
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="3">
-                                        <Label Text="AM" Style="{StaticResource MetaLabel}" FontSize="10" />
-                                        <Border Style="{StaticResource InputBorder}">
-                                            <Picker ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedAm}"
-                                                    TextColor="{StaticResource ColorText}" FontSize="12" />
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenCommand}" CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="{Binding RoutineName}" FontSize="14" FontAttributes="Bold" />
+                                        <Border Style="{StaticResource TagAccentBorder}" IsVisible="{Binding IsHiit}">
+                                            <Label Text="HIIT" Style="{StaticResource TagAccentLabel}" />
                                         </Border>
-                                    </VerticalStackLayout>
-                                    <VerticalStackLayout Grid.Column="1" Spacing="3">
-                                        <Label Text="PM" Style="{StaticResource MetaLabel}" FontSize="10" />
-                                        <Border Style="{StaticResource InputBorder}">
-                                            <Picker ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedPm}"
-                                                    TextColor="{StaticResource ColorText}" FontSize="12" />
-                                        </Border>
-                                    </VerticalStackLayout>
-                                </Grid>
-                            </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding Summary}" Style="{StaticResource MetaLabel}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                       TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
-        </ScrollView>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
-            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
-            <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
-        </Grid>
-    </Grid>
+            <Label Text="No routines are on a recurring schedule yet — set one up from a routine's own builder page."
+                   Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" Margin="0,20"
+                   IsVisible="{Binding IsEmpty}" />
+
+            <Button Text="Back" Style="{StaticResource SecondaryButton}" Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

@@ -17,7 +17,7 @@ public partial class WorkoutsViewModel : ObservableObject
 
     private List<RoutineDefinition> _allRoutines = new();
     private List<Exercise> _allExercises = new();
-    private Schedule _activeSchedule = new();
+    private Dictionary<Guid, RoutineSchedule> _routineSchedules = new();
     private Guid _activeMemberId;
     private Guid _accountId;
     private string _memberName = "";
@@ -57,7 +57,7 @@ public partial class WorkoutsViewModel : ObservableObject
 
         _allRoutines = _shared.Routines.Concat(manufacturer.Routines).ToList();
         _allExercises = _shared.Exercises.Concat(manufacturer.Exercises).ToList();
-        _activeSchedule = memberData.Schedule;
+        _routineSchedules = memberData.RoutineSchedules;
 
         Rebuild();
     }
@@ -178,7 +178,7 @@ public partial class WorkoutsViewModel : ObservableObject
     {
         var score = 0;
         if (r.Visibility != Visibility.Manufacturer) score += 2;
-        if (_activeSchedule.Days.Values.Any(d => d.Am.Contains(r.Id) || d.Pm.Contains(r.Id))) score += 1;
+        if (_routineSchedules.ContainsKey(r.Id)) score += 1;
         return score;
     }
 
@@ -190,17 +190,10 @@ public partial class WorkoutsViewModel : ObservableObject
         return null;
     }
 
-    private List<string> ScheduleTagsFor(Guid routineId)
-    {
-        var tags = new List<string>();
-        foreach (var (weekday, slots) in _activeSchedule.Days)
-        {
-            var label = weekday.ToString()[..3];
-            if (slots.Am.Contains(routineId)) tags.Add($"{label} AM");
-            if (slots.Pm.Contains(routineId)) tags.Add($"{label} PM");
-        }
-        return tags;
-    }
+    private List<string> ScheduleTagsFor(Guid routineId) =>
+        _routineSchedules.TryGetValue(routineId, out var schedule)
+            ? new List<string> { ScheduleResolver.RecurrenceSummary(schedule) }
+            : new List<string>();
 }
 
 public class RoutineRowViewModel

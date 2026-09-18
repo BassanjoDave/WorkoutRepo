@@ -105,13 +105,11 @@ public partial class ProfileViewModel : ObservableObject
         // empty state crashes natively inside WinUI's own child-collection handling
         // (see the same fix in WorkoutsViewModel.Rebuild()).
         var scheduleRows = new ObservableCollection<ScheduleSummaryRowViewModel>();
-        foreach (Weekday day in Enum.GetValues<Weekday>())
+        foreach (var (routineId, schedule) in memberData.RoutineSchedules)
         {
-            memberData.Schedule.Days.TryGetValue(day, out var slots);
-            var amNames = (slots?.Am ?? new()).Select(id => FindRoutine(id)?.Name).Where(n => n is not null);
-            var pmNames = (slots?.Pm ?? new()).Select(id => FindRoutine(id)?.Name).Where(n => n is not null);
-            var parts = amNames.Select(n => $"{n} (AM)").Concat(pmNames.Select(n => $"{n} (PM)")).ToList();
-            scheduleRows.Add(new ScheduleSummaryRowViewModel(day.ToString()[..3], parts.Count > 0 ? string.Join(", ", parts) : "Rest"));
+            var name = FindRoutine(routineId)?.Name;
+            if (name is null) continue;
+            scheduleRows.Add(new ScheduleSummaryRowViewModel(name, ScheduleResolver.RecurrenceSummary(schedule)));
         }
         ScheduleRows = scheduleRows;
 
@@ -328,12 +326,12 @@ public partial class ThemeOptionViewModel : ObservableObject
 
 public class ScheduleSummaryRowViewModel
 {
-    public string Day { get; }
+    public string RoutineName { get; }
     public string Summary { get; }
 
-    public ScheduleSummaryRowViewModel(string day, string summary)
+    public ScheduleSummaryRowViewModel(string routineName, string summary)
     {
-        Day = day;
+        RoutineName = routineName;
         Summary = summary;
     }
 }

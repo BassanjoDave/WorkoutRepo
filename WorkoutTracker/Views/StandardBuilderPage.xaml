@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.StandardBuilderPage"
              x:DataType="vm:StandardBuilderViewModel"
              Title="Ritual Builder">
@@ -168,67 +169,7 @@
             <Label Text="OR BROWSE EXERCISES" Style="{StaticResource KickerLabel}" />
             <ContentView x:Name="LibraryHost" />
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="SCHEDULE" Style="{StaticResource KickerLabel}" />
-                <Label Text="Assign this workout to your weekly schedule now, or skip and do it later from Profile → Weekly Schedule."
-                       Style="{StaticResource MetaLabel}" />
-                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding DayCells}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RoutineDayCellViewModel">
-                            <Border Stroke="{StaticResource ColorDivider}" BackgroundColor="Transparent"
-                                    StrokeShape="RoundRectangle 20" Padding="10,6" Margin="0,0,6,6">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label Text="{Binding Label}" FontSize="11">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </FlexLayout>
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Spacing="8">
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="REMINDER" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
-                    <Switch Grid.Column="1" IsToggled="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}" />
-                </Grid>
-                <Label Text="Reminders are turned off in Profile → Workout Reminders. This setting is saved but won't fire until you turn them back on."
-                       Style="{StaticResource MetaLabel}" FontSize="10"
-                       IsVisible="{Binding Reminder.MasterEnabled, Converter={StaticResource InvertedBoolConverter}}" />
-                <VerticalStackLayout Spacing="8" IsVisible="{Binding Reminder.Enabled}" IsEnabled="{Binding Reminder.MasterEnabled}">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Label Grid.Column="0" Text="Reminder time" FontSize="13" VerticalOptions="Center" />
-                        <TimePicker Grid.Column="1" Time="{Binding Reminder.ReminderTime}" FontSize="13" />
-                    </Grid>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Label Grid.Column="0" Text="Repeat weekly" FontSize="13" VerticalOptions="Center" />
-                        <Switch Grid.Column="1" IsToggled="{Binding Reminder.RepeatWeekly}" />
-                    </Grid>
-                    <Label Text="Fires on every day this workout is scheduled. Turn Repeat weekly off to fire just once, at the next scheduled occurrence, then stop."
-                           Style="{StaticResource MetaLabel}" FontSize="10" />
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Label Grid.Column="0" Text="Snooze" FontSize="13" VerticalOptions="Center" />
-                        <Switch Grid.Column="1" IsToggled="{Binding Reminder.SnoozeEnabled}" />
-                    </Grid>
-                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding Reminder.SnoozeEnabled}">
-                        <Label Grid.Column="0" Text="Snooze length (minutes)" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
-                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
-                            <Entry Text="{Binding Reminder.SnoozeMinutes}" Keyboard="Numeric" FontSize="12" />
-                        </Border>
-                    </Grid>
-                </VerticalStackLayout>
-            </VerticalStackLayout>
+            <views:RoutineScheduleEditorView BindingContext="{Binding Reminder}" />
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />

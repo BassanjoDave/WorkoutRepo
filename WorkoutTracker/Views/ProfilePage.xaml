@@ -122,21 +122,28 @@
 
             <VerticalStackLayout Spacing="8">
                 <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="WEEKLY SCHEDULE" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="Edit" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding OpenScheduleEditorCommand}" />
+                    <Label Grid.Column="0" Text="MY SCHEDULE" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="View all" Style="{StaticResource GhostButton}" FontSize="12" Command="{Binding OpenScheduleEditorCommand}" />
                 </Grid>
                 <Border Style="{StaticResource CardBorder}">
-                    <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding ScheduleRows}">
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ScheduleRows}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:ScheduleSummaryRowViewModel">
-                                <Grid ColumnDefinitions="40,*">
-                                    <Label Grid.Column="0" Text="{Binding Day}" Style="{StaticResource MetaLabel}" />
-                                    <Label Grid.Column="1" Text="{Binding Summary}" FontSize="12" />
-                                </Grid>
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="{Binding RoutineName}" FontSize="13" FontAttributes="Bold" />
+                                    <Label Text="{Binding Summary}" Style="{StaticResource MetaLabel}" FontSize="11" />
+                                </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding ScheduleRows.Count}" Value="0">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                    </Border.Triggers>
                 </Border>
+                <Label Text="No routines scheduled yet." Style="{StaticResource MetaLabel}"
+                       IsVisible="{Binding ScheduleRows.Count, Converter={StaticResource IsZeroConverter}}" />
             </VerticalStackLayout>
 
             <Button Text="Rigs" Style="{StaticResource PrimaryOutlineButton}"
