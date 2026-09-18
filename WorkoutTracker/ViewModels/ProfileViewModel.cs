@@ -14,6 +14,7 @@ public partial class ProfileViewModel : ObservableObject
     private readonly IAppRestartService _appRestart;
     private readonly RemoteApiWorkoutRepository _remoteRepo;
     private readonly IBiometricAuthService _biometrics;
+    private readonly IFirebaseAuthService _firebaseAuth;
     private bool _suppressBiometricToggleHandler;
 
     [ObservableProperty] public partial string ActiveMemberName { get; set; } = "";
@@ -29,6 +30,12 @@ public partial class ProfileViewModel : ObservableObject
     /// forces setup at the moment of risk (a profile switch or an admin screen)
     /// regardless of whether this banner was ever seen or acted on.</summary>
     [ObservableProperty] public partial bool NeedsPinSetup { get; set; }
+    /// <summary>Courtesy nudge mirroring NeedsPinSetup — true when the device's
+    /// currently signed-in identity has an unverified email (a Google/Apple sign-in
+    /// is always already verified, so this only really fires for a password account
+    /// that hasn't clicked its verification link yet).</summary>
+    [ObservableProperty] public partial bool NeedsEmailVerification { get; set; }
+    [ObservableProperty] public partial string EmailVerificationStatus { get; set; } = "Please verify your email address";
     /// <summary>Only the primary holder can delete the whole account — everyone
     /// else's way out is Manage Members' existing "Remove" action, which only
     /// affects their own membership, not the family's shared data.</summary>
@@ -42,13 +49,14 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] public partial bool BiometricUnlockEnabled { get; set; }
 
     public ProfileViewModel(IActiveSessionService session, IWorkoutRepository repo, IAppRestartService appRestart,
-        RemoteApiWorkoutRepository remoteRepo, IBiometricAuthService biometrics)
+        RemoteApiWorkoutRepository remoteRepo, IBiometricAuthService biometrics, IFirebaseAuthService firebaseAuth)
     {
         _session = session;
         _repo = repo;
         _appRestart = appRestart;
         _remoteRepo = remoteRepo;
         _biometrics = biometrics;
+        _firebaseAuth = firebaseAuth;
     }
 
     public async Task LoadAsync()
@@ -77,6 +85,7 @@ public partial class ProfileViewModel : ObservableObject
         CanManageMembers = member.EffectiveCapabilities().ManageMembers;
         IsPrimaryHolder = member.Id == account.PrimaryHolderMemberId;
         NeedsPinSetup = member.DeviceAuthMode == DeviceAuthMode.None;
+        NeedsEmailVerification = !await _firebaseAuth.IsEmailVerifiedAsync();
 
         BiometricUnlockAvailable = _biometrics.IsSupported && await _biometrics.IsAvailableAsync();
         _suppressBiometricToggleHandler = true;
@@ -195,6 +204,24 @@ public partial class ProfileViewModel : ObservableObject
         var memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         memberData.WeightUnit = IsLbs ? "lbs" : "kg";
         await _repo.SaveMemberDataAsync(account.Id, member.Id, memberData);
+    }
+
+    [RelayCommand]
+    private async Task ResendVerificationEmail()
+    {
+        var page = Shell.Current?.CurrentPage;
+        var idToken = await _firebaseAuth.GetValidIdTokenAsync();
+        if (idToken is null) return;
+
+        var sent = await _firebaseAuth.SendEmailVerificationAsync(idToken);
+        EmailVerificationStatus = sent
+            ? "Verification email sent — check your inbox."
+            : "Please verify your email address";
+        if (page is not null)
+        {
+            await page.DisplayAlertAsync(sent ? "Email sent" : "Couldn't send it",
+                sent ? "Check your inbox for the verification link." : _firebaseAuth.LastError ?? "Something went wrong.", "OK");
+        }
     }
 
     [RelayCommand]

@@ -54,6 +54,14 @@ public interface IFirebaseAuthService
     /// session (never signed in this launch, since sign-in is required every launch).</summary>
     Task<string?> GetValidIdTokenAsync();
 
+    /// <summary>Reads the "email_verified" claim off the current session's ID token
+    /// (refreshing it first if needed) — true for every provider whose own sign-in
+    /// already implies a verified email (Google, Apple), not just a password account
+    /// that's clicked the verification link. Returns true (nothing to nag about) when
+    /// there's no session or the claim can't be read, so a decode hiccup never falsely
+    /// nags a user who's actually fine.</summary>
+    Task<bool> IsEmailVerifiedAsync();
+
     /// <summary>Set right before any method returns null; read it immediately after.</summary>
     string? LastError { get; }
 }
@@ -184,6 +192,24 @@ public class FirebaseAuthService : IFirebaseAuthService
 
         var refreshed = await RefreshAsync(refreshToken);
         return refreshed?.IdToken;
+    }
+
+    public async Task<bool> IsEmailVerifiedAsync()
+    {
+        var idToken = await GetValidIdTokenAsync();
+        if (idToken is null) return true;
+
+        var parts = idToken.Split('.');
+        if (parts.Length < 2) return true;
+        try
+        {
+            var payload = JsonSerializer.Deserialize<JsonElement>(Base64UrlDecode(parts[1]));
+            return !payload.TryGetProperty("email_verified", out var v) || v.GetBoolean();
+        }
+        catch (Exception)
+        {
+            return true;
+        }
     }
 
     private async Task<FirebaseAuthResult?> RefreshAsync(string refreshToken)

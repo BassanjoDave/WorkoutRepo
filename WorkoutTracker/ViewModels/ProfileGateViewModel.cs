@@ -57,6 +57,18 @@ public partial class ProfileGateViewModel : ObservableObject
     [ObservableProperty]
     public partial string Password { get; set; } = "";
 
+    [ObservableProperty]
+    public partial bool PasswordHidden { get; set; } = true;
+
+    [RelayCommand]
+    private void ToggleShowPassword() => PasswordHidden = !PasswordHidden;
+
+    [RelayCommand]
+    private async Task OpenTerms() => await Shell.Current.GoToAsync("legal?doc=terms");
+
+    [RelayCommand]
+    private async Task OpenPrivacy() => await Shell.Current.GoToAsync("legal?doc=privacy");
+
     /// <summary>Shown at the top of a fresh-launch gate only when biometric unlock is
     /// turned on (Profile settings), the device actually has working biometric
     /// hardware right now, and there's a still-resumable stored session to unlock —

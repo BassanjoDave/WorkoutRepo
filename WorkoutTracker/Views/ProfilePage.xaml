@@ -41,8 +41,19 @@
                     <TapGestureRecognizer Command="{Binding OpenEditProfileCommand}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Label Grid.Column="0" Text="Protect your profile — set a PIN" FontSize="13" VerticalOptions="Center" />
+                    <Label Grid.Column="0" Text="Protect your profile — set a PIN" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
                     <Label Grid.Column="1" Text="Set up" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                    BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding NeedsEmailVerification}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ResendVerificationEmailCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Grid.Column="0" Text="{Binding EmailVerificationStatus}" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="Resend" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
                 </Grid>
             </Border>
 

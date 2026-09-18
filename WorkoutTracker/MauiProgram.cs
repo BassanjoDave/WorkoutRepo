@@ -167,5 +167,7 @@ public static class MauiProgram
 		services.AddTransient<NotificationsPage>();
 		services.AddTransient<UpgradeViewModel>();
 		services.AddTransient<UpgradePage>();
+		services.AddTransient<LegalViewModel>();
+		services.AddTransient<LegalPage>();
 	}
 }

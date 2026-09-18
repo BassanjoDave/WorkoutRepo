@@ -62,7 +62,19 @@
                 <Entry Placeholder="Email" Text="{Binding Email}" Keyboard="Email" ReturnType="Next" />
             </Border>
             <Border Style="{StaticResource InputBorder}">
-                <Entry Placeholder="Password" Text="{Binding Password}" IsPassword="True" ReturnType="Go" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Entry Grid.Column="0" Placeholder="Password" Text="{Binding Password}" IsPassword="{Binding PasswordHidden}" ReturnType="Go" />
+                    <Button Grid.Column="1" Text="Show" Style="{StaticResource GhostButton}" FontSize="11" Padding="8,0"
+                            SemanticProperties.Description="Show password"
+                            Command="{Binding ToggleShowPasswordCommand}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding PasswordHidden}" Value="False">
+                                <Setter Property="Text" Value="Hide" />
+                                <Setter Property="SemanticProperties.Description" Value="Hide password" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </Grid>
             </Border>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
@@ -79,6 +91,26 @@
             <ActivityIndicator IsRunning="{Binding IsSigningIn}" IsVisible="{Binding IsSigningIn}" Color="{StaticResource ColorAccent}" />
             <Label Text="Finds an account already linked to this sign-in on another device, or creates a new one."
                    Style="{StaticResource MetaLabel}" HorizontalTextAlignment="Center" />
+
+            <Label Style="{StaticResource MetaLabel}" FontSize="10" HorizontalTextAlignment="Center">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="By continuing you agree to our " />
+                        <Span Text="Terms of Service" TextColor="{StaticResource ColorAccent}" TextDecorations="Underline">
+                            <Span.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenTermsCommand}" />
+                            </Span.GestureRecognizers>
+                        </Span>
+                        <Span Text=" and " />
+                        <Span Text="Privacy Policy" TextColor="{StaticResource ColorAccent}" TextDecorations="Underline">
+                            <Span.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenPrivacyCommand}" />
+                            </Span.GestureRecognizers>
+                        </Span>
+                        <Span Text="." />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
         </VerticalStackLayout>
 
         <!-- Profile tiles: only after a successful sign-in this launch — picking
