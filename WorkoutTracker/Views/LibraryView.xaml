@@ -2,6 +2,7 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.LibraryView"
              x:DataType="vm:LibraryViewModel">
 
@@ -142,8 +143,12 @@
                                 </HorizontalStackLayout>
                                 <Label Text="{Binding Muscles}" Style="{StaticResource MetaLabel}" />
                             </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="+ Add" Style="{StaticResource PrimaryOutlineButton}" FontSize="11" Padding="10,4"
+                                    Clicked="OnPickExerciseClicked"
+                                    IsVisible="{Binding ExercisePickMode, Source={RelativeSource AncestorType={x:Type views:LibraryView}}}" />
                             <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
-                                   TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                                   TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center"
+                                   IsVisible="{Binding ExercisePickMode, Source={RelativeSource AncestorType={x:Type views:LibraryView}}, Converter={StaticResource InvertedBoolConverter}}" />
                         </Grid>
                     </Border>
                 </DataTemplate>

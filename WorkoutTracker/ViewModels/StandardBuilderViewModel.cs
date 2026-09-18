@@ -63,6 +63,26 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     [ObservableProperty] public partial ExercisePickerOption? SelectedExerciseToAdd { get; set; }
     [ObservableProperty] public partial ObservableCollection<RoutineDayCellViewModel> DayCells { get; set; } = new();
 
+    // Staged detail fields for the exercise about to be added — filled in here, in the
+    // Add Exercise card itself, rather than only after it lands in the list below.
+    public bool AddingStandard => SelectedExerciseToAdd?.Kind == SessionRowKind.Standard;
+    public bool AddingVibration => SelectedExerciseToAdd?.Kind == SessionRowKind.Vibration;
+    public bool AddingCardio => SelectedExerciseToAdd?.Kind == SessionRowKind.Cardio;
+    public bool AddingHasWeight => SelectedExerciseToAdd?.HasWeight ?? false;
+    public string[] PendingStanceOptions => VibrationOptions.Stances;
+    public string[] PendingModeOptions => VibrationOptions.Modes;
+
+    [ObservableProperty] public partial string PendingSets { get; set; } = "";
+    [ObservableProperty] public partial string PendingReps { get; set; } = "";
+    [ObservableProperty] public partial string PendingWeight { get; set; } = "";
+    [ObservableProperty] public partial string PendingStance { get; set; } = "";
+    [ObservableProperty] public partial string PendingMode { get; set; } = "";
+    [ObservableProperty] public partial string PendingDuration { get; set; } = "";
+    [ObservableProperty] public partial string PendingFrequency { get; set; } = "";
+    [ObservableProperty] public partial string PendingLevel { get; set; } = "";
+    [ObservableProperty] public partial string PendingTime { get; set; } = "";
+    [ObservableProperty] public partial string PendingResistance { get; set; } = "";
+
     public StandardBuilderViewModel(IActiveSessionService session, IWorkoutRepository repo, IWorkoutReminderService reminders,
         IHomeWorkoutBridge homeWorkoutBridge, IPendingExerciseBridge pendingExerciseBridge)
     {
@@ -76,9 +96,18 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
 
     partial void OnSelectedCategoryChanged(string value) => RebuildAvailableExercises();
 
-    /// <summary>Picking the "+ Add custom exercise…" row pushes the exercise editor instead of adding anything — resets the picker so that row doesn't linger as "selected" while the member is away.</summary>
+    /// <summary>Picking the "+ Add custom exercise…" row pushes the exercise editor instead of adding anything — resets the picker so that row doesn't linger as "selected" while the member is away.
+    /// Also clears any staged detail fields from the previous selection, so they don't leak into the next exercise's Add card.</summary>
     partial void OnSelectedExerciseToAddChanged(ExercisePickerOption? value)
     {
+        OnPropertyChanged(nameof(AddingStandard));
+        OnPropertyChanged(nameof(AddingVibration));
+        OnPropertyChanged(nameof(AddingCardio));
+        OnPropertyChanged(nameof(AddingHasWeight));
+        PendingSets = ""; PendingReps = ""; PendingWeight = "";
+        PendingStance = ""; PendingMode = ""; PendingDuration = ""; PendingFrequency = ""; PendingLevel = "";
+        PendingTime = ""; PendingResistance = "";
+
         if (value is null || value.Id != AddCustomExerciseSentinelId) return;
         SelectedExerciseToAdd = null;
         _ = Shell.Current.GoToAsync("exerciseEditor");
@@ -227,12 +256,44 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     {
         if (SelectedExerciseToAdd is not ExercisePickerOption option) return;
         var row = new StandardExerciseRowViewModel(option.Id, option.Name, option.HasWeight, option.Kind, MoveUpCommand, MoveDownCommand, RemoveRowCommand);
-        if (option.Kind == SessionRowKind.Standard)
+        switch (option.Kind)
+        {
+            case SessionRowKind.Standard:
+                row.Groups.Add(new SetGroupRowViewModel(PendingSets, PendingReps, PendingWeight, row.RemoveGroupCommand));
+                break;
+            case SessionRowKind.Vibration:
+                row.Stance = PendingStance;
+                row.Mode = PendingMode;
+                row.Duration = PendingDuration;
+                row.Frequency = PendingFrequency;
+                row.Level = PendingLevel;
+                break;
+            case SessionRowKind.Cardio:
+                row.Time = PendingTime;
+                row.Resistance = PendingResistance;
+                break;
+        }
+        ExerciseRows.Add(row);
+        SelectedExerciseToAdd = null;
+    }
+
+    /// <summary>Second way to add an exercise, alongside the Category/Exercise dropdown
+    /// above — called from StandardBuilderPage's embedded exercise-library browser (see
+    /// LibraryView.ExercisePickMode). No staged detail fields here since the library
+    /// doesn't go through the dropdown's Add card; added blank like AddExercise used to
+    /// before staging existed, still editable on the row afterward either way.</summary>
+    public void AddExerciseFromLibrary(Guid exerciseId)
+    {
+        var exercise = _allExercises.FirstOrDefault(e => e.Id == exerciseId);
+        if (exercise is null) return;
+        var kind = exercise.IsVibrationPlate ? SessionRowKind.Vibration : exercise.IsCardio ? SessionRowKind.Cardio : SessionRowKind.Standard;
+        var hasWeight = exercise.Equipment is ExerciseEquipment.BowflexMachine or ExerciseEquipment.Kettlebell;
+        var row = new StandardExerciseRowViewModel(exercise.Id, exercise.Name, hasWeight, kind, MoveUpCommand, MoveDownCommand, RemoveRowCommand);
+        if (kind == SessionRowKind.Standard)
         {
             row.Groups.Add(new SetGroupRowViewModel("", "", "", row.RemoveGroupCommand));
         }
         ExerciseRows.Add(row);
-        SelectedExerciseToAdd = null;
     }
 
     [RelayCommand]
@@ -269,6 +330,21 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             await page.DisplayAlertAsync("Name it first",
                 $"\"{DefaultRoutineName}\" is just the placeholder — give this workout a real name.", "OK");
             return;
+        }
+
+        // Vibration/Cardio authoring defaults are deliberately optional (the hint text
+        // next to them says so — blank just means the member fills it in live each
+        // time), so only Standard sets/reps/weight count as "missing" here.
+        var incompleteRows = ExerciseRows.Where(r => r.Kind == SessionRowKind.Standard &&
+            r.Groups.Any(g => string.IsNullOrWhiteSpace(g.Sets) || string.IsNullOrWhiteSpace(g.Reps) || (r.HasWeight && string.IsNullOrWhiteSpace(g.Weight))))
+            .ToList();
+        if (incompleteRows.Count > 0)
+        {
+            var names = string.Join(", ", incompleteRows.Select(r => r.Name));
+            var saveAnyway = await page.DisplayAlertAsync("Missing details",
+                $"These exercises are missing sets/reps or weight: {names}. Save anyway, or go back and fill them in?",
+                "Save anyway", "Let me fix it");
+            if (!saveAnyway) return;
         }
 
         // A "copy to mine" fork still displays under the source's own name until

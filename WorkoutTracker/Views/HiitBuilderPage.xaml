@@ -127,6 +127,9 @@
                 </VerticalStackLayout>
             </Border>
 
+            <Label Text="OR BROWSE EXERCISES" Style="{StaticResource KickerLabel}" />
+            <ContentView x:Name="LibraryHost" />
+
             <VerticalStackLayout Spacing="8">
                 <Label Text="SCHEDULE" Style="{StaticResource KickerLabel}" />
                 <Label Text="Assign this workout to your weekly schedule now, or skip and do it later from Profile → Weekly Schedule."

@@ -131,6 +131,14 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private void RemoveSection(HiitSectionRowViewModel row) => Sections.Remove(row);
 
+    /// <summary>Second way to add a section, alongside the manual Type/Label/Duration
+    /// form above — called from HiitBuilderPage's embedded exercise-library browser
+    /// (see LibraryView.ExercisePickMode). Adds it as an "Exercise" section named after
+    /// the picked exercise, at the same 30s default the manual form starts from; still
+    /// editable (including duration) afterward like any other section.</summary>
+    public void AddSectionFromLibrary(string exerciseName) =>
+        Sections.Add(new HiitSectionRowViewModel("Exercise", exerciseName, "", 30, HiitSectionColors.DefaultFor("Exercise"), RemoveSectionCommand));
+
     private List<HiitSection> BuildSections() => Sections.Select(s => new HiitSection
     {
         Id = Guid.NewGuid(),

@@ -115,9 +115,58 @@
                     <Border Style="{StaticResource InputBorder}">
                         <Picker ItemsSource="{Binding AvailableExercises}" SelectedItem="{Binding SelectedExerciseToAdd}" TextColor="{StaticResource ColorText}" />
                     </Border>
+
+                    <!-- Standard: sets/reps[/weight] filled in here, before Add — still editable after too. -->
+                    <HorizontalStackLayout Spacing="6" IsVisible="{Binding AddingStandard}">
+                        <Label Text="Sets" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                        <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="46">
+                            <Entry Text="{Binding PendingSets}" Keyboard="Numeric" FontSize="12" />
+                        </Border>
+                        <Label Text="Reps" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+                        <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="60">
+                            <Entry Text="{Binding PendingReps}" Placeholder="10-12" FontSize="12" />
+                        </Border>
+                        <Label Text="Weight" Style="{StaticResource MetaLabel}" VerticalOptions="Center" IsVisible="{Binding AddingHasWeight}" />
+                        <Border Style="{StaticResource InputBorder}" Padding="6,0" WidthRequest="56" IsVisible="{Binding AddingHasWeight}">
+                            <Entry Text="{Binding PendingWeight}" Placeholder="lbs" Keyboard="Numeric" FontSize="12" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <!-- Vibration Plate defaults, same fields/wording as the row's own post-add editor. -->
+                    <VerticalStackLayout Spacing="6" IsVisible="{Binding AddingVibration}">
+                        <Label Text="Default stance / mode / duration / frequency / level for a fresh session — leave blank to require the member to fill it in each time."
+                               Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding PendingStanceOptions}" SelectedItem="{Binding PendingStance}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding PendingModeOptions}" SelectedItem="{Binding PendingMode}" TextColor="{StaticResource ColorText}" FontSize="12" />
+                            </Border>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Border Grid.Column="0" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding PendingDuration}" Placeholder="Sec" Keyboard="Numeric" FontSize="12" /></Border>
+                            <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding PendingFrequency}" Placeholder="Hz" Keyboard="Numeric" FontSize="12" /></Border>
+                            <Border Grid.Column="2" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding PendingLevel}" Placeholder="1-30" Keyboard="Numeric" FontSize="12" /></Border>
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <!-- Cardio defaults, same fields/wording as the row's own post-add editor. -->
+                    <VerticalStackLayout Spacing="6" IsVisible="{Binding AddingCardio}">
+                        <Label Text="Default time / resistance for a fresh session. Distance is never pre-set — it's only ever entered live."
+                               Style="{StaticResource MetaLabel}" FontSize="10" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Border Grid.Column="0" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding PendingTime}" Placeholder="Minutes" Keyboard="Numeric" FontSize="12" /></Border>
+                            <Border Grid.Column="1" Style="{StaticResource InputBorder}" Padding="6,0"><Entry Text="{Binding PendingResistance}" Placeholder="Resistance" Keyboard="Numeric" FontSize="12" /></Border>
+                        </Grid>
+                    </VerticalStackLayout>
+
                     <Button Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddExerciseCommand}" HorizontalOptions="Start" />
                 </VerticalStackLayout>
             </Border>
+
+            <Label Text="OR BROWSE EXERCISES" Style="{StaticResource KickerLabel}" />
+            <ContentView x:Name="LibraryHost" />
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="SCHEDULE" Style="{StaticResource KickerLabel}" />
