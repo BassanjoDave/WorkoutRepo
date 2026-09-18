@@ -76,6 +76,7 @@ public static class MauiProgram
 		services.AddSingleton<IHomeWorkoutBridge, HomeWorkoutBridge>();
 		services.AddSingleton<IPendingExerciseBridge, PendingExerciseBridge>();
 		services.AddSingleton<IGoogleAuthService, GoogleAuthService>();
+		services.AddSingleton<IAppleAuthService, AppleAuthService>();
 		services.AddSingleton<IAppRestartService, AppRestartService>();
 		services.AddSingleton<IIdentityService, IdentityService>();
 		services.AddSingleton<IFirebaseAuthService, FirebaseAuthService>();

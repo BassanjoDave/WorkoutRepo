@@ -21,6 +21,10 @@ public interface IFirebaseAuthService
     /// dance first; this is the one extra step that unifies it with the other methods.</summary>
     Task<FirebaseAuthResult?> SignInWithGoogleAsync(string googleIdToken);
 
+    /// <summary>Same idea as SignInWithGoogleAsync, for an Apple identity token from
+    /// IAppleAuthService's native ASAuthorizationAppleIdProvider flow.</summary>
+    Task<FirebaseAuthResult?> SignInWithAppleAsync(string appleIdToken);
+
     Task<FirebaseAuthResult?> SignInWithEmailAsync(string email, string password);
 
     /// <summary>Fails if the email is already registered — Firebase reports that as
@@ -87,6 +91,14 @@ public class FirebaseAuthService : IFirebaseAuthService
     public Task<FirebaseAuthResult?> SignInWithGoogleAsync(string googleIdToken) => PostAsync("accounts:signInWithIdp", new
     {
         postBody = $"id_token={googleIdToken}&providerId=google.com",
+        requestUri = "http://localhost",
+        returnIdpCredential = true,
+        returnSecureToken = true,
+    });
+
+    public Task<FirebaseAuthResult?> SignInWithAppleAsync(string appleIdToken) => PostAsync("accounts:signInWithIdp", new
+    {
+        postBody = $"id_token={appleIdToken}&providerId=apple.com",
         requestUri = "http://localhost",
         returnIdpCredential = true,
         returnSecureToken = true,

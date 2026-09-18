@@ -51,6 +51,9 @@
         <VerticalStackLayout Spacing="14" IsVisible="{Binding ShowSignIn}">
             <Button Text="Sign in with Google" Style="{StaticResource AccentFilledButton}"
                     Command="{Binding SignInWithGoogleCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}" />
+            <Button Text="Sign in with Apple" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding SignInWithAppleCommand}" IsEnabled="{Binding IsSigningIn, Converter={StaticResource InvertedBoolConverter}}"
+                    IsVisible="{Binding ShowAppleSignIn}" />
 
             <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10" Margin="0,4" VerticalOptions="Center">
                 <BoxView Grid.Column="0" HeightRequest="1" BackgroundColor="{StaticResource ColorDivider}" VerticalOptions="Center" />

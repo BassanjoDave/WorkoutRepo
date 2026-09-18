@@ -13,6 +13,7 @@ public partial class ProfileGateViewModel : ObservableObject
     private readonly IWorkoutRepository _repo;
     private readonly IActiveSessionService _session;
     private readonly IGoogleAuthService _googleAuth;
+    private readonly IAppleAuthService _appleAuth;
     private readonly IFirebaseAuthService _firebaseAuth;
     private readonly IIdentityService _identity;
     private readonly IBiometricAuthService _biometrics;
@@ -77,6 +78,13 @@ public partial class ProfileGateViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ShowBiometricUnlock { get; set; }
 
+    /// <summary>Hides the Apple button entirely on Android/Windows, where there's no
+    /// native Sign in with Apple — Apple's own review requirement (offer it wherever
+    /// a third-party sign-in like Google is offered) only applies on Apple's own
+    /// platforms anyway. See IAppleAuthService.IsSupported.</summary>
+    [ObservableProperty]
+    public partial bool ShowAppleSignIn { get; set; }
+
     /// <summary>The sign-in form (Google/email/create-account) shows once loading has
     /// finished and until a sign-in actually succeeds on a fresh launch — but stays
     /// available alongside the tile list in switch mode (CanCancel), since "Switch"
@@ -104,13 +112,14 @@ public partial class ProfileGateViewModel : ObservableObject
     }
 
     public ProfileGateViewModel(IAppBootstrapper bootstrapper, IWorkoutRepository repo, IActiveSessionService session,
-        IGoogleAuthService googleAuth, IFirebaseAuthService firebaseAuth, IIdentityService identity, IBiometricAuthService biometrics,
+        IGoogleAuthService googleAuth, IAppleAuthService appleAuth, IFirebaseAuthService firebaseAuth, IIdentityService identity, IBiometricAuthService biometrics,
         IKeyboardService keyboard, IMemberAuthGateService authGate)
     {
         _bootstrapper = bootstrapper;
         _repo = repo;
         _session = session;
         _googleAuth = googleAuth;
+        _appleAuth = appleAuth;
         _firebaseAuth = firebaseAuth;
         _identity = identity;
         _biometrics = biometrics;
@@ -138,6 +147,7 @@ public partial class ProfileGateViewModel : ObservableObject
 
         IsLoading = true;
         IsUnlocked = false;
+        ShowAppleSignIn = _appleAuth.IsSupported;
         try
         {
             await _bootstrapper.EnsureSeedDataAsync();
@@ -332,6 +342,43 @@ public partial class ProfileGateViewModel : ObservableObject
             }
 
             await CompleteSignInAsync(firebaseResult, googleResult.Name);
+        }
+        finally
+        {
+            IsSigningIn = false;
+        }
+    }
+
+    /// <summary>Mirrors SignInWithGoogle exactly, swapping IGoogleAuthService for
+    /// IAppleAuthService's native ASAuthorizationAppleIdProvider flow — same Firebase
+    /// exchange, same CompleteSignInAsync tail. Only reachable when ShowAppleSignIn is
+    /// true (iOS/Mac Catalyst).</summary>
+    [RelayCommand]
+    private async Task SignInWithApple()
+    {
+        if (IsSigningIn) return;
+        IsSigningIn = true;
+        var page = Shell.Current?.CurrentPage;
+        try
+        {
+            var appleResult = await _appleAuth.SignInAsync();
+            if (appleResult is null)
+            {
+                if (_appleAuth.LastError is string authError && page is not null)
+                {
+                    await page.DisplayAlertAsync("Sign-in failed", authError, "OK");
+                }
+                return;
+            }
+
+            var firebaseResult = await _firebaseAuth.SignInWithAppleAsync(appleResult.IdToken);
+            if (firebaseResult is null)
+            {
+                if (page is not null) await page.DisplayAlertAsync("Sign-in failed", _firebaseAuth.LastError ?? "Unknown error.", "OK");
+                return;
+            }
+
+            await CompleteSignInAsync(firebaseResult, appleResult.Name);
         }
         finally
         {
