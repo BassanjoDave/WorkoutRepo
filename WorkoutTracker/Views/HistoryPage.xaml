@@ -15,6 +15,25 @@
             <Setter Property="Padding" Value="13,6" />
             <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
         </Style>
+        <DataTemplate x:Key="MeasurementChipTemplate" x:DataType="vm:MetricChipViewModel">
+            <Border Style="{StaticResource ToggleChip}" Margin="0,0,6,6">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="{Binding Name}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{Binding Name}" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+        </DataTemplate>
     </ContentPage.Resources>
 
     <VerticalStackLayout Padding="18" Spacing="14">
@@ -51,7 +70,7 @@
                         <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
                     </DataTrigger>
                 </Border.Triggers>
-                <Label Text="Progress" FontSize="12">
+                <Label Text="Exercise" FontSize="12">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding IsProgressTab}" Value="True">
                             <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
@@ -105,6 +124,23 @@
                 <Label Text="Stacks" FontSize="12">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding IsStacksTab}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Border>
+            <Border Style="{StaticResource ToggleChip}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowMeasurementCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsMeasurementTab}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="Measurement" FontSize="12">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsMeasurementTab}" Value="True">
                             <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
                         </DataTrigger>
                     </Label.Triggers>
@@ -318,6 +354,16 @@
         <!-- Nutrition -->
         <ScrollView IsVisible="{Binding IsNutritionTab}">
             <VerticalStackLayout Spacing="10">
+                <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                        BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasNutritionAccess, Converter={StaticResource InvertedBoolConverter}}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" CommandParameter="nutrition" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
                 <Label Text="Per-day totals from your food log, most recent first." Style="{StaticResource MetaLabel}" FontSize="10" />
                 <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding NutritionDayRows}">
                     <BindableLayout.ItemTemplate>
@@ -343,6 +389,16 @@
         <!-- Stacks -->
         <ScrollView IsVisible="{Binding IsStacksTab}">
             <VerticalStackLayout Spacing="10">
+                <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                        BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasStacksAccess, Converter={StaticResource InvertedBoolConverter}}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" CommandParameter="stacks" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
                 <Label Text="Days you marked a supplement or medication stack as taken, most recent first." Style="{StaticResource MetaLabel}" FontSize="10" />
                 <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding StackHistoryDayRows}">
                     <BindableLayout.ItemTemplate>
@@ -362,6 +418,36 @@
                 </VerticalStackLayout>
                 <Label Text="No stacks marked taken yet." Style="{StaticResource MetaLabel}"
                        IsVisible="{Binding StackHistoryEmpty}" HorizontalTextAlignment="Center" Margin="0,20" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Measurement -->
+        <ScrollView IsVisible="{Binding IsMeasurementTab}">
+            <VerticalStackLayout Spacing="14">
+                <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                        BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasMeasurementsAccess, Converter={StaticResource InvertedBoolConverter}}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" CommandParameter="measurements" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding MeasurementMetricChips}" BindableLayout.ItemTemplate="{StaticResource MeasurementChipTemplate}" />
+
+                <Border Style="{StaticResource CardBorder}" IsVisible="{Binding HasMeasurementData}">
+                    <VerticalStackLayout Spacing="8">
+                        <GraphicsView Drawable="{Binding MeasurementDrawable}" HeightRequest="180" />
+                        <Label Text="{Binding MeasurementBestLabel}" FontSize="12" FontAttributes="Bold" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource ElevatedCardBorder}" IsVisible="{Binding HasMeasurementData, Converter={StaticResource InvertedBoolConverter}}">
+                    <Label Text="Log a few weigh-ins and your measurement trend will show up here." Style="{StaticResource MetaLabel}"
+                           HorizontalTextAlignment="Center" />
+                </Border>
             </VerticalStackLayout>
         </ScrollView>
 

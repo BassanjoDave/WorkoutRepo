@@ -93,10 +93,24 @@
                                 <Label Text="{Binding SlotLabel}" Style="{StaticResource KickerLabel}" />
                                 <Border Style="{StaticResource ElevatedCardBorder}">
                                     <VerticalStackLayout Spacing="12">
-                                        <VerticalStackLayout Spacing="2">
-                                            <Label Text="{Binding Name}" Style="{StaticResource TitleLabel}" />
-                                            <Label Text="{Binding CountLabel}" Style="{StaticResource MetaLabel}" />
-                                        </VerticalStackLayout>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                <Label Text="{Binding Name}" Style="{StaticResource TitleLabel}" />
+                                                <Label Text="{Binding CountLabel}" Style="{StaticResource MetaLabel}" />
+                                            </VerticalStackLayout>
+                                            <Button Grid.Column="1" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                                    Style="{StaticResource GhostButton}" FontSize="22" Padding="4"
+                                                    TextColor="{StaticResource ColorNeutral600}"
+                                                    SemanticProperties.Description="Mark completed"
+                                                    Command="{Binding ToggleCompletedCommand}" CommandParameter="{Binding .}">
+                                                <Button.Triggers>
+                                                    <DataTrigger TargetType="Button" Binding="{Binding IsCompleted}" Value="True">
+                                                        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                                        <Setter Property="SemanticProperties.Description" Value="Mark not completed" />
+                                                    </DataTrigger>
+                                                </Button.Triggers>
+                                            </Button>
+                                        </Grid>
                                         <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding Exercises}">
                                             <BindableLayout.ItemTemplate>
                                                 <DataTemplate x:DataType="x:String">

@@ -189,6 +189,47 @@ public partial class HomeViewModel : ObservableObject
     [RelayCommand]
     private void GoToToday() => SelectDay(_today);
 
+    /// <summary>Manual override for a scheduled workout's completed state — lets a
+    /// member un-mark one that auto-completed (or mark one done without actually
+    /// running the player). "Not completed" has no session record at all elsewhere
+    /// in this model, so unchecking removes the session rather than setting some
+    /// third status; checking creates a bare Completed one with no logged entries,
+    /// since there's no played data to attach.</summary>
+    [RelayCommand]
+    private async Task ToggleCompleted(TodaySlotViewModel slot)
+    {
+        var existingSession = _memberData.Sessions.FirstOrDefault(s =>
+            s.RoutineDefinitionId == slot.RoutineId && s.Date == slot.Date && s.Slot == slot.Slot);
+
+        if (existingSession is { Status: SessionStatus.Completed })
+        {
+            _memberData.Sessions.Remove(existingSession);
+            slot.IsCompleted = false;
+            slot.StartLabel = "Start";
+        }
+        else
+        {
+            if (existingSession is not null) _memberData.Sessions.Remove(existingSession);
+            _memberData.Sessions.Add(new WorkoutSession
+            {
+                Id = Guid.NewGuid(),
+                AccountId = _accountId,
+                MemberId = _memberId,
+                RoutineDefinitionId = slot.RoutineId,
+                RoutineNameSnapshot = slot.Name,
+                Date = slot.Date,
+                Slot = slot.Slot,
+                Status = SessionStatus.Completed,
+                CompletedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+            slot.IsCompleted = true;
+            slot.StartLabel = "Completed";
+        }
+
+        await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
+    }
+
     [RelayCommand]
     private void SelectDay(DateOnly date)
     {
@@ -230,13 +271,16 @@ public partial class HomeViewModel : ObservableObject
 
                 built.Add((isCompleted, new TodaySlotViewModel(
                     routineId,
+                    date,
                     slot,
                     routine.Type == RoutineType.Hiit,
                     slot == Slot.Am ? "AM" : "PM",
                     routine.Name,
                     $"{exerciseNames.Count} exercises",
                     exerciseNames,
-                    startLabel)));
+                    startLabel,
+                    isCompleted,
+                    ToggleCompletedCommand)));
             }
         }
 
@@ -400,20 +444,26 @@ public partial class WeekDayCellViewModel : ObservableObject
     }
 }
 
-public class TodaySlotViewModel
+public partial class TodaySlotViewModel : ObservableObject
 {
     public Guid RoutineId { get; }
+    public DateOnly Date { get; }
     public Slot Slot { get; }
     public bool IsHiit { get; }
     public string SlotLabel { get; }
     public string Name { get; }
     public string CountLabel { get; }
     public List<string> Exercises { get; }
-    public string StartLabel { get; }
+    public IRelayCommand<TodaySlotViewModel> ToggleCompletedCommand { get; }
 
-    public TodaySlotViewModel(Guid routineId, Slot slot, bool isHiit, string slotLabel, string name, string countLabel, List<string> exercises, string startLabel)
+    [ObservableProperty] public partial string StartLabel { get; set; }
+    [ObservableProperty] public partial bool IsCompleted { get; set; }
+
+    public TodaySlotViewModel(Guid routineId, DateOnly date, Slot slot, bool isHiit, string slotLabel, string name, string countLabel,
+        List<string> exercises, string startLabel, bool isCompleted, IRelayCommand<TodaySlotViewModel> toggleCompletedCommand)
     {
         RoutineId = routineId;
+        Date = date;
         Slot = slot;
         IsHiit = isHiit;
         SlotLabel = slotLabel;
@@ -421,5 +471,7 @@ public class TodaySlotViewModel
         CountLabel = countLabel;
         Exercises = exercises;
         StartLabel = startLabel;
+        IsCompleted = isCompleted;
+        ToggleCompletedCommand = toggleCompletedCommand;
     }
 }

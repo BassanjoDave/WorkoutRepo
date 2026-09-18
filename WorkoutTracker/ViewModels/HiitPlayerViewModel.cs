@@ -43,6 +43,12 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
     [ObservableProperty] public partial string CurrentDescription { get; set; } = "";
     [ObservableProperty] public partial int RemainingSeconds { get; set; }
 
+    /// <summary>Preview of the section coming up after this one — hidden on the
+    /// last section, since there's nothing to preview.</summary>
+    [ObservableProperty] public partial bool HasNextSection { get; set; }
+    [ObservableProperty] public partial string NextTitle { get; set; } = "";
+    [ObservableProperty] public partial Color NextSectionColor { get; set; } = Colors.Transparent;
+
     /// <summary>The current section's own standard/custom color — restored after each
     /// countdown flash (see FlashAsync) and what DisplayBackgroundColor reverts to.</summary>
     private Color _sectionColor = Colors.Transparent;
@@ -117,6 +123,15 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
         CurrentDescription = section.Description;
         _sectionColor = Color.FromArgb(HiitSectionColors.Resolve(section));
         DisplayBackgroundColor = _sectionColor;
+
+        var nextIndex = CurrentIndex + 1;
+        HasNextSection = nextIndex < _flatSections.Count;
+        if (HasNextSection)
+        {
+            var next = _flatSections[nextIndex];
+            NextTitle = next.Title;
+            NextSectionColor = Color.FromArgb(HiitSectionColors.Resolve(next));
+        }
     }
 
     private static string Announcement(HiitSection section) =>

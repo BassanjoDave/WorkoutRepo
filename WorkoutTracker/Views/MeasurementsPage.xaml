@@ -51,7 +51,7 @@
                     <TapGestureRecognizer Command="{Binding OpenUpgradeCommand}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" VerticalOptions="Center" />
+                    <Label Grid.Column="0" Text="Your history stays visible — add Full Access to log new entries" FontSize="13" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
                     <Label Grid.Column="1" Text="Upgrade" FontSize="12" TextColor="{StaticResource ColorAccent300}" VerticalOptions="Center" />
                 </Grid>
             </Border>

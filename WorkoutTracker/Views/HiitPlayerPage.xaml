@@ -36,9 +36,10 @@
         </Grid>
 
         <Grid Grid.Row="1" Padding="20">
+        <VerticalStackLayout VerticalOptions="Center" Spacing="10">
         <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}" StrokeThickness="1"
                 BackgroundColor="{Binding DisplayBackgroundColor}" Shadow="{StaticResource ShadowSm}"
-                Padding="24" VerticalOptions="Center">
+                Padding="24">
         <VerticalStackLayout Spacing="20">
 
             <VerticalStackLayout IsVisible="{Binding Finished, Converter={StaticResource InvertedBoolConverter}}" Spacing="20">
@@ -74,6 +75,18 @@
 
         </VerticalStackLayout>
         </Border>
+
+        <!-- Next up preview — a smaller, dimmer echo of the main card above, framed in
+             the upcoming section's own color, so it reads as "coming next" not "current". -->
+        <Border StrokeShape="RoundRectangle 8" Stroke="Transparent"
+                BackgroundColor="{Binding NextSectionColor}" Opacity="0.6"
+                Padding="12,8" IsVisible="{Binding HasNextSection}">
+            <VerticalStackLayout Spacing="1">
+                <Label Text="NEXT UP" FontSize="10" TextColor="White" Shadow="{StaticResource HiitTextShadow}" />
+                <Label Text="{Binding NextTitle}" FontSize="14" FontAttributes="Bold" TextColor="White" Shadow="{StaticResource HiitTextShadow}" />
+            </VerticalStackLayout>
+        </Border>
+        </VerticalStackLayout>
         </Grid>
 
     </Grid>

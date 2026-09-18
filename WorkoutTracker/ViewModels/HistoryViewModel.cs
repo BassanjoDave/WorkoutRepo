@@ -11,17 +11,23 @@ using WorkoutTracker.Services.Storage;
 namespace WorkoutTracker.ViewModels;
 
 public enum LogSortKey { Date, Exercise, Weight }
-public enum HistoryTab { Overview, Progress, Log, Nutrition, Stacks }
+public enum HistoryTab { Overview, Progress, Log, Nutrition, Stacks, Measurement }
 
 public partial class HistoryViewModel : ObservableObject
 {
     private readonly IActiveSessionService _session;
     private readonly IWorkoutRepository _repo;
+    private readonly IEntitlementService _entitlements;
 
     private List<SetLogRow> _allLogRows = new();
     private List<WorkoutSession> _completedSessions = new();
     private string _weightUnit = "lbs";
     private Dictionary<string, List<(DateOnly Date, double Weight)>> _exerciseWeightHistory = new();
+    private List<BodyMeasurementEntry> _measurements = new();
+    private List<CustomMeasurementSlot> _customMeasurementSlots = new();
+
+    private static readonly string[] BuiltInMeasurementMetrics =
+        { "Weight", "Neck", "Shoulder", "Chest", "Waist", "Abdomen", "Hip", "L-Bicep", "R-Bicep", "L-Thigh", "R-Thigh", "L-Calf", "R-Calf" };
     // The month currently shown in the Overview calendar — starts on today's month,
     // moves independently once the user navigates via Previous/NextMonth.
     private DateOnly _calendarMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -32,6 +38,20 @@ public partial class HistoryViewModel : ObservableObject
     public bool IsLogTab => SelectedTab == HistoryTab.Log;
     public bool IsNutritionTab => SelectedTab == HistoryTab.Nutrition;
     public bool IsStacksTab => SelectedTab == HistoryTab.Stacks;
+    public bool IsMeasurementTab => SelectedTab == HistoryTab.Measurement;
+
+    // History stays visible read-only regardless of Full Access (see the comment on
+    // ShowNutrition/ShowStacksHistory below) — these only drive the non-blocking
+    // "your history stays visible" upgrade nudge on each tab, not whether it's reachable.
+    [ObservableProperty] public partial bool HasNutritionAccess { get; set; }
+    [ObservableProperty] public partial bool HasStacksAccess { get; set; }
+    [ObservableProperty] public partial bool HasMeasurementsAccess { get; set; }
+
+    [ObservableProperty] public partial ObservableCollection<MetricChipViewModel> MeasurementMetricChips { get; set; } = new();
+    [ObservableProperty] public partial string SelectedMeasurementMetric { get; set; } = "Weight";
+    [ObservableProperty] public partial WeightTrendDrawable MeasurementDrawable { get; set; } = new();
+    [ObservableProperty] public partial string MeasurementBestLabel { get; set; } = "";
+    [ObservableProperty] public partial bool HasMeasurementData { get; set; }
 
     [ObservableProperty] public partial ObservableCollection<NutritionDayRowViewModel> NutritionDayRows { get; set; } = new();
     [ObservableProperty] public partial bool NutritionEmpty { get; set; }
@@ -77,10 +97,11 @@ public partial class HistoryViewModel : ObservableObject
     private LogSortKey _sortKey = LogSortKey.Date;
     private bool _sortDescending = true;
 
-    public HistoryViewModel(IActiveSessionService session, IWorkoutRepository repo)
+    public HistoryViewModel(IActiveSessionService session, IWorkoutRepository repo, IEntitlementService entitlements)
     {
         _session = session;
         _repo = repo;
+        _entitlements = entitlements;
     }
 
     partial void OnSelectedTabChanged(HistoryTab value)
@@ -90,9 +111,11 @@ public partial class HistoryViewModel : ObservableObject
         OnPropertyChanged(nameof(IsLogTab));
         OnPropertyChanged(nameof(IsNutritionTab));
         OnPropertyChanged(nameof(IsStacksTab));
+        OnPropertyChanged(nameof(IsMeasurementTab));
         if (value == HistoryTab.Log) RebuildLog();
     }
     partial void OnSelectedProgressExerciseChanged(string? value) => RebuildProgressChart();
+    partial void OnSelectedMeasurementMetricChanged(string value) => RebuildMeasurementChart();
     partial void OnLogSearchChanged(string value) => RebuildLog();
     partial void OnLogDateFromChanged(DateTime value) => RebuildLog();
     partial void OnLogDateToChanged(DateTime value) => RebuildLog();
@@ -117,7 +140,16 @@ public partial class HistoryViewModel : ObservableObject
     // live Nutrition/Stacks pages themselves via HasFullAccess).
     [RelayCommand] private void ShowNutrition() => SelectedTab = HistoryTab.Nutrition;
     [RelayCommand] private void ShowStacksHistory() => SelectedTab = HistoryTab.Stacks;
+    [RelayCommand] private void ShowMeasurement() => SelectedTab = HistoryTab.Measurement;
     [RelayCommand] private void ClearLogFilters() { LogSearch = ""; LogDateFrom = DateTime.MinValue; LogDateTo = DateTime.MaxValue; }
+    [RelayCommand] private async Task OpenUpgrade(string page) => await Shell.Current.GoToAsync($"upgrade?page={page}");
+
+    [RelayCommand]
+    private void SelectMeasurementMetric(string metric)
+    {
+        SelectedMeasurementMetric = metric;
+        foreach (var chip in MeasurementMetricChips) chip.IsSelected = chip.Name == metric;
+    }
 
     [RelayCommand]
     private void PreviousMonth()
@@ -214,9 +246,15 @@ public partial class HistoryViewModel : ObservableObject
         Exercise? FindExercise(Guid id) =>
             shared.Exercises.FirstOrDefault(e => e.Id == id) ?? manufacturer.Exercises.FirstOrDefault(e => e.Id == id);
 
+        HasNutritionAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Nutrition);
+        HasStacksAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Stacks);
+        HasMeasurementsAccess = _entitlements.HasPageAccess(account, member.Id, PageEntitlements.Measurements);
+
         var memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _completedSessions = memberData.Sessions.Where(s => s.Status == SessionStatus.Completed).ToList();
         _weightUnit = memberData.WeightUnit;
+        _measurements = memberData.Measurements;
+        _customMeasurementSlots = memberData.CustomMeasurementSlots;
 
         IEnumerable<SetLogRow> BuildLogRows(WorkoutSession s, SessionExerciseEntry entry)
         {
@@ -256,6 +294,69 @@ public partial class HistoryViewModel : ObservableObject
         BuildProgressData(FindExercise);
         BuildNutritionSummary(memberData.Meals);
         BuildStackHistorySummary(memberData.StackLog, memberData.Stacks);
+        BuildMeasurementChips();
+    }
+
+    /// <summary>Mirrors MeasurementsViewModel's own metric picker + trend chart —
+    /// deliberately the all-time-only subset (no custom date range, no waist/hip
+    /// ratio, no progress photos), since this is a compact History tab, not a
+    /// replacement for the full Body Measurements page.</summary>
+    private void BuildMeasurementChips()
+    {
+        var allMetrics = BuiltInMeasurementMetrics.Concat(_customMeasurementSlots.Select(s => s.Name)).ToList();
+        if (!allMetrics.Contains(SelectedMeasurementMetric)) SelectedMeasurementMetric = "Weight";
+
+        var chips = new ObservableCollection<MetricChipViewModel>();
+        foreach (var m in allMetrics) chips.Add(new MetricChipViewModel(m, m == SelectedMeasurementMetric, SelectMeasurementMetricCommand));
+        MeasurementMetricChips = chips;
+
+        RebuildMeasurementChart();
+    }
+
+    private double? CustomMeasurementValue(BodyMeasurementEntry entry, string slotName)
+    {
+        var slot = _customMeasurementSlots.FirstOrDefault(s => s.Name == slotName);
+        if (slot is null) return null;
+        return entry.CustomValues.TryGetValue(slot.Id, out var v) ? v : null;
+    }
+
+    private void RebuildMeasurementChart()
+    {
+        Func<BodyMeasurementEntry, double?> selector = SelectedMeasurementMetric switch
+        {
+            "Weight" => e => e.Weight,
+            "Neck" => e => e.Neck,
+            "Shoulder" => e => e.Shoulder,
+            "Chest" => e => e.Chest,
+            "Waist" => e => e.Waist,
+            "Abdomen" => e => e.Abdomen,
+            "Hip" => e => e.Hip,
+            "L-Bicep" => e => e.LBicep,
+            "R-Bicep" => e => e.RBicep,
+            "L-Thigh" => e => e.LThigh,
+            "R-Thigh" => e => e.RThigh,
+            "L-Calf" => e => e.LCalf,
+            "R-Calf" => e => e.RCalf,
+            _ => e => CustomMeasurementValue(e, SelectedMeasurementMetric),
+        };
+        var points = _measurements
+            .Where(e => selector(e).HasValue)
+            .OrderBy(e => e.Date)
+            .Select(e => (e.Date, Value: selector(e)!.Value))
+            .ToList();
+
+        MeasurementDrawable = new WeightTrendDrawable
+        {
+            Points = points,
+            LineColor = AppColors.Get("ColorAccent"),
+            EmptyMessage = "Log a weigh-in to see your trend here.",
+        };
+        HasMeasurementData = points.Count > 0;
+
+        if (points.Count == 0) { MeasurementBestLabel = ""; return; }
+        var unit = SelectedMeasurementMetric == "Weight" ? _weightUnit : "in";
+        var latest = points[^1];
+        MeasurementBestLabel = $"Latest: {latest.Value:0.#} {unit} on {latest.Date.ToDateTime(TimeOnly.MinValue):MMM d, yyyy}";
     }
 
     /// <summary>Most recent 30 days that have at least one stack actually marked taken,
