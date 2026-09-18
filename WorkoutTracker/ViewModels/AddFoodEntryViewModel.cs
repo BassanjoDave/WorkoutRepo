@@ -20,13 +20,22 @@ public partial class AddFoodEntryViewModel : ObservableObject, IQueryAttributabl
     private List<FoodPickerOption> _allOptions = new();
 
     [ObservableProperty] public partial string MealTypeLabel { get; set; } = "";
-    [ObservableProperty] public partial bool IsCustomEntry { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowQuantityFooter))]
+    public partial bool IsCustomEntry { get; set; }
     [ObservableProperty] public partial bool ShowFoods { get; set; } = true;
     [ObservableProperty] public partial bool ShowRecipes { get; set; } = true;
     [ObservableProperty] public partial string SearchText { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<FoodPickerOption> FilteredOptions { get; set; } = new();
-    [ObservableProperty] public partial FoodPickerOption? SelectedOption { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowQuantityFooter))]
+    public partial FoodPickerOption? SelectedOption { get; set; }
     [ObservableProperty] public partial string Quantity { get; set; } = "1";
+
+    /// <summary>Shows the servings box in the footer, next to Add, once a library
+    /// item is actually picked — keeps it out of the scrollable list area (was
+    /// easy to miss below a long list) and right where it's needed at save time.</summary>
+    public bool ShowQuantityFooter => !IsCustomEntry && SelectedOption is not null;
 
     [ObservableProperty] public partial string CustomName { get; set; } = "";
     [ObservableProperty] public partial string CustomCalories { get; set; } = "";
@@ -65,7 +74,7 @@ public partial class AddFoodEntryViewModel : ObservableObject, IQueryAttributabl
         _allOptions = allFoods
             .Select(f => new FoodPickerOption(f.Id, null, string.IsNullOrWhiteSpace(f.BrandName) ? f.Name : $"{f.BrandName} {f.Name}",
                 f.ServingLabel, FoodMacros.From(f)))
-            .Concat(shared.Recipes.Select(r =>
+            .Concat(shared.Recipes.Concat(manufacturer.Recipes).Select(r =>
                 new FoodPickerOption(null, r.Id, r.Name, "1 serving", NutritionMath.PerServing(r, allFoods))))
             .OrderBy(o => o.Name)
             .ToList();

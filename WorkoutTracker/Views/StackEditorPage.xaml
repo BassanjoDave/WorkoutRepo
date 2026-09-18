@@ -11,8 +11,8 @@
 
             <VerticalStackLayout Spacing="4">
                 <Label Text="Name" Style="{StaticResource MetaLabel}" />
-                <Border Style="{StaticResource InputBorder}">
-                    <Entry Text="{Binding StackName}" Placeholder="e.g. Morning Stack" />
+                <Border x:Name="StackNameBorder" Style="{StaticResource InputBorder}">
+                    <Entry x:Name="StackNameEntry" Text="{Binding StackName}" Placeholder="e.g. Morning Stack" />
                 </Border>
             </VerticalStackLayout>
 

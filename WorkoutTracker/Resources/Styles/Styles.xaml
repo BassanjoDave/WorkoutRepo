@@ -181,8 +181,11 @@
         <Setter Property="FontSize" Value="12" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="10,4" />
+        <!-- Was "10,4" — the tightest labels (e.g. "Rituals") could visually clip against
+             the border/corner radius on some devices; a little extra horizontal room fixes it. -->
+        <Setter Property="Padding" Value="14,4" />
         <Setter Property="MinimumHeightRequest" Value="32" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
         <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
         <Setter Property="BorderColor" Value="{StaticResource ColorDivider}" />
         <Setter Property="BorderWidth" Value="1" />

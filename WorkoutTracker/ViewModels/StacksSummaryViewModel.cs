@@ -46,6 +46,7 @@ public partial class StacksSummaryViewModel : ObservableObject
         var hideMedications = memberData.HomeModules.FirstOrDefault(m => m.ModuleId == "stacks")?.SummaryVariant == "hideMeds";
 
         var today = (Weekday)DateTime.Today.DayOfWeek;
+        var todayDate = DateOnly.FromDateTime(DateTime.Today);
         var eligible = memberData.Stacks
             .Where(s => s.Days.Count == 0 || s.Days.Contains(today))
             .OrderBy(s => s.Time)
@@ -58,7 +59,8 @@ public partial class StacksSummaryViewModel : ObservableObject
         var slots = new ObservableCollection<StackSlotViewModel>();
         foreach (var (stack, items) in eligible.Take(2))
         {
-            slots.Add(new StackSlotViewModel(stack.Name, stack.Time.ToString("h:mm tt"), items.Count));
+            var takenToday = memberData.StackLog.Any(l => l.StackId == stack.Id && l.Date == todayDate && l.Taken);
+            slots.Add(new StackSlotViewModel(stack.Name, stack.Time.ToString("h:mm tt"), items.Count, takenToday));
         }
         VisibleSlots = slots;
         MoreCount = Math.Max(0, eligible.Count - slots.Count);
@@ -74,11 +76,13 @@ public class StackSlotViewModel
     public string Name { get; }
     public string TimeLabel { get; }
     public string ItemsLabel { get; }
+    public bool IsTaken { get; }
 
-    public StackSlotViewModel(string name, string timeLabel, int itemCount)
+    public StackSlotViewModel(string name, string timeLabel, int itemCount, bool isTaken)
     {
         Name = name;
         TimeLabel = timeLabel;
         ItemsLabel = itemCount == 1 ? "1 item" : $"{itemCount} items";
+        IsTaken = isTaken;
     }
 }

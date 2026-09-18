@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Services.Storage;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -181,7 +182,15 @@ public partial class StackEditorViewModel : ObservableObject, IQueryAttributable
     {
         if (string.IsNullOrWhiteSpace(StackName))
         {
-            ErrorMessage = "Give this stack a name.";
+            if (Shell.Current?.CurrentPage is StackEditorPage page)
+            {
+                await page.DisplayAlertAsync("Name it first", "Give this stack a name.", "OK");
+                page.FocusStackName();
+            }
+            else
+            {
+                ErrorMessage = "Give this stack a name.";
+            }
             return;
         }
         if (Items.Count == 0)

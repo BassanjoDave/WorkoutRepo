@@ -92,13 +92,6 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Quantity (servings)" Style="{StaticResource MetaLabel}" />
-                        <Border Style="{StaticResource InputBorder}" WidthRequest="100" HorizontalOptions="Start">
-                            <Entry Text="{Binding Quantity}" Keyboard="Numeric" FontSize="13" />
-                        </Border>
-                    </VerticalStackLayout>
                 </VerticalStackLayout>
 
                 <!-- Custom entry -->
@@ -135,9 +128,20 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="18">
-            <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
-            <Button Grid.Column="1" Text="Add" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
-        </Grid>
+        <VerticalStackLayout Grid.Row="1" Padding="18" Spacing="10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" IsVisible="{Binding ShowQuantityFooter}">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="{Binding SelectedOption.Name}" FontSize="13" FontAttributes="Bold" />
+                    <Label Text="Servings" Style="{StaticResource MetaLabel}" FontSize="10" />
+                </VerticalStackLayout>
+                <Border Grid.Column="1" Style="{StaticResource InputBorder}" WidthRequest="70" Padding="8,0">
+                    <Entry Text="{Binding Quantity}" Keyboard="Numeric" FontSize="13" HorizontalTextAlignment="Center" />
+                </Border>
+            </Grid>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="1" Text="Add" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
+            </Grid>
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>

@@ -27,11 +27,28 @@
                         <DataTemplate x:DataType="vm:StackSlotViewModel">
                             <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource ColorDivider}" StrokeThickness="1"
                                     BackgroundColor="Transparent" Padding="10,8" WidthRequest="110">
-                                <VerticalStackLayout Spacing="2">
-                                    <Label Text="{Binding Name}" FontSize="12" FontAttributes="Bold" LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding TimeLabel}" Style="{StaticResource MetaLabel}" FontSize="11" />
-                                    <Label Text="{Binding ItemsLabel}" FontSize="11" />
-                                </VerticalStackLayout>
+                                <Grid>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Name}" FontSize="12" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding TimeLabel}" Style="{StaticResource MetaLabel}" FontSize="11" />
+                                        <Label Text="{Binding ItemsLabel}" FontSize="11" />
+                                    </VerticalStackLayout>
+                                    <!-- Same outline-vs-filled Phosphor trick as Home's ritual completion
+                                         checkmark — whether today's dose was logged, at a glance. -->
+                                    <Label Text="{StaticResource IconCheckCircleFill}" FontSize="14"
+                                           HorizontalOptions="End" VerticalOptions="Start">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsTaken}" Value="True">
+                                                <Setter Property="FontFamily" Value="{StaticResource FontPhosphorFill}" />
+                                                <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsTaken}" Value="False">
+                                                <Setter Property="FontFamily" Value="{StaticResource FontPhosphorRegular}" />
+                                                <Setter Property="TextColor" Value="{StaticResource ColorNeutral500}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
