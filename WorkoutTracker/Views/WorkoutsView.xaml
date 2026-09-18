@@ -25,7 +25,7 @@
 
         <!-- Header actions -->
         <Grid ColumnDefinitions="*,Auto,Auto">
-            <Label Grid.Column="0" Text="Workouts" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
+            <Label Grid.Column="0" Text="Rituals" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
             <Button Grid.Column="1" Text="New HIIT" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnNewHiitClicked" Margin="0,0,6,0" />
             <Button Grid.Column="2" Text="New" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnNewClicked" />
         </Grid>
@@ -96,7 +96,7 @@
                         <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
                     </DataTrigger>
                 </Border.Triggers>
-                <Label Text="Mine" Style="{StaticResource ChipLabel}">
+                <Label Text="My Rituals" Style="{StaticResource ChipLabel}">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding ShowMine}" Value="True">
                             <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
@@ -113,7 +113,7 @@
                         <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
                     </DataTrigger>
                 </Border.Triggers>
-                <Label Text="Account" Style="{StaticResource ChipLabel}">
+                <Label Text="Our Rituals" Style="{StaticResource ChipLabel}">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding ShowAccount}" Value="True">
                             <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
@@ -130,7 +130,7 @@
                         <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
                     </DataTrigger>
                 </Border.Triggers>
-                <Label Text="Manufacturer" Style="{StaticResource ChipLabel}">
+                <Label Text="Rig Rituals" Style="{StaticResource ChipLabel}">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding ShowManufacturer}" Value="True">
                             <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />

@@ -23,7 +23,7 @@
         <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
             <Button x:Name="HomeButton" Text="Home" CommandParameter="home" Clicked="OnTabClicked"
                     Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
-            <Button x:Name="ExerciseButton" Text="Exercise" CommandParameter="exercise" Clicked="OnTabClicked"
+            <Button x:Name="ExerciseButton" Text="Rituals" CommandParameter="exercise" Clicked="OnTabClicked"
                     Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />
             <Button x:Name="NutritionButton" Text="Nutrition" CommandParameter="nutrition" Clicked="OnTabClicked"
                     Style="{StaticResource TabBarButton}" Margin="0,0,8,6" />

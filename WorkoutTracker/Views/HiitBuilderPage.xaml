@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
              x:Class="WorkoutTracker.Views.HiitBuilderPage"
              x:DataType="vm:HiitBuilderViewModel"
-             Title="HIIT Builder">
+             Title="HIIT Ritual Builder">
 
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="16">

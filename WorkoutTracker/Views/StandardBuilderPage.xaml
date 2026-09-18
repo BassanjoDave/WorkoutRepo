@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
              x:Class="WorkoutTracker.Views.StandardBuilderPage"
              x:DataType="vm:StandardBuilderViewModel"
-             Title="Workout Builder">
+             Title="Ritual Builder">
 
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="16">

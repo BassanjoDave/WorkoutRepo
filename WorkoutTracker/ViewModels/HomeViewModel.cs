@@ -187,6 +187,9 @@ public partial class HomeViewModel : ObservableObject
     private async Task OpenNotifications() => await Shell.Current.GoToAsync("notifications");
 
     [RelayCommand]
+    private async Task OpenMyRigs() => await Shell.Current.GoToAsync("myRigs");
+
+    [RelayCommand]
     private void GoToToday() => SelectDay(_today);
 
     /// <summary>Manual override for a scheduled workout's completed state — lets a

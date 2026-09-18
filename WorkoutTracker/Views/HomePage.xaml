@@ -76,11 +76,13 @@
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
 
-                <Grid ColumnDefinitions="*,Auto,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                     <Label Grid.Column="0" Text="{Binding SelectedDateLabel}" Style="{StaticResource KickerLabel}" VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="Today" Style="{StaticResource GhostButton}" FontSize="11"
                             Command="{Binding GoToTodayCommand}" IsVisible="{Binding IsSelectedToday, Converter={StaticResource InvertedBoolConverter}}" />
-                    <Button Grid.Column="2" Text="+ Add Workout" Style="{StaticResource GhostButton}" FontSize="11"
+                    <Button Grid.Column="2" Text="My Rigs" Style="{StaticResource GhostButton}" FontSize="11"
+                            Command="{Binding OpenMyRigsCommand}" />
+                    <Button Grid.Column="3" Text="+ Add Ritual" Style="{StaticResource GhostButton}" FontSize="11"
                             Command="{Binding AddWorkoutCommand}" />
                 </Grid>
 

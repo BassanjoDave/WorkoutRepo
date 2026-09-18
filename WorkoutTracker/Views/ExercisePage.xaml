@@ -5,7 +5,7 @@
              xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.ExercisePage"
              x:DataType="vm:ExerciseViewModel"
-             Title="Exercise">
+             Title="Rituals">
 
     <ContentPage.Resources>
         <Style x:Key="ToggleChip" TargetType="Border">
@@ -22,9 +22,9 @@
 
             <views:AppTabBar ActiveRoute="exercise" />
 
-            <Label Text="Exercise" Style="{StaticResource HeadingLabel}" />
+            <Label Text="Rituals" Style="{StaticResource HeadingLabel}" />
 
-            <!-- Workouts / Exercises toggle -->
+            <!-- Rituals / Exercises toggle -->
             <HorizontalStackLayout Spacing="6">
                 <Border Style="{StaticResource ToggleChip}">
                     <Border.GestureRecognizers>
@@ -35,7 +35,7 @@
                             <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
                         </DataTrigger>
                     </Border.Triggers>
-                    <Label Text="Workouts" FontSize="12">
+                    <Label Text="Rituals" FontSize="12">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding IsWorkoutsTab}" Value="True">
                                 <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />

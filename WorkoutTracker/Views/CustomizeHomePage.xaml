@@ -9,12 +9,12 @@
     <Grid RowDefinitions="*,Auto">
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="18" Spacing="14">
-                <Label Text="Choose which sections show up on Home, and in what order. Exercise always stays at the top — it's what runs your day picker."
+                <Label Text="Choose which sections show up on Home, and in what order. Rituals always stays at the top — it's what runs your day picker."
                        Style="{StaticResource MetaLabel}" />
 
                 <Border Style="{StaticResource CardBorder}">
                     <Grid ColumnDefinitions="*,Auto">
-                        <Label Grid.Column="0" Text="Exercise" FontSize="14" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Label Grid.Column="0" Text="Rituals" FontSize="14" FontAttributes="Bold" VerticalOptions="Center" />
                         <Switch Grid.Column="1" IsToggled="{Binding IsExerciseEnabled}" />
                     </Grid>
                 </Border>
