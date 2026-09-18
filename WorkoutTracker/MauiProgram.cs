@@ -75,6 +75,7 @@ public static class MauiProgram
 		services.AddSingleton<IRecipeDraftBridge, RecipeDraftBridge>();
 		services.AddSingleton<IHomeWorkoutBridge, HomeWorkoutBridge>();
 		services.AddSingleton<IPendingExerciseBridge, PendingExerciseBridge>();
+		services.AddSingleton<IActiveRoutineBuilderContext, ActiveRoutineBuilderContext>();
 		services.AddSingleton<IGoogleAuthService, GoogleAuthService>();
 		services.AddSingleton<IAppleAuthService, AppleAuthService>();
 		services.AddSingleton<IAppRestartService, AppRestartService>();
@@ -86,6 +87,7 @@ public static class MauiProgram
 	{
 		services.AddTransient<ProfileGateViewModel>();
 		services.AddTransient<ProfileGatePage>();
+		services.AddTransient<AppTabBar>();
 		services.AddTransient<HomeViewModel>();
 		services.AddTransient<HomePage>();
 		services.AddTransient<WorkoutsViewModel>();
@@ -114,6 +116,12 @@ public static class MauiProgram
 		services.AddTransient<HiitPlayerPage>();
 		services.AddTransient<StandardBuilderViewModel>();
 		services.AddTransient<StandardBuilderPage>();
+		services.AddTransient<StandardAddExercisePage>();
+		services.AddTransient<HiitAddSectionPage>();
+		services.AddTransient<BrowseExercisesPage>();
+		services.AddTransient<RoutineSchedulePage>();
+		services.AddTransient<AddFromRitualViewModel>();
+		services.AddTransient<AddFromRitualPage>();
 		services.AddTransient<DevSettingsViewModel>();
 		services.AddTransient<DevSettingsPage>();
 		services.AddTransient<ExerciseEditorViewModel>();

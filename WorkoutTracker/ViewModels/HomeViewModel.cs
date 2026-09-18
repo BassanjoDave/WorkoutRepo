@@ -24,10 +24,6 @@ public partial class HomeViewModel : ObservableObject
     private ManufacturerLibrary _manufacturer = new();
     private DateOnly _today;
 
-    [ObservableProperty] public partial string ActiveMemberInitial { get; set; } = "";
-    [ObservableProperty] public partial Color ActiveMemberColor { get; set; } = Colors.Gray;
-    [ObservableProperty] public partial bool ActiveMemberUsesPhoto { get; set; }
-    [ObservableProperty] public partial ImageSource? ActiveMemberPhoto { get; set; }
     [ObservableProperty] public partial ObservableCollection<WeekDayCellViewModel> WeekStrip { get; set; } = new();
     [ObservableProperty] public partial bool IsRestDay { get; set; }
     [ObservableProperty] public partial bool IsExerciseEnabled { get; set; } = true;
@@ -39,9 +35,6 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty] public partial DateOnly SelectedDate { get; set; }
     [ObservableProperty] public partial string SelectedDateLabel { get; set; } = "";
     [ObservableProperty] public partial bool IsSelectedToday { get; set; } = true;
-    [ObservableProperty] public partial int UnreadNotificationCount { get; set; }
-    public bool HasUnreadNotifications => UnreadNotificationCount > 0;
-    partial void OnUnreadNotificationCountChanged(int value) => OnPropertyChanged(nameof(HasUnreadNotifications));
 
     public HomeViewModel(IActiveSessionService session, IWorkoutRepository repo, ISyncStatusService syncStatus,
         IWorkoutReminderService reminders, IHomeWorkoutBridge homeWorkoutBridge, IEntitlementService entitlements)
@@ -95,24 +88,9 @@ public partial class HomeViewModel : ObservableObject
         _accountId = account.Id;
         _memberId = member.Id;
 
-        ActiveMemberInitial = member.Initial;
-        ActiveMemberColor = Color.FromArgb(member.AvatarColor);
-        ActiveMemberUsesPhoto = member.AvatarDisplay == AvatarDisplay.Photo && member.AvatarPhotoBlobFileName is not null;
-        if (ActiveMemberUsesPhoto)
-        {
-            var blobFileName = member.AvatarPhotoBlobFileName!;
-            ActiveMemberPhoto = ImageSource.FromStream(async _ =>
-            {
-                var bytes = await _repo.GetProgressPhotoBlobAsync(account.Id, member.Id, blobFileName);
-                return bytes is null ? null : new MemoryStream(bytes);
-            });
-        }
-
         _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _shared = await _repo.GetSharedLibraryAsync(account.Id);
         _manufacturer = await _repo.GetManufacturerLibraryAsync();
-
-        UnreadNotificationCount = _memberData.Notifications.Count(n => !n.IsRead);
 
         LoadModuleConfig();
 
@@ -145,7 +123,7 @@ public partial class HomeViewModel : ObservableObject
         // Fire-and-forget: keeps device-side reminders in sync with whatever
         // the schedule looks like right now, without threading the reminder
         // service through every place that can change the schedule.
-        _ = _reminders.RescheduleAllAsync(_memberData, id =>
+        _ = _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, id =>
             _shared.Routines.FirstOrDefault(r => r.Id == id)?.Name ?? _manufacturer.Routines.FirstOrDefault(r => r.Id == id)?.Name);
 
         // Reappearing after "+ Add Workout" → "Create a new workout" sent the member
@@ -155,7 +133,12 @@ public partial class HomeViewModel : ObservableObject
         {
             var newRoutine = _shared.Routines.FirstOrDefault(r => r.Id == newRoutineId)
                 ?? _manufacturer.Routines.FirstOrDefault(r => r.Id == newRoutineId);
-            if (newRoutine is not null && Shell.Current?.CurrentPage is Page page)
+            // If the routine was already given a recurring schedule in its own
+            // builder (the "Schedule & Reminder" toggle), it's already on the
+            // calendar — asking "add to today?" and then "one-time or recurring?"
+            // would just re-litigate a decision the member already made.
+            if (newRoutine is not null && !_memberData.RoutineSchedules.ContainsKey(newRoutine.Id)
+                && Shell.Current?.CurrentPage is Page page)
             {
                 var add = await page.DisplayAlertAsync("Workout created",
                     $"Add \"{newRoutine.Name}\" to today's schedule?", "Add", "Not now");
@@ -182,9 +165,6 @@ public partial class HomeViewModel : ObservableObject
             .Select(m => m.ModuleId)
             .ToList();
     }
-
-    [RelayCommand]
-    private async Task OpenNotifications() => await Shell.Current.GoToAsync("notifications");
 
     [RelayCommand]
     private async Task OpenMyRigs() => await Shell.Current.GoToAsync("myRigs");

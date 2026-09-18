@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Services.Storage;
+using WorkoutTracker.Views;
 using Visibility = WorkoutTracker.Models.Visibility;
 
 namespace WorkoutTracker.ViewModels;
@@ -14,6 +15,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     private readonly IWorkoutRepository _repo;
     private readonly IWorkoutReminderService _reminders;
     private readonly IHomeWorkoutBridge _homeWorkoutBridge;
+    private readonly IActiveRoutineBuilderContext _builderContext;
 
     private Guid? _editingRoutineId;
     private bool _fromHome;
@@ -26,6 +28,10 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     private ManufacturerLibrary _manufacturer = new();
     private MemberData _memberData = new();
 
+    /// <summary>The routine id being edited, if any — used by AddFromRitualPage to
+    /// exclude this routine from its own "copy sections from" list.</summary>
+    public Guid? EditingRoutineId => _editingRoutineId;
+
     public RoutineReminderEditorViewModel Reminder { get; }
 
     /// <summary>Set only when opened from a running HIIT session's Edit button — see HiitPlayerViewModel.EditWorkout.</summary>
@@ -36,6 +42,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     // stay a property or the section-type Picker silently binds to nothing.
     public string[] SectionTypes { get; } = { "Warm Up", "Exercise", "Rest", "Cool Down", "Custom" };
 
+    [ObservableProperty] public partial bool IsLoading { get; set; }
     [ObservableProperty] public partial string RoutineName { get; set; } = "New HIIT Workout";
     [ObservableProperty] public partial bool IsAccountShared { get; set; }
     [ObservableProperty] public partial int Cycles { get; set; } = 1;
@@ -48,12 +55,13 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] public partial int NewSectionSeconds { get; set; } = 30;
 
     public HiitBuilderViewModel(IActiveSessionService session, IWorkoutRepository repo, IWorkoutReminderService reminders,
-        IHomeWorkoutBridge homeWorkoutBridge)
+        IHomeWorkoutBridge homeWorkoutBridge, IActiveRoutineBuilderContext builderContext)
     {
         _session = session;
         _repo = repo;
         _reminders = reminders;
         _homeWorkoutBridge = homeWorkoutBridge;
+        _builderContext = builderContext;
         Reminder = new RoutineReminderEditorViewModel(reminders);
     }
 
@@ -67,51 +75,62 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
 
     public async Task LoadAsync()
     {
-        var account = _session.ActiveAccount;
-        var member = _session.ActiveMember;
-        if (account is null || member is null)
+        IsLoading = true;
+        try
         {
-            await Shell.Current.GoToAsync("//gate");
-            return;
+            var account = _session.ActiveAccount;
+            var member = _session.ActiveMember;
+            if (account is null || member is null)
+            {
+                await Shell.Current.GoToAsync("//gate");
+                return;
+            }
+            _accountId = account.Id;
+            _memberId = member.Id;
+            _memberName = member.DisplayName;
+            // Lets the Add Section/Browse Exercises/Add From Ritual/Schedule sub-pages
+            // reach this same in-progress instance — see IActiveRoutineBuilderContext.
+            _builderContext.ActiveHiit = this;
+
+            _shared = await _repo.GetSharedLibraryAsync(account.Id);
+            _manufacturer = await _repo.GetManufacturerLibraryAsync();
+            _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
+            _routineId = _editingRoutineId ?? Guid.NewGuid();
+            Reminder.Load(_memberData, _routineId);
+
+            if (_editingRoutineId is not Guid routineId) return;
+
+            var routine = _shared.Routines.FirstOrDefault(r => r.Id == routineId);
+            if (routine is null)
+            {
+                // Home lets a member schedule a manufacturer routine directly (see
+                // HomeViewModel.AddWorkout), so "Edit" here can land on one. It can't
+                // be mutated in place — Save() below forks it into a private copy
+                // instead, the same way a mid-session "just this occurrence" edit does.
+                routine = _manufacturer.Routines.FirstOrDefault(r => r.Id == routineId);
+                if (routine is null) return;
+                _isManufacturerFork = true;
+            }
+
+            RoutineName = routine.Name;
+            IsAccountShared = routine.Visibility == Visibility.Account;
+            Cycles = routine.CycleRepeats ?? 1;
+            RestBetweenCycles = routine.RestBetweenCyclesSeconds ?? 0;
+            // Replacing the whole collection (rather than Clear() + Add() in place) avoids
+            // BindableLayout briefly seeing an empty source mid-rebuild — that transient
+            // empty state crashes natively inside WinUI's own child-collection handling
+            // (see the same fix in WorkoutsViewModel.Rebuild()).
+            var sections = new ObservableCollection<HiitSectionRowViewModel>();
+            foreach (var s in routine.Sections ?? new())
+            {
+                sections.Add(new HiitSectionRowViewModel(s.Type, s.Title, s.Description, s.Seconds, HiitSectionColors.Resolve(s), RemoveSectionCommand));
+            }
+            Sections = sections;
         }
-        _accountId = account.Id;
-        _memberId = member.Id;
-        _memberName = member.DisplayName;
-
-        _shared = await _repo.GetSharedLibraryAsync(account.Id);
-        _manufacturer = await _repo.GetManufacturerLibraryAsync();
-        _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
-        _routineId = _editingRoutineId ?? Guid.NewGuid();
-        Reminder.Load(_memberData, _routineId);
-
-        if (_editingRoutineId is not Guid routineId) return;
-
-        var routine = _shared.Routines.FirstOrDefault(r => r.Id == routineId);
-        if (routine is null)
+        finally
         {
-            // Home lets a member schedule a manufacturer routine directly (see
-            // HomeViewModel.AddWorkout), so "Edit" here can land on one. It can't
-            // be mutated in place — Save() below forks it into a private copy
-            // instead, the same way a mid-session "just this occurrence" edit does.
-            routine = _manufacturer.Routines.FirstOrDefault(r => r.Id == routineId);
-            if (routine is null) return;
-            _isManufacturerFork = true;
+            IsLoading = false;
         }
-
-        RoutineName = routine.Name;
-        IsAccountShared = routine.Visibility == Visibility.Account;
-        Cycles = routine.CycleRepeats ?? 1;
-        RestBetweenCycles = routine.RestBetweenCyclesSeconds ?? 0;
-        // Replacing the whole collection (rather than Clear() + Add() in place) avoids
-        // BindableLayout briefly seeing an empty source mid-rebuild — that transient
-        // empty state crashes natively inside WinUI's own child-collection handling
-        // (see the same fix in WorkoutsViewModel.Rebuild()).
-        var sections = new ObservableCollection<HiitSectionRowViewModel>();
-        foreach (var s in routine.Sections ?? new())
-        {
-            sections.Add(new HiitSectionRowViewModel(s.Type, s.Title, s.Description, s.Seconds, HiitSectionColors.Resolve(s), RemoveSectionCommand));
-        }
-        Sections = sections;
     }
 
     [RelayCommand]
@@ -136,6 +155,11 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     /// editable (including duration) afterward like any other section.</summary>
     public void AddSectionFromLibrary(string exerciseName) =>
         Sections.Add(new HiitSectionRowViewModel("Exercise", exerciseName, "", 30, HiitSectionColors.DefaultFor("Exercise"), RemoveSectionCommand));
+
+    /// <summary>Third way to add a section — copying one over from another HIIT
+    /// routine's own section list (see AddFromRitualViewModel).</summary>
+    public void AddSectionFromTarget(HiitSection section) =>
+        Sections.Add(new HiitSectionRowViewModel(section.Type, section.Title, section.Description, section.Seconds, HiitSectionColors.Resolve(section), RemoveSectionCommand));
 
     private List<HiitSection> BuildSections() => Sections.Select(s => new HiitSection
     {
@@ -198,7 +222,11 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             var useSuggestion = await page.DisplayAlertAsync("Name already used",
                 $"A workout named \"{trimmedName}\" already exists. Use \"{suggestion}\" instead?",
                 $"Use \"{suggestion}\"", "Let me rename it");
-            if (!useSuggestion) return;
+            if (!useSuggestion)
+            {
+                if (page is HiitBuilderPage hbp) hbp.FocusRoutineName();
+                return;
+            }
             RoutineName = suggestion;
             trimmedName = suggestion;
         }
@@ -238,8 +266,9 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
             _memberData.Schedule.UpdatedAt = now;
             Reminder.ApplyTo(_memberData, fork.Id);
             await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
-            await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);
+            await _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, FindRoutineName);
 
+            _builderContext.ActiveHiit = null;
             await Shell.Current!.GoToAsync("//home");
             return;
         }
@@ -306,12 +335,13 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
 
         Reminder.ApplyTo(_memberData, _routineId);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
-        await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);
+        await _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, FindRoutineName);
 
         // Lets HomeViewModel offer "add this to today's schedule?" once we're back
         // there — see IHomeWorkoutBridge. Only for a genuinely new routine.
         if (_fromHome && isNew) _homeWorkoutBridge.SetPendingRoutineId(routine.Id);
 
+        _builderContext.ActiveHiit = null;
         await Shell.Current!.GoToAsync(_occDate is not null ? "//home" : "..");
     }
 
@@ -332,7 +362,11 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
     }
 
     [RelayCommand]
-    private async Task Cancel() => await Shell.Current.GoToAsync("..");
+    private async Task Cancel()
+    {
+        _builderContext.ActiveHiit = null;
+        await Shell.Current.GoToAsync("..");
+    }
 }
 
 public partial class HiitSectionRowViewModel : ObservableObject

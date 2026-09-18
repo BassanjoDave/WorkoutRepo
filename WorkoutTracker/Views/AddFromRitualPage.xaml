@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.AddFromRitualPage"
+             x:DataType="vm:AddFromRitualViewModel"
+             Title="Add From an Existing Ritual">
+
+    <ContentPage.Resources>
+        <Style x:Key="RitualChip" TargetType="Border">
+            <Setter Property="Stroke" Value="{StaticResource ColorDivider}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="StrokeDashArray" Value="2,2" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style x:Key="RitualChipLabel" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="14">
+
+            <!-- Step 1: pick a routine, filtered like the workout list -->
+            <VerticalStackLayout Spacing="14" IsVisible="{Binding HasSelectedRoutine, Converter={StaticResource InvertedBoolConverter}}">
+                <HorizontalStackLayout Spacing="6">
+                    <Border Style="{StaticResource RitualChip}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding ToggleMineCommand}" /></Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ShowMine}" Value="True">
+                                <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="My Rituals" Style="{StaticResource RitualChipLabel}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ShowMine}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+                    <Border Style="{StaticResource RitualChip}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding ToggleAccountCommand}" /></Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ShowAccount}" Value="True">
+                                <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Our Rituals" Style="{StaticResource RitualChipLabel}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ShowAccount}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+                    <Border Style="{StaticResource RitualChip}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding ToggleManufacturerCommand}" /></Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ShowManufacturer}" Value="True">
+                                <Setter Property="Stroke" Value="{StaticResource ColorAccent}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Rig Rituals" Style="{StaticResource RitualChipLabel}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ShowManufacturer}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Routines}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RitualPickRowViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRoutineTapped" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding Name}" FontSize="13" FontAttributes="Bold" />
+                                        <Label Text="{Binding Summary}" Style="{StaticResource MetaLabel}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
+                                           TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="No rituals match these filters." Style="{StaticResource MetaLabel}"
+                       IsVisible="{Binding Routines.Count, Converter={StaticResource IsZeroConverter}}"
+                       HorizontalTextAlignment="Center" Margin="0,20,0,0" />
+            </VerticalStackLayout>
+
+            <!-- Step 2: pick which of that routine's exercises/sections to copy in -->
+            <VerticalStackLayout Spacing="14" IsVisible="{Binding HasSelectedRoutine}">
+                <Button Text="← Back to rituals" Style="{StaticResource GhostButton}" FontSize="12"
+                        Command="{Binding BackToRoutineListCommand}" HorizontalOptions="Start" />
+                <Label Text="{Binding SelectedRoutineName}" Style="{StaticResource HeadingLabel}" FontSize="15" />
+
+                <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Items}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RitualItemCheckRowViewModel">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" />
+                                <Label Grid.Column="1" Text="{Binding Name}" FontSize="13" VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="Add Selected" Style="{StaticResource AccentFilledButton}" Command="{Binding AddSelectedCommand}" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

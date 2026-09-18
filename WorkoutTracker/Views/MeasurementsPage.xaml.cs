@@ -5,17 +5,22 @@ namespace WorkoutTracker.Views;
 public partial class MeasurementsPage : ContentPage
 {
     private readonly MeasurementsViewModel _viewModel;
+    private readonly AppTabBar _appHeader;
 
-    public MeasurementsPage(MeasurementsViewModel viewModel)
+    public MeasurementsPage(MeasurementsViewModel viewModel, AppTabBar appHeader)
     {
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
+        _appHeader = appHeader;
+        _appHeader.ActiveRoute = "measurements";
+        AppHeaderHost.Content = _appHeader;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        await _appHeader.LoadAsync();
         await _viewModel.LoadAsync();
     }
 

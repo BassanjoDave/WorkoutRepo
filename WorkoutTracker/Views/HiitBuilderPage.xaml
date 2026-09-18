@@ -2,18 +2,18 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
-             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.HiitBuilderPage"
              x:DataType="vm:HiitBuilderViewModel"
              Title="HIIT Ritual Builder">
 
-    <ScrollView>
+    <Grid>
+    <ScrollView IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
         <VerticalStackLayout Padding="18" Spacing="16">
 
             <VerticalStackLayout Spacing="4">
                 <Label Text="Name" Style="{StaticResource MetaLabel}" />
-                <Border Style="{StaticResource InputBorder}">
-                    <Entry Text="{Binding RoutineName}" />
+                <Border x:Name="RoutineNameBorder" Style="{StaticResource InputBorder}">
+                    <Entry x:Name="RoutineNameEntry" Text="{Binding RoutineName}" />
                 </Border>
             </VerticalStackLayout>
 
@@ -91,53 +91,42 @@
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardBorder}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Add section" Style="{StaticResource MetaLabel}" />
-
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Type" Style="{StaticResource MetaLabel}" FontSize="10" />
-                        <Border Style="{StaticResource InputBorder}">
-                            <Picker ItemsSource="{Binding SectionTypes}" SelectedItem="{Binding NewSectionType}" TextColor="{StaticResource ColorText}" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Label (optional)" Style="{StaticResource MetaLabel}" FontSize="10" />
-                        <Border Style="{StaticResource InputBorder}">
-                            <Entry Text="{Binding NewSectionTitle}" Placeholder="e.g. Burpees — leave blank to just say the type" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Description (optional)" Style="{StaticResource MetaLabel}" FontSize="10" />
-                        <Border Style="{StaticResource InputBorder}">
-                            <Entry Text="{Binding NewSectionDescription}" Placeholder="Shown during the countdown" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <VerticalStackLayout Grid.Column="0" Spacing="4">
-                            <Label Text="Duration (seconds)" Style="{StaticResource MetaLabel}" FontSize="10" />
-                            <Border Style="{StaticResource InputBorder}">
-                                <Entry Text="{Binding NewSectionSeconds}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
-                        <Button Grid.Column="1" Text="Add" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding AddSectionCommand}" VerticalOptions="End" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
-
-            <Label Text="OR BROWSE EXERCISES" Style="{StaticResource KickerLabel}" />
-            <ContentView x:Name="LibraryHost" />
-
-            <views:RoutineScheduleEditorView BindingContext="{Binding Reminder}" />
-
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" />
                 <Button Grid.Column="1" Text="Save" Style="{StaticResource AccentFilledButton}" Command="{Binding SaveCommand}" />
             </Grid>
 
+            <Border Style="{StaticResource CardBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnAddSectionTapped" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="Add Section" FontSize="13" FontAttributes="Bold" />
+                        <Label Text="{Binding Sections.Count, StringFormat='{0} sections'}" Style="{StaticResource MetaLabel}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
+                           TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorder}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnScheduleTapped" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="Schedule &amp; Reminder" FontSize="13" FontAttributes="Bold" />
+                        <Label Text="{Binding Reminder.Summary}" Style="{StaticResource MetaLabel}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
+                           TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
         </VerticalStackLayout>
     </ScrollView>
+    <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
+                        Color="{StaticResource ColorAccent}" HorizontalOptions="Center" VerticalOptions="Center" />
+    </Grid>
 </ContentPage>

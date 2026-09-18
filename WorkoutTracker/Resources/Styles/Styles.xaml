@@ -13,6 +13,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:WorkoutTracker.Behaviors"
     x:Class="WorkoutTracker.Resources.Styles.AppStyles">
 
     <x:String x:Key="FontBody">InterRegular</x:String>
@@ -253,6 +254,20 @@
         <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="Behaviors">
+            <Setter.Value>
+                <behaviors:SelectAllOnFocusBehavior />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- No explicit TextColor otherwise renders unreadable (near-black) against
+         a dark theme background on Android/Windows. -->
+    <Style TargetType="TimePicker">
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
+    </Style>
+    <Style TargetType="DatePicker">
+        <Setter Property="TextColor" Value="{StaticResource ColorText}" />
     </Style>
 
     <Style x:Key="InputBorder" TargetType="Border">

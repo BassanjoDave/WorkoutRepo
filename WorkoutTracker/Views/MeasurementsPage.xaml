@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
-             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.MeasurementsPage"
              x:DataType="vm:MeasurementsViewModel"
              Title="Measurements">
@@ -43,7 +42,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="14">
 
-            <views:AppTabBar ActiveRoute="measurements" />
+            <ContentView x:Name="AppHeaderHost" />
 
             <Border Padding="14,10" StrokeShape="RoundRectangle 10" Stroke="Transparent"
                     BackgroundColor="{StaticResource ColorAccent800}" IsVisible="{Binding HasFullAccess, Converter={StaticResource InvertedBoolConverter}}">

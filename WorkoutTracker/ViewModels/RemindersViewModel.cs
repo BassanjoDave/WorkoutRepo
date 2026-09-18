@@ -97,7 +97,7 @@ public partial class RemindersViewModel : ObservableObject
         _memberData.Reminders.Enabled = Enabled;
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
 
-        await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);
+        await _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, FindRoutineName);
         await Shell.Current.GoToAsync("..");
     }
 

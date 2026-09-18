@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
-             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.ExercisePage"
              x:DataType="vm:ExerciseViewModel"
              Title="Rituals">
@@ -20,7 +19,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="14">
 
-            <views:AppTabBar ActiveRoute="exercise" />
+            <ContentView x:Name="AppHeaderHost" />
 
             <Label Text="Rituals" Style="{StaticResource HeadingLabel}" />
 

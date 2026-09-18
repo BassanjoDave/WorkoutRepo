@@ -6,16 +6,21 @@ namespace WorkoutTracker.Views;
 public partial class HomePage : ContentPage
 {
     private readonly HomeViewModel _viewModel;
+    private readonly AppTabBar _appHeader;
     private readonly Dictionary<string, (View View, Func<Task> Load)> _moduleCards;
     private readonly Dictionary<string, LockedModuleCardView> _lockedCards;
     private List<string> _displayedSignature = new();
 
-    public HomePage(HomeViewModel viewModel, NutritionSummaryView nutritionSummary,
+    public HomePage(HomeViewModel viewModel, AppTabBar appHeader, NutritionSummaryView nutritionSummary,
         MeasurementsSummaryView measurementsSummary, HistorySummaryView historySummary, StacksSummaryView stacksSummary)
     {
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
+
+        _appHeader = appHeader;
+        _appHeader.ActiveRoute = "home";
+        AppHeaderHost.Content = _appHeader;
 
         _moduleCards = new Dictionary<string, (View, Func<Task>)>
         {
@@ -44,6 +49,7 @@ public partial class HomePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        await _appHeader.LoadAsync();
         await _viewModel.LoadAsync();
 
         // Signature includes lock state, not just the enabled module id list, so a
@@ -111,8 +117,4 @@ public partial class HomePage : ContentPage
         await Shell.Current.GoToAsync("//exercise");
     }
 
-    private async void OnAvatarTapped(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//profile");
-    }
 }

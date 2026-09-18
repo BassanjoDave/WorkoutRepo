@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
-             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.HomePage"
              x:DataType="vm:HomeViewModel"
              Title="Home">
@@ -10,45 +9,14 @@
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="16">
 
-            <views:AppTabBar ActiveRoute="home" />
+            <ContentView x:Name="AppHeaderHost" />
 
-            <!-- Header banner — brand blue, page name in a contrasting (white) color
-                 so it stays legible against the banner in either theme (see
-                 ColorBanner/ColorBannerText in Colors.Light/Dark.cs). The app logo
-                 lives in AppTabBar (the shared app header above), not repeated here. -->
-            <Border StrokeShape="RoundRectangle 10" Stroke="Transparent" BackgroundColor="{StaticResource ColorBanner}" Padding="14,10">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
-                    <Label Grid.Column="0" Text="Home" Style="{StaticResource HeadingLabel}" TextColor="{StaticResource ColorBannerText}" VerticalOptions="Center" />
-                    <Label Grid.Column="1" Text="{Binding SyncLabel}" Style="{StaticResource MetaLabel}" TextColor="{StaticResource ColorBannerText}" Opacity="0.85" VerticalOptions="Center" />
-                    <Grid Grid.Column="2" WidthRequest="26" HeightRequest="26">
-                        <Grid.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding OpenNotificationsCommand}" />
-                        </Grid.GestureRecognizers>
-                        <Label Text="{StaticResource IconBell}" FontSize="18" TextColor="{StaticResource ColorBannerText}"
-                               HorizontalOptions="Center" VerticalOptions="Center" />
-                        <Border StrokeShape="RoundRectangle 8" Stroke="Transparent" BackgroundColor="{StaticResource ColorAccent}"
-                                WidthRequest="16" HeightRequest="16" Padding="0"
-                                HorizontalOptions="End" VerticalOptions="Start"
-                                IsVisible="{Binding HasUnreadNotifications}">
-                            <Label Text="{Binding UnreadNotificationCount}" FontSize="10" TextColor="White" FontAttributes="Bold"
-                                   HorizontalOptions="Center" VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
-                    <Border Grid.Column="3" StrokeShape="RoundRectangle 15" Stroke="Transparent"
-                            BackgroundColor="{Binding ActiveMemberColor}" WidthRequest="30" HeightRequest="30" Padding="0">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnAvatarTapped" />
-                        </Border.GestureRecognizers>
-                        <Grid>
-                            <Label Text="{Binding ActiveMemberInitial}" Style="{StaticResource MetaLabel}"
-                                   TextColor="{StaticResource ColorBg}" FontAttributes="Bold"
-                                   HorizontalOptions="Center" VerticalOptions="Center"
-                                   IsVisible="{Binding ActiveMemberUsesPhoto, Converter={StaticResource InvertedBoolConverter}}" />
-                            <Image Source="{Binding ActiveMemberPhoto}" Aspect="AspectFill" IsVisible="{Binding ActiveMemberUsesPhoto}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
+            <!-- Plain page heading, like every other tab page — the bell/avatar/banner
+                 chrome now lives once in the shared app header (AppTabBar) above. -->
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Home" Style="{StaticResource HeadingLabel}" FontSize="16" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="{Binding SyncLabel}" Style="{StaticResource MetaLabel}" VerticalOptions="Center" />
+            </Grid>
 
             <!-- Exercise module: Home's permanent anchor (owns the day picker) -->
             <VerticalStackLayout Spacing="16" IsVisible="{Binding IsExerciseEnabled}">

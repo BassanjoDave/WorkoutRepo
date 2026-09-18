@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Services.Storage;
+using WorkoutTracker.Views;
 using Visibility = WorkoutTracker.Models.Visibility;
 
 namespace WorkoutTracker.ViewModels;
@@ -22,6 +23,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     private readonly IWorkoutReminderService _reminders;
     private readonly IHomeWorkoutBridge _homeWorkoutBridge;
     private readonly IPendingExerciseBridge _pendingExerciseBridge;
+    private readonly IActiveRoutineBuilderContext _builderContext;
 
     /// <summary>Sentinel row appended to AvailableExercises so the picker can offer "+ Add custom exercise…" — see OnSelectedExerciseToAddChanged.</summary>
     private static readonly Guid AddCustomExerciseSentinelId = Guid.Empty;
@@ -37,6 +39,10 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     private ManufacturerLibrary _manufacturer = new();
     private MemberData _memberData = new();
     private List<Exercise> _allExercises = new();
+
+    /// <summary>The routine id being edited, if any — used by AddFromRitualPage to
+    /// exclude this routine from its own "copy exercises from" list.</summary>
+    public Guid? EditingRoutineId => _editingRoutineId;
 
     public RoutineReminderEditorViewModel Reminder { get; }
 
@@ -55,6 +61,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         { "All", "Chest", "Shoulders", "Back", "Arms", "Abs", "Legs", "Full Body", "Cardio", "Vibration Plate" };
     public string[] CategoryOptions => Categories;
 
+    [ObservableProperty] public partial bool IsLoading { get; set; }
     [ObservableProperty] public partial string RoutineName { get; set; } = "New Workout";
     [ObservableProperty] public partial bool IsAccountShared { get; set; }
     [ObservableProperty] public partial ObservableCollection<StandardExerciseRowViewModel> ExerciseRows { get; set; } = new();
@@ -83,13 +90,14 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     [ObservableProperty] public partial string PendingResistance { get; set; } = "";
 
     public StandardBuilderViewModel(IActiveSessionService session, IWorkoutRepository repo, IWorkoutReminderService reminders,
-        IHomeWorkoutBridge homeWorkoutBridge, IPendingExerciseBridge pendingExerciseBridge)
+        IHomeWorkoutBridge homeWorkoutBridge, IPendingExerciseBridge pendingExerciseBridge, IActiveRoutineBuilderContext builderContext)
     {
         _session = session;
         _repo = repo;
         _reminders = reminders;
         _homeWorkoutBridge = homeWorkoutBridge;
         _pendingExerciseBridge = pendingExerciseBridge;
+        _builderContext = builderContext;
         Reminder = new RoutineReminderEditorViewModel(reminders);
     }
 
@@ -172,81 +180,66 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
 
     public async Task LoadAsync()
     {
-        var account = _session.ActiveAccount;
-        var member = _session.ActiveMember;
-        if (account is null || member is null)
+        IsLoading = true;
+        try
         {
-            await Shell.Current.GoToAsync("//gate");
-            return;
-        }
-        _accountId = account.Id;
-        _memberId = member.Id;
-        _memberName = member.DisplayName;
-
-        _shared = await _repo.GetSharedLibraryAsync(account.Id);
-        _manufacturer = await _repo.GetManufacturerLibraryAsync();
-        _allExercises = _shared.Exercises.Concat(_manufacturer.Exercises)
-            .Where(e => e.Visibility == Visibility.Manufacturer || e.OwnerMemberId == _memberId || e.Visibility == Visibility.Account)
-            .ToList();
-        RebuildAvailableExercises();
-
-        _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
-        // Assigned now (not at Save time) so the schedule/reminder editor and the
-        // eventual routine share one id whether this is a fresh workout or an edit.
-        _routineId = _editingRoutineId ?? Guid.NewGuid();
-        Reminder.Load(_memberData, _routineId);
-
-        if (_editingRoutineId is not Guid routineId) return;
-        var routine = _shared.Routines.FirstOrDefault(r => r.Id == routineId);
-        if (routine is null)
-        {
-            // Home lets a member schedule a manufacturer routine directly (see
-            // HomeViewModel.AddWorkout), so "Edit" here can land on one. It can't
-            // be mutated in place — Save() below forks it into a private copy
-            // instead, the same way a mid-session "just this occurrence" edit does.
-            routine = _manufacturer.Routines.FirstOrDefault(r => r.Id == routineId);
-            if (routine is null) return;
-            _isManufacturerFork = true;
-        }
-
-        RoutineName = routine.Name;
-        IsAccountShared = routine.Visibility == Visibility.Account;
-        // Replacing the whole collection (rather than Clear() + Add() in place) avoids
-        // BindableLayout briefly seeing an empty source mid-rebuild — that transient
-        // empty state crashes natively inside WinUI's own child-collection handling
-        // (see the same fix in WorkoutsViewModel.Rebuild()).
-        var exerciseRows = new ObservableCollection<StandardExerciseRowViewModel>();
-        foreach (var target in routine.Exercises)
-        {
-            var option = AvailableExercises.FirstOrDefault(o => o.Id == target.ExerciseId);
-            var kind = option?.Kind ?? SessionRowKind.Standard;
-            var row = new StandardExerciseRowViewModel(target.ExerciseId, option?.Name ?? "Exercise", option?.HasWeight ?? false, kind,
-                MoveUpCommand, MoveDownCommand, RemoveRowCommand);
-
-            switch (kind)
+            var account = _session.ActiveAccount;
+            var member = _session.ActiveMember;
+            if (account is null || member is null)
             {
-                case SessionRowKind.Vibration:
-                    row.Stance = target.Stance ?? "";
-                    row.Mode = target.Mode ?? "";
-                    row.Duration = target.DurationSeconds?.ToString() ?? "";
-                    row.Frequency = target.FrequencyHz?.ToString() ?? "";
-                    row.Level = target.Level?.ToString() ?? "";
-                    break;
-                case SessionRowKind.Cardio:
-                    row.Time = target.TimeMinutes?.ToString() ?? "";
-                    row.Resistance = target.Resistance?.ToString() ?? "";
-                    break;
-                default:
-                    foreach (var g in target.Groups)
-                    {
-                        row.Groups.Add(new SetGroupRowViewModel(g.Sets, g.Reps, g.Weight, row.RemoveGroupCommand));
-                    }
-                    if (row.Groups.Count == 0) row.Groups.Add(new SetGroupRowViewModel("", "", "", row.RemoveGroupCommand));
-                    break;
+                await Shell.Current.GoToAsync("//gate");
+                return;
             }
-            exerciseRows.Add(row);
+            _accountId = account.Id;
+            _memberId = member.Id;
+            _memberName = member.DisplayName;
+            // Lets the Add Exercise/Browse Exercises/Add From Ritual/Schedule sub-pages
+            // reach this same in-progress instance — see IActiveRoutineBuilderContext.
+            _builderContext.ActiveStandard = this;
+
+            _shared = await _repo.GetSharedLibraryAsync(account.Id);
+            _manufacturer = await _repo.GetManufacturerLibraryAsync();
+            _allExercises = _shared.Exercises.Concat(_manufacturer.Exercises)
+                .Where(e => e.Visibility == Visibility.Manufacturer || e.OwnerMemberId == _memberId || e.Visibility == Visibility.Account)
+                .ToList();
+            RebuildAvailableExercises();
+
+            _memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
+            // Assigned now (not at Save time) so the schedule/reminder editor and the
+            // eventual routine share one id whether this is a fresh workout or an edit.
+            _routineId = _editingRoutineId ?? Guid.NewGuid();
+            Reminder.Load(_memberData, _routineId);
+
+            if (_editingRoutineId is not Guid routineId) return;
+            var routine = _shared.Routines.FirstOrDefault(r => r.Id == routineId);
+            if (routine is null)
+            {
+                // Home lets a member schedule a manufacturer routine directly (see
+                // HomeViewModel.AddWorkout), so "Edit" here can land on one. It can't
+                // be mutated in place — Save() below forks it into a private copy
+                // instead, the same way a mid-session "just this occurrence" edit does.
+                routine = _manufacturer.Routines.FirstOrDefault(r => r.Id == routineId);
+                if (routine is null) return;
+                _isManufacturerFork = true;
+            }
+
+            RoutineName = routine.Name;
+            IsAccountShared = routine.Visibility == Visibility.Account;
+            // Replacing the whole collection (rather than Clear() + Add() in place) avoids
+            // BindableLayout briefly seeing an empty source mid-rebuild — that transient
+            // empty state crashes natively inside WinUI's own child-collection handling
+            // (see the same fix in WorkoutsViewModel.Rebuild()).
+            var exerciseRows = new ObservableCollection<StandardExerciseRowViewModel>();
+            foreach (var target in routine.Exercises)
+            {
+                exerciseRows.Add(BuildRowFromTarget(target));
+            }
+            ExerciseRows = exerciseRows;
         }
-        ExerciseRows = exerciseRows;
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]
@@ -292,6 +285,43 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             row.Groups.Add(new SetGroupRowViewModel("", "", "", row.RemoveGroupCommand));
         }
         ExerciseRows.Add(row);
+    }
+
+    /// <summary>Third way to add an exercise — copying one over from another routine's
+    /// own exercise list (see AddFromRitualViewModel). Shares the exact row-construction
+    /// logic LoadAsync uses when opening an existing routine for edit, via BuildRowFromTarget,
+    /// so a copied-in exercise looks and behaves identically to one loaded from a saved routine.</summary>
+    public void AddExerciseFromTarget(RoutineExerciseTarget target) => ExerciseRows.Add(BuildRowFromTarget(target));
+
+    private StandardExerciseRowViewModel BuildRowFromTarget(RoutineExerciseTarget target)
+    {
+        var option = AvailableExercises.FirstOrDefault(o => o.Id == target.ExerciseId);
+        var kind = option?.Kind ?? SessionRowKind.Standard;
+        var row = new StandardExerciseRowViewModel(target.ExerciseId, option?.Name ?? "Exercise", option?.HasWeight ?? false, kind,
+            MoveUpCommand, MoveDownCommand, RemoveRowCommand);
+
+        switch (kind)
+        {
+            case SessionRowKind.Vibration:
+                row.Stance = target.Stance ?? "";
+                row.Mode = target.Mode ?? "";
+                row.Duration = target.DurationSeconds?.ToString() ?? "";
+                row.Frequency = target.FrequencyHz?.ToString() ?? "";
+                row.Level = target.Level?.ToString() ?? "";
+                break;
+            case SessionRowKind.Cardio:
+                row.Time = target.TimeMinutes?.ToString() ?? "";
+                row.Resistance = target.Resistance?.ToString() ?? "";
+                break;
+            default:
+                foreach (var g in target.Groups)
+                {
+                    row.Groups.Add(new SetGroupRowViewModel(g.Sets, g.Reps, g.Weight, row.RemoveGroupCommand));
+                }
+                if (row.Groups.Count == 0) row.Groups.Add(new SetGroupRowViewModel("", "", "", row.RemoveGroupCommand));
+                break;
+        }
+        return row;
     }
 
     [RelayCommand]
@@ -342,7 +372,11 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             var saveAnyway = await page.DisplayAlertAsync("Missing details",
                 $"These exercises are missing sets/reps or weight: {names}. Save anyway, or go back and fill them in?",
                 "Save anyway", "Let me fix it");
-            if (!saveAnyway) return;
+            if (!saveAnyway)
+            {
+                if (page is StandardBuilderPage sbp) await sbp.ScrollToExerciseRow(ExerciseRows.IndexOf(incompleteRows[0]));
+                return;
+            }
         }
 
         // A "copy to mine" fork still displays under the source's own name until
@@ -377,7 +411,11 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             var useSuggestion = await page.DisplayAlertAsync("Name already used",
                 $"A workout named \"{trimmedName}\" already exists. Use \"{suggestion}\" instead?",
                 $"Use \"{suggestion}\"", "Let me rename it");
-            if (!useSuggestion) return;
+            if (!useSuggestion)
+            {
+                if (page is StandardBuilderPage sbp) sbp.FocusRoutineName();
+                return;
+            }
             RoutineName = suggestion;
             trimmedName = suggestion;
         }
@@ -417,8 +455,9 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
             _memberData.Schedule.UpdatedAt = now;
             Reminder.ApplyTo(_memberData, fork.Id);
             await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
-            await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);
+            await _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, FindRoutineName);
 
+            _builderContext.ActiveStandard = null;
             await Shell.Current!.GoToAsync("//home");
             return;
         }
@@ -483,7 +522,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
 
         Reminder.ApplyTo(_memberData, _routineId);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
-        await _reminders.RescheduleAllAsync(_memberData, FindRoutineName);
+        await _reminders.RescheduleAllAsync(_memberData, _accountId, _memberId, FindRoutineName);
 
         // Lets HomeViewModel offer "add this to today's schedule?" once we're back
         // there — see IHomeWorkoutBridge. Only for a genuinely new routine: editing
@@ -491,6 +530,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         // on the schedule, nothing to offer.
         if (_fromHome && isNew) _homeWorkoutBridge.SetPendingRoutineId(routine.Id);
 
+        _builderContext.ActiveStandard = null;
         await Shell.Current!.GoToAsync(_occDate is not null ? "//home" : "..");
     }
 
@@ -533,7 +573,11 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     private static int? ParseIntOrNull(string value) => int.TryParse(value, out var i) ? i : null;
 
     [RelayCommand]
-    private async Task Cancel() => await Shell.Current.GoToAsync("..");
+    private async Task Cancel()
+    {
+        _builderContext.ActiveStandard = null;
+        await Shell.Current.GoToAsync("..");
+    }
 }
 
 public record ExercisePickerOption(Guid Id, string Name, bool HasWeight, SessionRowKind Kind)

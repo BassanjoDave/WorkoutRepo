@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
-             xmlns:views="clr-namespace:WorkoutTracker.Views"
              x:Class="WorkoutTracker.Views.ProfilePage"
              x:DataType="vm:ProfileViewModel"
              Title="Profile">
@@ -10,7 +9,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="18" Spacing="18">
 
-            <views:AppTabBar ActiveRoute="profile" />
+            <ContentView x:Name="AppHeaderHost" />
 
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                 <Border Grid.Column="0" StrokeShape="RoundRectangle 26" Stroke="Transparent"

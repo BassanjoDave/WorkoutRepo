@@ -9,6 +9,7 @@ using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 #endif
 using WorkoutTracker.Models;
+using WorkoutTracker.Services.Storage;
 using WorkoutTracker.ViewModels;
 
 namespace WorkoutTracker.Services;
@@ -44,8 +45,10 @@ public interface IWorkoutReminderService
     Task<bool> AreNotificationsEnabledAsync();
     Task<bool> RequestPermissionAsync();
 
-    /// <summary>Cancels every reminder this service could have scheduled, then re-schedules from the current RoutineSchedules/ReminderSettings.</summary>
-    Task RescheduleAllAsync(MemberData memberData, Func<Guid, string?> findRoutineName);
+    /// <summary>Cancels every reminder this service could have scheduled, then re-schedules from the current RoutineSchedules/ReminderSettings.
+    /// accountId/memberId are carried along so that when a reminder actually fires, it can also write a
+    /// NotificationEntry into that member's own in-app notification bell (see NotificationWriter).</summary>
+    Task RescheduleAllAsync(MemberData memberData, Guid accountId, Guid memberId, Func<Guid, string?> findRoutineName);
 }
 
 public class WorkoutReminderService : IWorkoutReminderService
@@ -59,9 +62,18 @@ public class WorkoutReminderService : IWorkoutReminderService
     private const int SnoozeActionId = 1;
     private const int MaxOneShotOccurrences = 8;
 
-    public WorkoutReminderService()
+    private readonly IWorkoutRepository _repo;
+
+    public WorkoutReminderService(IWorkoutRepository repo)
     {
+        _repo = repo;
         LocalNotificationCenter.Current.NotificationActionTapped += OnNotificationActionTapped;
+        // Fires when the OS is about to display a scheduled notification — this is what
+        // lets a fired reminder also show up in the in-app bell (see NotificationWriter).
+        // Best-effort only: relies on the app process being alive enough to run managed
+        // code for the plugin's broadcast receiver to reach here; a fully killed
+        // Android/iOS process may show the OS notification without this ever firing.
+        LocalNotificationCenter.Current.NotificationReceiving = OnNotificationReceiving;
     }
 
     public Task<bool> AreNotificationsEnabledAsync() => LocalNotificationCenter.Current.AreNotificationsEnabled();
@@ -72,7 +84,7 @@ public class WorkoutReminderService : IWorkoutReminderService
         return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
-    public async Task RescheduleAllAsync(MemberData memberData, Func<Guid, string?> findRoutineName)
+    public async Task RescheduleAllAsync(MemberData memberData, Guid accountId, Guid memberId, Func<Guid, string?> findRoutineName)
     {
         LocalNotificationCenter.Current.CancelAll();
 
@@ -84,14 +96,14 @@ public class WorkoutReminderService : IWorkoutReminderService
             if (!schedule.ReminderEnabled) continue;
             var name = findRoutineName(routineId);
             if (name is null) continue;
-            await ScheduleRoutineAsync(routineId, schedule, name);
+            await ScheduleRoutineAsync(routineId, schedule, name, accountId, memberId);
         }
     }
 
-    private static async Task ScheduleRoutineAsync(Guid routineId, RoutineSchedule schedule, string name)
+    private static async Task ScheduleRoutineAsync(Guid routineId, RoutineSchedule schedule, string name, Guid accountId, Guid memberId)
     {
         var description = ReminderText(name, schedule.Time);
-        var payload = JsonSerializer.Serialize(new SnoozePayload(description, schedule.SnoozeMinutes));
+        var payload = JsonSerializer.Serialize(new NotificationPayload(description, schedule.SnoozeMinutes, accountId, memberId));
 
         async Task ShowAsync(int notificationId, DateTimeOffset notifyTime, NotificationRepeat repeat)
         {
@@ -148,13 +160,33 @@ public class WorkoutReminderService : IWorkoutReminderService
         },
     };
 
+    private Task<NotificationEventReceivingArgs> OnNotificationReceiving(NotificationRequest request)
+    {
+        if (request.ReturningData is string json)
+        {
+            NotificationPayload? payload = null;
+            try { payload = JsonSerializer.Deserialize<NotificationPayload>(json); }
+            catch { /* not one of ours, or malformed — nothing to write */ }
+
+            if (payload is not null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try { await NotificationWriter.NotifyMemberAsync(_repo, payload.AccountId, payload.MemberId, "Workout reminder", payload.Description, "home"); }
+                    catch { /* best-effort — the OS notification itself already fired regardless */ }
+                });
+            }
+        }
+        return Task.FromResult(new NotificationEventReceivingArgs());
+    }
+
     private static async void OnNotificationActionTapped(NotificationActionEventArgs e)
     {
         if (e.ActionId != SnoozeActionId) return;
         if (e.Request.ReturningData is not string json) return;
 
-        SnoozePayload payload;
-        try { payload = JsonSerializer.Deserialize<SnoozePayload>(json)!; }
+        NotificationPayload payload;
+        try { payload = JsonSerializer.Deserialize<NotificationPayload>(json)!; }
         catch { return; }
 
         var snoozed = new NotificationRequest
@@ -172,7 +204,7 @@ public class WorkoutReminderService : IWorkoutReminderService
         await LocalNotificationCenter.Current.Show(snoozed);
     }
 
-    private record SnoozePayload(string Description, int SnoozeMinutes);
+    private record NotificationPayload(string Description, int SnoozeMinutes, Guid AccountId, Guid MemberId);
 #elif WINDOWS
     // Set false if AppNotificationManager registration throws at construction —
     // e.g. the Windows App SDK runtime isn't available on this machine. Every
@@ -184,9 +216,11 @@ public class WorkoutReminderService : IWorkoutReminderService
     // Only fires while this process is alive — see the type-level doc comment.
     private readonly Dictionary<int, Timer> _timers = new();
     private readonly Lock _timersLock = new();
+    private readonly IWorkoutRepository _repo;
 
-    public WorkoutReminderService()
+    public WorkoutReminderService(IWorkoutRepository repo)
     {
+        _repo = repo;
         try
         {
             AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
@@ -212,7 +246,7 @@ public class WorkoutReminderService : IWorkoutReminderService
 
     public Task<bool> RequestPermissionAsync() => AreNotificationsEnabledAsync();
 
-    public Task RescheduleAllAsync(MemberData memberData, Func<Guid, string?> findRoutineName)
+    public Task RescheduleAllAsync(MemberData memberData, Guid accountId, Guid memberId, Func<Guid, string?> findRoutineName)
     {
         if (!IsSupported) return Task.CompletedTask;
 
@@ -229,7 +263,7 @@ public class WorkoutReminderService : IWorkoutReminderService
             if (!schedule.ReminderEnabled) continue;
             var name = findRoutineName(routineId);
             if (name is null) continue;
-            ScheduleNextOccurrence(routineId, schedule, name);
+            ScheduleNextOccurrence(routineId, schedule, name, accountId, memberId);
         }
         return Task.CompletedTask;
     }
@@ -240,7 +274,7 @@ public class WorkoutReminderService : IWorkoutReminderService
     // that next upcoming occurrence (see the type-level doc comment — it only
     // fires while the app is actually running, unlike the real OS-level scheduling
     // Android/iOS get), recomputed every time RescheduleAllAsync runs.
-    private void ScheduleNextOccurrence(Guid routineId, RoutineSchedule schedule, string name)
+    private void ScheduleNextOccurrence(Guid routineId, RoutineSchedule schedule, string name, Guid accountId, Guid memberId)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         DateOnly? nextDate = null;
@@ -264,22 +298,24 @@ public class WorkoutReminderService : IWorkoutReminderService
         // thread risks a native COM crash that bypasses try/catch entirely, not just
         // a catchable managed exception. MainThread.BeginInvokeOnMainThread first,
         // *then* the try/catch is still kept as a second line of defense.
-        var timer = new Timer(_ => MainThread.BeginInvokeOnMainThread(() => SafeShow(description, snoozeMinutes)),
+        var timer = new Timer(_ => MainThread.BeginInvokeOnMainThread(() => SafeShow(description, snoozeMinutes, accountId, memberId)),
             null, delay, Timeout.InfiniteTimeSpan);
         lock (_timersLock) { _timers[NotificationId(routineId, occurrenceDate)] = timer; }
     }
 
-    private static void SafeShow(string description, int? snoozeMinutes)
+    private void SafeShow(string description, int? snoozeMinutes, Guid accountId, Guid memberId)
     {
-        try { Show(description, snoozeMinutes); }
+        try { Show(description, snoozeMinutes, accountId, memberId); }
         catch { /* see the comment where this is scheduled — must never throw here */ }
     }
 
-    private static void Show(string description, int? snoozeMinutes)
+    private void Show(string description, int? snoozeMinutes, Guid accountId, Guid memberId)
     {
         var builder = new AppNotificationBuilder()
             .AddText("Workout reminder")
-            .AddText(description);
+            .AddText(description)
+            .AddArgument("accountId", accountId.ToString())
+            .AddArgument("memberId", memberId.ToString());
         if (snoozeMinutes is int minutes)
         {
             builder.AddButton(new AppNotificationButton("Snooze")
@@ -288,31 +324,42 @@ public class WorkoutReminderService : IWorkoutReminderService
                 .AddArgument("minutes", minutes.ToString()));
         }
         AppNotificationManager.Default.Show(builder.BuildNotification());
+
+        // This fires in-process (unlike Android/iOS's OS-delivered notifications), so
+        // writing the in-app bell entry here is reliable, not best-effort.
+        _ = Task.Run(async () =>
+        {
+            try { await NotificationWriter.NotifyMemberAsync(_repo, accountId, memberId, "Workout reminder", description, "home"); }
+            catch { /* the OS notification itself already showed regardless */ }
+        });
     }
 
-    private static void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs e)
+    private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs e)
     {
         try
         {
             if (!e.Arguments.TryGetValue("action", out var action) || action != "snooze") return;
             if (!e.Arguments.TryGetValue("description", out var description)) return;
             if (!e.Arguments.TryGetValue("minutes", out var minutesText) || !int.TryParse(minutesText, out var minutes)) return;
+            if (!e.Arguments.TryGetValue("accountId", out var accountIdText) || !Guid.TryParse(accountIdText, out var accountId)) return;
+            if (!e.Arguments.TryGetValue("memberId", out var memberIdText) || !Guid.TryParse(memberIdText, out var memberId)) return;
 
             // Untracked one-off follow-up — RescheduleAllAsync's timer dictionary only
             // needs to cancel the *originals*; letting this one run to completion (or
             // leak until process exit if the app closes first) is an acceptable trade
             // for how rarely someone snoozes and then also edits their schedule
             // within the snooze window.
-            _ = new Timer(_ => MainThread.BeginInvokeOnMainThread(() => SafeShow(description, null)),
+            _ = new Timer(_ => MainThread.BeginInvokeOnMainThread(() => SafeShow(description, null, accountId, memberId)),
                 null, TimeSpan.FromMinutes(minutes), Timeout.InfiniteTimeSpan);
         }
         catch { /* a WinRT event callback throwing is just as fatal as a Timer callback throwing — never let it */ }
     }
 #else
+    public WorkoutReminderService(IWorkoutRepository repo) { }
     public bool IsSupported => false;
     public Task<bool> AreNotificationsEnabledAsync() => Task.FromResult(false);
     public Task<bool> RequestPermissionAsync() => Task.FromResult(false);
-    public Task RescheduleAllAsync(MemberData memberData, Func<Guid, string?> findRoutineName) => Task.CompletedTask;
+    public Task RescheduleAllAsync(MemberData memberData, Guid accountId, Guid memberId, Func<Guid, string?> findRoutineName) => Task.CompletedTask;
 #endif
 
 #if ANDROID || IOS || WINDOWS

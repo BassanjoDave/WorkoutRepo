@@ -28,20 +28,45 @@ public partial class RoutineReminderEditorViewModel : ObservableObject
 
     /// <summary>Whether this routine recurs at all — off means unscheduled (still
     /// runnable ad hoc from the Rituals list), and nothing below matters.</summary>
-    [ObservableProperty] public partial bool IsScheduled { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Summary))]
+    public partial bool IsScheduled { get; set; }
 
-    [ObservableProperty] public partial TimeSpan Time { get; set; } = new(7, 0, 0);
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Summary))]
+    public partial TimeSpan Time { get; set; } = new(7, 0, 0);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEveryNDays))]
     [NotifyPropertyChangedFor(nameof(IsWeeklyOnDays))]
+    [NotifyPropertyChangedFor(nameof(Summary))]
     public partial RepeatOption Repeat { get; set; } = RepeatOption.WeeklyOnDays;
     public bool IsEveryNDays => Repeat == RepeatOption.EveryNDays;
     public bool IsWeeklyOnDays => Repeat == RepeatOption.WeeklyOnDays;
 
-    [ObservableProperty] public partial int IntervalDays { get; set; } = 2;
-    [ObservableProperty] public partial int IntervalWeeks { get; set; } = 1;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Summary))]
+    public partial int IntervalDays { get; set; } = 2;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Summary))]
+    public partial int IntervalWeeks { get; set; } = 1;
     public ObservableCollection<WeekdayChipViewModel> WeekdayChips { get; }
+
+    /// <summary>Live "Every Mon, Wed, Fri at 6:30 AM"-style summary of the current,
+    /// not-yet-saved editor state — shown on the main builder page's "Schedule &amp;
+    /// Reminder" nav row so the collapsed page still shows what's set at a glance.
+    /// Reuses ScheduleResolver.RecurrenceSummary against a throwaway RoutineSchedule
+    /// built from these fields, the same shape ApplyTo saves.</summary>
+    public string Summary => IsScheduled
+        ? ScheduleResolver.RecurrenceSummary(new RoutineSchedule
+        {
+            Time = TimeOnly.FromTimeSpan(Time),
+            Kind = Repeat == RepeatOption.WeeklyOnDays ? RecurrenceKind.WeeklyOnDays : RecurrenceKind.EveryNDays,
+            Weekdays = WeekdayChips.Where(c => c.IsSelected).Select(c => c.Weekday).ToList(),
+            IntervalDays = Repeat == RepeatOption.EveryDay ? 1 : Math.Max(2, IntervalDays),
+            IntervalWeeks = Math.Max(1, IntervalWeeks),
+        })
+        : "Not scheduled";
 
     [ObservableProperty] public partial bool HasEndDate { get; set; }
     [ObservableProperty] public partial DateTime EndDate { get; set; } = DateTime.Today.AddMonths(1);
@@ -61,7 +86,11 @@ public partial class RoutineReminderEditorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleWeekday(WeekdayChipViewModel chip) => chip.IsSelected = !chip.IsSelected;
+    private void ToggleWeekday(WeekdayChipViewModel chip)
+    {
+        chip.IsSelected = !chip.IsSelected;
+        OnPropertyChanged(nameof(Summary));
+    }
 
     [RelayCommand]
     private void SetRepeat(string mode) => Repeat = Enum.Parse<RepeatOption>(mode);

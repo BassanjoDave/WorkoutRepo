@@ -12,6 +12,41 @@
             <Image Source="logo.png" HeightRequest="40" Aspect="AspectFit" HorizontalOptions="Fill" />
         </Border>
 
+        <!-- Notification bell + member avatar — shown once here (not per-page) so they're
+             reachable from anywhere, not just Home. Loaded imperatively in code-behind
+             (LoadAsync, called from each host page's OnAppearing) since this ContentView
+             has no ViewModel/BindingContext of its own. -->
+        <Border StrokeShape="RoundRectangle 10" Stroke="Transparent" BackgroundColor="{StaticResource ColorBanner}" Padding="14,10">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                <Grid Grid.Column="1" WidthRequest="26" HeightRequest="26">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBellTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Text="{StaticResource IconBell}" FontSize="18" TextColor="{StaticResource ColorBannerText}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border x:Name="UnreadBadge" StrokeShape="RoundRectangle 8" Stroke="Transparent" BackgroundColor="{StaticResource ColorAccent}"
+                            WidthRequest="16" HeightRequest="16" Padding="0"
+                            HorizontalOptions="End" VerticalOptions="Start"
+                            IsVisible="False">
+                        <Label x:Name="UnreadBadgeLabel" FontSize="10" TextColor="White" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </Grid>
+                <Border Grid.Column="2" StrokeShape="RoundRectangle 15" Stroke="Transparent"
+                        x:Name="AvatarBorder" WidthRequest="30" HeightRequest="30" Padding="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAvatarTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid>
+                        <Label x:Name="AvatarInitialLabel" Style="{StaticResource MetaLabel}"
+                               TextColor="{StaticResource ColorBg}" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Image x:Name="AvatarPhotoImage" Aspect="AspectFill" IsVisible="False" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
         <!--
           Replaces Shell's native TabBar chrome (hidden globally via the ContentPage
           style in Styles.xaml). On Windows, Shell's TabBar collapses tabs that don't
