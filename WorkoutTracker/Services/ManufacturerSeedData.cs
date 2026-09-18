@@ -11,6 +11,17 @@ public static class ManufacturerSeedData
 {
     private static readonly DateTimeOffset SeedTime = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    // PLACEHOLDER — the handoff data has no per-routine equipment model, only the
+    // generic "Bowflex" manufacturer name and an equally generic BowflexMachine
+    // equipment tag; there's no real source of truth for which specific model each
+    // routine was authored on. Standing in with "Revolution XL" (Dave's own example
+    // in the naming-convention spec) so the "[Manufacturer] – [Model]" display has
+    // something to show — replace with the real model(s) once known. NOTE: this file
+    // is auto-generated from generate_csharp.py; a regeneration will need this
+    // Model assignment re-applied (or added to the generator) since it isn't sourced
+    // from the handoff data.
+    private const string PlaceholderBowflexModel = "Revolution XL";
+
     public static ManufacturerLibrary Build()
     {
         var library = new ManufacturerLibrary();
@@ -479,7 +490,7 @@ public static class ManufacturerSeedData
 
         // better-body: 20 Minute Better Body
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("5e3d0f03-f861-5d0e-bb79-583e74d5fd0b"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "20 Minute Better Body", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "20 Minute Better Body", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("3eb86938-0037-51d4-9421-dac0d988605e"), Groups = { new SetGroupTarget { Sets = "2", Reps = "10-15" } } },
                 new() { ExerciseId = Guid.Parse("7a9fc827-f764-59ba-b94b-a11e12f03d6b"), Groups = { new SetGroupTarget { Sets = "2", Reps = "10-15" } } },
@@ -494,7 +505,7 @@ public static class ManufacturerSeedData
 
         // adv-conditioning: Advanced General Conditioning
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("19a3eaf0-73b6-563e-9f6b-9d26572ce252"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "Advanced General Conditioning", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "Advanced General Conditioning", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("c154b8b6-81dd-5531-8faf-7f5bd4bc6ca8"), Groups = { new SetGroupTarget { Sets = "3", Reps = "10-12" } } },
                 new() { ExerciseId = Guid.Parse("05cd28e4-7534-58b6-b2e0-7c895a81f516"), Groups = { new SetGroupTarget { Sets = "3", Reps = "10-12" } } },
@@ -511,7 +522,7 @@ public static class ManufacturerSeedData
 
         // upper-lower: 20 Minute Upper/Lower Body
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("0f10d7c0-e148-5b8e-a71a-0ea94875c047"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "20 Minute Upper/Lower Body", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "20 Minute Upper/Lower Body", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("aa92ec77-c696-502a-93fe-0d5c43237e18"), Groups = { new SetGroupTarget { Sets = "3", Reps = "12-15" } } },
                 new() { ExerciseId = Guid.Parse("3eb86938-0037-51d4-9421-dac0d988605e"), Groups = { new SetGroupTarget { Sets = "3", Reps = "12-15" } } },
@@ -528,7 +539,7 @@ public static class ManufacturerSeedData
 
         // body-building: Body Building
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("2578a9e7-ff7b-5790-915f-99c27777b8b7"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "Body Building", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "Body Building", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("aa92ec77-c696-502a-93fe-0d5c43237e18"), Groups = { new SetGroupTarget { Sets = "4", Reps = "8-12" } } },
                 new() { ExerciseId = Guid.Parse("e1e62ccb-3112-55bc-bdb2-0846266e6e8c"), Groups = { new SetGroupTarget { Sets = "4", Reps = "8-12" } } },
@@ -552,7 +563,7 @@ public static class ManufacturerSeedData
 
         // circuit: Circuit Training
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("7d08f018-59d7-5ff7-9aab-7e939ba478fa"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "Circuit Training", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "Circuit Training", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("c154b8b6-81dd-5531-8faf-7f5bd4bc6ca8"), Groups = { new SetGroupTarget { Sets = "1", Reps = "8-12" } } },
                 new() { ExerciseId = Guid.Parse("f0484f54-a3c0-5ade-a443-9941b074d0a8"), Groups = { new SetGroupTarget { Sets = "1", Reps = "8-12" } } },
@@ -569,7 +580,7 @@ public static class ManufacturerSeedData
 
         // strength: Strength Training
         library.Routines.Add(new RoutineDefinition { Id = Guid.Parse("29d82027-6600-5b2b-b48f-9a87342363c6"), AccountId = Guid.Empty, OwnerMemberId = null,
-            OwnerNameSnapshot = "Bowflex", Name = "Strength Training", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
+            OwnerNameSnapshot = "Bowflex", Model = PlaceholderBowflexModel, Name = "Strength Training", Visibility = Visibility.Manufacturer, Type = RoutineType.Standard,
             UpdatedAt = SeedTime, Exercises = new List<RoutineExerciseTarget> {
                 new() { ExerciseId = Guid.Parse("aa92ec77-c696-502a-93fe-0d5c43237e18"), Groups = { new SetGroupTarget { Sets = "4", Reps = "6-8" } } },
                 new() { ExerciseId = Guid.Parse("3eb86938-0037-51d4-9421-dac0d988605e"), Groups = { new SetGroupTarget { Sets = "4", Reps = "6-8" } } },

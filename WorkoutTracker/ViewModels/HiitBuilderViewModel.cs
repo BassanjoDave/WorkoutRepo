@@ -222,7 +222,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
                 OwnerMemberId = _memberId,
                 OwnerNameSnapshot = _memberName,
                 SourceRoutineId = _editingRoutineId,
-                SourceNameSnapshot = existing?.OwnerNameSnapshot ?? existing?.Name,
+                SourceNameSnapshot = existing?.OwnerNameSnapshot is null ? existing?.Name : existing.OwnerDisplayName,
                 Name = RoutineName.Trim(),
                 Visibility = Visibility.Private,
                 Type = RoutineType.Hiit,
@@ -278,7 +278,7 @@ public partial class HiitBuilderViewModel : ObservableObject, IQueryAttributable
                 else
                 {
                     manufacturerForkSourceId = manufacturerSource.Id;
-                    manufacturerForkSourceName = manufacturerSource.OwnerNameSnapshot ?? manufacturerSource.Name;
+                    manufacturerForkSourceName = manufacturerSource.OwnerNameSnapshot is null ? manufacturerSource.Name : manufacturerSource.OwnerDisplayName;
                     manufacturerForkSourceKeys = sourceKeys;
                 }
             }

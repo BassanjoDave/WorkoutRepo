@@ -101,7 +101,7 @@ public partial class WorkoutsViewModel : ObservableObject
             OwnerMemberId = _activeMemberId,
             OwnerNameSnapshot = _memberName,
             SourceRoutineId = source.Id,
-            SourceNameSnapshot = source.OwnerNameSnapshot ?? source.Name,
+            SourceNameSnapshot = source.OwnerNameSnapshot is null ? source.Name : source.OwnerDisplayName,
             SourceExerciseKeysSnapshot = RoutineNamingHelper.ExerciseKeysFor(source.Type, source.Exercises.Select(e => e.ExerciseId), source.Sections),
             Name = source.Name,
             Visibility = Visibility.Private,
@@ -184,7 +184,7 @@ public partial class WorkoutsViewModel : ObservableObject
 
     private string? OwnerBadge(RoutineDefinition r)
     {
-        if (r.Visibility == Visibility.Manufacturer) return r.OwnerNameSnapshot ?? "Manufacturer";
+        if (r.Visibility == Visibility.Manufacturer) return r.OwnerNameSnapshot is null ? "Manufacturer" : r.OwnerDisplayName;
         if (r.OwnerMemberId == _activeMemberId) return null;
         if (r.Visibility == Visibility.Account) return $"Shared · by {r.OwnerNameSnapshot ?? "Unknown"}";
         return null;

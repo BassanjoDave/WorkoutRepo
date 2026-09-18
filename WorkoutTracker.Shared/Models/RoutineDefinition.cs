@@ -12,6 +12,15 @@ public class RoutineDefinition
     public Guid? OwnerMemberId { get; set; }
     public string? OwnerNameSnapshot { get; set; }
 
+    /// <summary>Manufacturer-only: the specific equipment model this routine was authored
+    /// for (e.g. "Revolution XL"), shown alongside the manufacturer name as
+    /// "[Manufacturer] – [Model]". Null/blank falls back to just the manufacturer name.</summary>
+    public string? Model { get; set; }
+
+    /// <summary>What to show for this routine's manufacturer/owner — "[Manufacturer] – [Model]"
+    /// when a model is set, otherwise just the plain owner name.</summary>
+    public string OwnerDisplayName => !string.IsNullOrWhiteSpace(Model) ? $"{OwnerNameSnapshot} – {Model}" : OwnerNameSnapshot ?? "";
+
     /// <summary>Set when a copy-on-modify fork created this routine from another member's.</summary>
     public Guid? SourceRoutineId { get; set; }
     public string? SourceNameSnapshot { get; set; }

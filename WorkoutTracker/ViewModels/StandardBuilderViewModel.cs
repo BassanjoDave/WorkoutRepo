@@ -401,7 +401,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
                 OwnerMemberId = _memberId,
                 OwnerNameSnapshot = _memberName,
                 SourceRoutineId = _editingRoutineId,
-                SourceNameSnapshot = existing?.OwnerNameSnapshot ?? existing?.Name,
+                SourceNameSnapshot = existing?.OwnerNameSnapshot is null ? existing?.Name : existing.OwnerDisplayName,
                 Name = RoutineName.Trim(),
                 Visibility = Visibility.Private,
                 Type = RoutineType.Standard,
@@ -457,7 +457,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
                 else
                 {
                     manufacturerForkSourceId = manufacturerSource.Id;
-                    manufacturerForkSourceName = manufacturerSource.OwnerNameSnapshot ?? manufacturerSource.Name;
+                    manufacturerForkSourceName = manufacturerSource.OwnerNameSnapshot is null ? manufacturerSource.Name : manufacturerSource.OwnerDisplayName;
                     manufacturerForkSourceKeys = sourceKeys;
                 }
             }
