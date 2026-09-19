@@ -30,6 +30,10 @@
             <Button Grid.Column="2" Text="New" Style="{StaticResource PrimaryOutlineButton}" Clicked="OnNewClicked" />
         </Grid>
 
+        <Border Style="{StaticResource InputBorder}">
+            <Entry Text="{Binding SearchText}" Placeholder="Search rituals…" FontSize="13" />
+        </Border>
+
         <!-- Type filter: All / Standard / HIIT -->
         <HorizontalStackLayout Spacing="6">
             <Border Style="{StaticResource ChipBorder}">

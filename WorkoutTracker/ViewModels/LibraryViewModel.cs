@@ -23,6 +23,7 @@ public partial class LibraryViewModel : ObservableObject
     [ObservableProperty] public partial bool ShowMine { get; set; } = true;
     [ObservableProperty] public partial bool ShowAccount { get; set; } = true;
     [ObservableProperty] public partial bool ShowManufacturer { get; set; } = true;
+    [ObservableProperty] public partial string SearchText { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<ChipOptionViewModel> CategoryChips { get; set; } = new();
     [ObservableProperty] public partial ObservableCollection<ChipOptionViewModel> EquipmentChips { get; set; } = new();
     [ObservableProperty] public partial ObservableCollection<ExerciseRowViewModel> Exercises { get; set; } = new();
@@ -43,6 +44,7 @@ public partial class LibraryViewModel : ObservableObject
     partial void OnShowMineChanged(bool value) => Rebuild();
     partial void OnShowAccountChanged(bool value) => Rebuild();
     partial void OnShowManufacturerChanged(bool value) => Rebuild();
+    partial void OnSearchTextChanged(string value) => Rebuild();
 
     [RelayCommand] private void ToggleMine() => ShowMine = !ShowMine;
     [RelayCommand] private void ToggleAccount() => ShowAccount = !ShowAccount;
@@ -136,11 +138,13 @@ public partial class LibraryViewModel : ObservableObject
         // empty state crashes natively inside WinUI's own child-collection handling
         // (see the same fix in WorkoutsViewModel.Rebuild()).
         var exercises = new ObservableCollection<ExerciseRowViewModel>();
+        var needle = SearchText.Trim();
         var filtered = _allExercises
             .Where(VisibilityOk)
             .Where(e => EquipmentCatalog.IsExerciseEnabled(_libraryFilter, e))
             .Where(e => _selectedCategory == "All" || CategoryLabel(e.Category) == _selectedCategory)
-            .Where(e => _selectedEquipment == "All" || EquipmentLabel(e.Equipment) == _selectedEquipment);
+            .Where(e => _selectedEquipment == "All" || EquipmentLabel(e.Equipment) == _selectedEquipment)
+            .Where(e => string.IsNullOrEmpty(needle) || e.Name.Contains(needle, StringComparison.OrdinalIgnoreCase));
 
         foreach (var e in filtered)
         {

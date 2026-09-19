@@ -30,6 +30,7 @@ public partial class WorkoutsViewModel : ObservableObject
     [ObservableProperty] public partial bool ShowMine { get; set; } = true;
     [ObservableProperty] public partial bool ShowAccount { get; set; } = true;
     [ObservableProperty] public partial bool ShowManufacturer { get; set; } = true;
+    [ObservableProperty] public partial string SearchText { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<RoutineRowViewModel> Routines { get; set; } = new();
 
     public WorkoutsViewModel(IActiveSessionService session, IWorkoutRepository repo)
@@ -72,6 +73,7 @@ public partial class WorkoutsViewModel : ObservableObject
     partial void OnShowMineChanged(bool value) => Rebuild();
     partial void OnShowAccountChanged(bool value) => Rebuild();
     partial void OnShowManufacturerChanged(bool value) => Rebuild();
+    partial void OnSearchTextChanged(string value) => Rebuild();
 
     [RelayCommand]
     private void SetTypeFilter(string key) =>
@@ -144,10 +146,12 @@ public partial class WorkoutsViewModel : ObservableObject
         // BindableLayout briefly seeing an empty source mid-rebuild — that transient
         // empty state crashed natively inside WinUI's own child-collection handling
         // on this app's FlexLayout-hosted routine list.
+        var needle = SearchText.Trim();
         var filtered = _allRoutines
             .Where(VisibilityOk)
             .Where(r => TypeFilter == RoutineTypeFilter.All
                 || (TypeFilter == RoutineTypeFilter.Hiit ? r.Type == RoutineType.Hiit : r.Type != RoutineType.Hiit))
+            .Where(r => string.IsNullOrEmpty(needle) || r.Name.Contains(needle, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(r => Score(r))
             .ToList();
 

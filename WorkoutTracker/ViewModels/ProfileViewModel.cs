@@ -244,6 +244,9 @@ public partial class ProfileViewModel : ObservableObject
     private async Task OpenCustomizeHome() => await Shell.Current.GoToAsync("customizeHome");
 
     [RelayCommand]
+    private async Task OpenHelp() => await Shell.Current.GoToAsync("help");
+
+    [RelayCommand]
     private async Task OpenProfileGate() => await Shell.Current.GoToAsync("//gate");
 
     /// <summary>Edits the signed-in member's own name/avatar/details — reuses

@@ -163,6 +163,9 @@
             <Button Text="Manage Members" Style="{StaticResource PrimaryOutlineButton}"
                     Command="{Binding OpenManageMembersCommand}" IsVisible="{Binding CanManageMembers}" />
 
+            <Button Text="Help &amp; Support" Style="{StaticResource PrimaryOutlineButton}"
+                    Command="{Binding OpenHelpCommand}" />
+
             <Button Text="Delete Account" Style="{StaticResource SecondaryButton}" TextColor="{StaticResource ColorAccent}"
                     BorderColor="{StaticResource ColorAccent}" Command="{Binding DeleteAccountCommand}" IsVisible="{Binding IsPrimaryHolder}" />
 

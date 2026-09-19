@@ -103,10 +103,21 @@ public class MacroGoals
     public double ProteinG { get; set; } = 150;
     public double CarbsG { get; set; } = 200;
     public double FatG { get; set; } = 65;
+    public double WaterOz { get; set; } = 64;
 
     /// <summary>Which of today's running totals show on the Home dashboard's Nutrition card. All false means the card shows nothing (Home hides it).</summary>
     public bool ShowCaloriesOnHome { get; set; } = true;
     public bool ShowProteinOnHome { get; set; }
     public bool ShowCarbsOnHome { get; set; }
     public bool ShowFatOnHome { get; set; }
+    public bool ShowWaterOnHome { get; set; }
+}
+
+/// <summary>One member's running water total for one date — mirrors StackLogEntry's
+/// per-day shape, but water has no per-item identity to key on, just a running ounce
+/// total updated in place as quick-add buttons are tapped.</summary>
+public class LoggedWaterEntry
+{
+    public DateOnly Date { get; set; }
+    public double Ounces { get; set; }
 }

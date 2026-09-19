@@ -54,6 +54,16 @@
                         <CheckBox IsChecked="{Binding ShowFatOnHome}" Color="{StaticResource ColorAccent}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <VerticalStackLayout Grid.Column="0" Spacing="4">
+                        <Label Text="Water (oz)" Style="{StaticResource MetaLabel}" />
+                        <Border Style="{StaticResource InputBorder}"><Entry Text="{Binding Water}" Keyboard="Numeric" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
+                        <Label Text="On Home" Style="{StaticResource MetaLabel}" FontSize="9" HorizontalTextAlignment="Center" />
+                        <CheckBox IsChecked="{Binding ShowWaterOnHome}" Color="{StaticResource ColorAccent}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Grid>
             </VerticalStackLayout>
         </ScrollView>
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.HelpPage"
+             x:DataType="vm:HelpViewModel"
+             Title="Help &amp; Support">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <Label Text="FREQUENTLY ASKED QUESTIONS" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding FaqItems}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FaqItemViewModel">
+                        <Border Style="{StaticResource CardBorder}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding Question}" FontSize="13" FontAttributes="Bold" />
+                                <Label Text="{Binding Answer}" Style="{StaticResource MetaLabel}" FontSize="12" LineHeight="1.3" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label Text="CONTACT" Style="{StaticResource KickerLabel}" />
+            <Button Text="Contact Support" Style="{StaticResource PrimaryOutlineButton}" Command="{Binding ContactSupportCommand}" />
+
+            <Label Text="ABOUT" Style="{StaticResource KickerLabel}" />
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding AppVersionLabel}" Style="{StaticResource MetaLabel}" />
+                <Button Text="Terms of Service" Style="{StaticResource GhostButton}" FontSize="12" HorizontalOptions="Start" Command="{Binding OpenTermsCommand}" />
+                <Button Text="Privacy Policy" Style="{StaticResource GhostButton}" FontSize="12" HorizontalOptions="Start" Command="{Binding OpenPrivacyCommand}" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

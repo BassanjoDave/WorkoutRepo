@@ -19,11 +19,13 @@ public partial class MacroGoalsViewModel : ObservableObject
     [ObservableProperty] public partial string Protein { get; set; } = "";
     [ObservableProperty] public partial string Carbs { get; set; } = "";
     [ObservableProperty] public partial string Fat { get; set; } = "";
+    [ObservableProperty] public partial string Water { get; set; } = "";
 
     [ObservableProperty] public partial bool ShowCaloriesOnHome { get; set; }
     [ObservableProperty] public partial bool ShowProteinOnHome { get; set; }
     [ObservableProperty] public partial bool ShowCarbsOnHome { get; set; }
     [ObservableProperty] public partial bool ShowFatOnHome { get; set; }
+    [ObservableProperty] public partial bool ShowWaterOnHome { get; set; }
 
     public MacroGoalsViewModel(IActiveSessionService session, IWorkoutRepository repo)
     {
@@ -48,10 +50,12 @@ public partial class MacroGoalsViewModel : ObservableObject
         Protein = _memberData.MacroGoals.ProteinG.ToString("0");
         Carbs = _memberData.MacroGoals.CarbsG.ToString("0");
         Fat = _memberData.MacroGoals.FatG.ToString("0");
+        Water = _memberData.MacroGoals.WaterOz.ToString("0");
         ShowCaloriesOnHome = _memberData.MacroGoals.ShowCaloriesOnHome;
         ShowProteinOnHome = _memberData.MacroGoals.ShowProteinOnHome;
         ShowCarbsOnHome = _memberData.MacroGoals.ShowCarbsOnHome;
         ShowFatOnHome = _memberData.MacroGoals.ShowFatOnHome;
+        ShowWaterOnHome = _memberData.MacroGoals.ShowWaterOnHome;
     }
 
     [RelayCommand]
@@ -63,10 +67,12 @@ public partial class MacroGoalsViewModel : ObservableObject
             ProteinG = ParseDouble(Protein, 150),
             CarbsG = ParseDouble(Carbs, 200),
             FatG = ParseDouble(Fat, 65),
+            WaterOz = ParseDouble(Water, 64),
             ShowCaloriesOnHome = ShowCaloriesOnHome,
             ShowProteinOnHome = ShowProteinOnHome,
             ShowCarbsOnHome = ShowCarbsOnHome,
             ShowFatOnHome = ShowFatOnHome,
+            ShowWaterOnHome = ShowWaterOnHome,
         };
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
         await Shell.Current.GoToAsync("..");

@@ -178,5 +178,7 @@ public static class MauiProgram
 		services.AddTransient<UpgradePage>();
 		services.AddTransient<LegalViewModel>();
 		services.AddTransient<LegalPage>();
+		services.AddTransient<HelpViewModel>();
+		services.AddTransient<HelpPage>();
 	}
 }

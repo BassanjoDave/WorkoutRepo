@@ -44,5 +44,6 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("browseExercises", typeof(BrowseExercisesPage));
 		Routing.RegisterRoute("addFromRitual", typeof(AddFromRitualPage));
 		Routing.RegisterRoute("routineSchedule", typeof(RoutineSchedulePage));
+		Routing.RegisterRoute("help", typeof(HelpPage));
 	}
 }

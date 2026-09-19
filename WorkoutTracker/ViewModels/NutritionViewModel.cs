@@ -34,6 +34,8 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] public partial double CarbsProgress { get; set; }
     [ObservableProperty] public partial string FatLabel { get; set; } = "";
     [ObservableProperty] public partial double FatProgress { get; set; }
+    [ObservableProperty] public partial string WaterLabel { get; set; } = "";
+    [ObservableProperty] public partial double WaterProgress { get; set; }
     [ObservableProperty] public partial ObservableCollection<MealGroupViewModel> MealGroups { get; set; } = new();
     [ObservableProperty] public partial bool HasFullAccess { get; set; }
 
@@ -102,6 +104,10 @@ public partial class NutritionViewModel : ObservableObject
         FatLabel = $"{totalFat:0} / {goals.FatG:0} g fat";
         FatProgress = Ratio(totalFat, goals.FatG);
 
+        var todaysWater = _memberData.WaterLog.FirstOrDefault(w => w.Date == _today)?.Ounces ?? 0;
+        WaterLabel = $"{todaysWater:0} / {goals.WaterOz:0} oz water";
+        WaterProgress = Ratio(todaysWater, goals.WaterOz);
+
         // Replacing the whole collection (rather than Clear() + Add() in place) avoids
         // BindableLayout briefly seeing an empty source mid-rebuild — that transient
         // empty state crashes natively inside WinUI's own child-collection handling
@@ -139,6 +145,21 @@ public partial class NutritionViewModel : ObservableObject
         if (meal is null) return;
         meal.Entries.Remove(row.Entry);
         meal.UpdatedAt = DateTimeOffset.UtcNow;
+        await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
+        Rebuild();
+    }
+
+    [RelayCommand]
+    private async Task AddWater(string ouncesText)
+    {
+        if (!double.TryParse(ouncesText, out var delta)) return;
+        var entry = _memberData.WaterLog.FirstOrDefault(w => w.Date == _today);
+        if (entry is null)
+        {
+            entry = new LoggedWaterEntry { Date = _today };
+            _memberData.WaterLog.Add(entry);
+        }
+        entry.Ounces = Math.Max(0, entry.Ounces + delta);
         await _repo.SaveMemberDataAsync(_accountId, _memberId, _memberData);
         Rebuild();
     }

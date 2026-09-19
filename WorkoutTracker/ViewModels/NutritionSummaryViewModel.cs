@@ -28,6 +28,10 @@ public partial class NutritionSummaryViewModel : ObservableObject
     [ObservableProperty] public partial string FatLabel { get; set; } = "";
     [ObservableProperty] public partial double FatProgress { get; set; }
 
+    [ObservableProperty] public partial bool ShowWater { get; set; }
+    [ObservableProperty] public partial string WaterLabel { get; set; } = "";
+    [ObservableProperty] public partial double WaterProgress { get; set; }
+
     [ObservableProperty] public partial bool HasAnySelected { get; set; }
 
     public NutritionSummaryViewModel(IActiveSessionService session, IWorkoutRepository repo)
@@ -59,7 +63,11 @@ public partial class NutritionSummaryViewModel : ObservableObject
         ShowFat = goals.ShowFatOnHome;
         (FatLabel, FatProgress) = Summarize(entries.Sum(e => e.FatG), goals.FatG, "g fat");
 
-        HasAnySelected = ShowCalories || ShowProtein || ShowCarbs || ShowFat;
+        ShowWater = goals.ShowWaterOnHome;
+        var todaysWater = memberData.WaterLog.FirstOrDefault(w => w.Date == today)?.Ounces ?? 0;
+        (WaterLabel, WaterProgress) = Summarize(todaysWater, goals.WaterOz, "oz water");
+
+        HasAnySelected = ShowCalories || ShowProtein || ShowCarbs || ShowFat || ShowWater;
     }
 
     private static (string Label, double Progress) Summarize(double total, double goal, string unit) =>

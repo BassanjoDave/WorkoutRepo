@@ -29,6 +29,10 @@
                 <Label Text="{Binding FatLabel}" FontSize="12" Style="{StaticResource MetaLabel}" />
                 <ProgressBar Progress="{Binding FatProgress}" ProgressColor="{StaticResource ColorAccent}" />
             </VerticalStackLayout>
+            <VerticalStackLayout Spacing="3" IsVisible="{Binding ShowWater}">
+                <Label Text="{Binding WaterLabel}" FontSize="12" Style="{StaticResource MetaLabel}" />
+                <ProgressBar Progress="{Binding WaterProgress}" ProgressColor="{StaticResource ColorAccent}" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </Border>
 </ContentView>

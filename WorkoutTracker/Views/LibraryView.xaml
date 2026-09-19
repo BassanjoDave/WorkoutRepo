@@ -25,6 +25,10 @@
     <VerticalStackLayout Spacing="12">
         <Label Text="Exercises" Style="{StaticResource HeadingLabel}" FontSize="16" />
 
+        <Border Style="{StaticResource InputBorder}">
+            <Entry Text="{Binding SearchText}" Placeholder="Search exercises…" FontSize="13" />
+        </Border>
+
         <!-- Visibility filter -->
         <HorizontalStackLayout Spacing="6">
             <Border Style="{StaticResource DashedChip}">

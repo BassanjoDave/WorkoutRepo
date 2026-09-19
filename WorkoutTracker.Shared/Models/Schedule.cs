@@ -100,6 +100,7 @@ public class MemberData
     public Dictionary<Guid, RoutineSchedule> RoutineSchedules { get; set; } = new();
 
     public List<LoggedMeal> Meals { get; set; } = new();
+    public List<LoggedWaterEntry> WaterLog { get; set; } = new();
     public MacroGoals MacroGoals { get; set; } = new();
     public List<BodyMeasurementEntry> Measurements { get; set; } = new();
     public List<CustomMeasurementSlot> CustomMeasurementSlots { get; set; } = new();
