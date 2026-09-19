@@ -261,6 +261,35 @@ public partial class HomeViewModel : ObservableObject
                 ToggleCompletedCommand)));
         }
 
+        // A workout run ad hoc (e.g. via "Browse Workouts" on an otherwise-unscheduled
+        // day) creates a WorkoutSession without ever going through ScheduleResolver —
+        // surface those here too, so a workout actually done today doesn't stay hidden
+        // behind "Rest day" just because it was never on the schedule.
+        var covered = built.Select(t => (t.ViewModel.RoutineId, t.ViewModel.Time)).ToHashSet();
+        foreach (var session in _memberData.Sessions.Where(s => s.Date == date))
+        {
+            if (!covered.Add((session.RoutineDefinitionId, session.Time))) continue;
+            var routine = FindRoutine(session.RoutineDefinitionId);
+            if (routine is null) continue;
+
+            var exerciseNames = routine.Exercises.Select(e => FindExercise(e.ExerciseId)?.Name ?? "Exercise").ToList();
+            var isCompleted = session.Status == SessionStatus.Completed;
+            var startLabel = isCompleted ? "Completed" : "Resume";
+
+            built.Add((isCompleted, new TodaySlotViewModel(
+                session.RoutineDefinitionId,
+                date,
+                session.Time,
+                routine.Type == RoutineType.Hiit,
+                session.Time.ToString("h:mm tt"),
+                routine.Name,
+                $"{exerciseNames.Count} exercises",
+                exerciseNames,
+                startLabel,
+                isCompleted,
+                ToggleCompletedCommand)));
+        }
+
         // Replacing the whole collection (rather than Clear() + Add() in place) avoids
         // BindableLayout briefly seeing an empty source mid-rebuild — that transient
         // empty state crashes natively inside WinUI's own child-collection handling

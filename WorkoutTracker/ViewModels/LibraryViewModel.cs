@@ -16,6 +16,7 @@ public partial class LibraryViewModel : ObservableObject
 
     private List<Exercise> _allExercises = new();
     private List<string>? _libraryFilter;
+    private List<Rig> _rigs = new();
     private Guid _activeMemberId;
     private string _selectedCategory = "All";
     private string _selectedEquipment = "All";
@@ -66,6 +67,7 @@ public partial class LibraryViewModel : ObservableObject
         var memberData = await _repo.GetMemberDataAsync(account.Id, member.Id);
         _allExercises = shared.Exercises.Concat(manufacturer.Exercises).ToList();
         _libraryFilter = memberData.LibraryEquipmentFilter;
+        _rigs = (await _repo.GetRigCatalogAsync()).Rigs;
 
         CategoryChips = BuildChip(Categories, _selectedCategory, key => SelectCategoryCommand.Execute(key));
         EquipmentChips = BuildChip(EquipmentTypes, _selectedEquipment, key => SelectEquipmentCommand.Execute(key));
@@ -123,6 +125,16 @@ public partial class LibraryViewModel : ObservableObject
         }
     }
 
+    /// <summary>The specific machine this exercise belongs to (e.g. "Bowflex Xceed"),
+    /// looked up from the real Rig catalog by equipment key — falls back to the equipment
+    /// type's generic label for manufacturer exercises with no matching Rig entry.</summary>
+    private string ManufacturerBadge(Exercise e)
+    {
+        var key = EquipmentCatalog.KeyFor(e);
+        var rig = _rigs.FirstOrDefault(r => r.EquipmentKey == key);
+        return rig?.Name ?? EquipmentCatalog.Label(e.Equipment);
+    }
+
     private bool VisibilityOk(Exercise e)
     {
         if (e.Visibility == Visibility.Manufacturer) return ShowManufacturer;
@@ -148,7 +160,7 @@ public partial class LibraryViewModel : ObservableObject
 
         foreach (var e in filtered)
         {
-            string? ownerBadge = e.Visibility == Visibility.Manufacturer ? "Manufacturer"
+            string? ownerBadge = e.Visibility == Visibility.Manufacturer ? ManufacturerBadge(e)
                 : e.OwnerMemberId == _activeMemberId ? null
                 : e.Visibility == Visibility.Account ? "Account" : null;
             exercises.Add(new ExerciseRowViewModel(e.Id, e.Name, e.Muscles, ownerBadge));

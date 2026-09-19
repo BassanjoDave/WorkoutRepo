@@ -69,23 +69,22 @@
                                                 <Label Text="{Binding CountLabel}" Style="{StaticResource MetaLabel}" />
                                             </VerticalStackLayout>
                                             <Label Grid.Column="1" Text="Completed" TextColor="White" FontSize="12" VerticalOptions="Center" />
-                                            <!-- Same glyph codepoint at two different Phosphor weights: FontPhosphorRegular
-                                                 renders it as an empty outline, FontPhosphorFill as a solid checkmark — this
-                                                 is what actually makes "not completed yet" visually distinct from "done",
-                                                 rather than just a color change on an already-filled icon. -->
-                                            <Button Grid.Column="2" Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorRegular}"
-                                                    Style="{StaticResource GhostButton}" FontSize="22" Padding="4"
-                                                    TextColor="{StaticResource ColorNeutral600}"
-                                                    SemanticProperties.Description="Mark completed"
-                                                    Command="{Binding ToggleCompletedCommand}" CommandParameter="{Binding .}">
-                                                <Button.Triggers>
-                                                    <DataTrigger TargetType="Button" Binding="{Binding IsCompleted}" Value="True">
-                                                        <Setter Property="FontFamily" Value="{StaticResource FontPhosphorFill}" />
-                                                        <Setter Property="TextColor" Value="{StaticResource ColorAccent}" />
-                                                        <Setter Property="SemanticProperties.Description" Value="Mark not completed" />
-                                                    </DataTrigger>
-                                                </Button.Triggers>
-                                            </Button>
+                                            <!-- Not completed: a plain outline ring, no checkmark at all. Completed: the
+                                                 filled check-circle glyph, accent-colored — a real shape change rather than
+                                                 just a color change on an already-checkmarked icon. -->
+                                            <Grid Grid.Column="2" WidthRequest="30" HeightRequest="30"
+                                                  SemanticProperties.Description="Toggle workout completed">
+                                                <Grid.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding ToggleCompletedCommand}" CommandParameter="{Binding .}" />
+                                                </Grid.GestureRecognizers>
+                                                <Ellipse Stroke="{StaticResource ColorNeutral600}" StrokeThickness="1.5" Fill="Transparent"
+                                                         WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center"
+                                                         IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}" />
+                                                <Label Text="{StaticResource IconCheckCircleFill}" FontFamily="{StaticResource FontPhosphorFill}"
+                                                       FontSize="22" TextColor="{StaticResource ColorAccent}"
+                                                       HorizontalOptions="Center" VerticalOptions="Center"
+                                                       IsVisible="{Binding IsCompleted}" />
+                                            </Grid>
                                         </Grid>
                                         <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding Exercises}">
                                             <BindableLayout.ItemTemplate>
