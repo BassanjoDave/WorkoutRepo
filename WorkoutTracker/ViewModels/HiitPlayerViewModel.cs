@@ -25,6 +25,7 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
     private Guid _routineId;
     private TimeOnly _time = new(7, 0);
     private DateOnly _date;
+    private DateOnly? _browseDate;
     private Guid _accountId;
     private Guid _memberId;
     private string _routineName = "";
@@ -71,6 +72,10 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
         _routineId = Guid.Parse((string)query["routineId"]);
         _time = query.TryGetValue("time", out var t) ? TimeOnly.ParseExact((string)t, "HH:mm") : new TimeOnly(7, 0);
         _date = query.TryGetValue("date", out var d) ? DateOnly.Parse((string)d) : DateOnly.FromDateTime(DateTime.Today);
+        // Set only when started via Home's "Browse Workouts" on a day other than today —
+        // see IHomeBrowseContext/WorkoutsView.OnRoutineTapped. Asked about once the
+        // workout actually finishes (SaveSessionAsync), not before it's even started.
+        _browseDate = query.TryGetValue("browseDate", out var bd) ? DateOnly.Parse((string)bd) : null;
     }
 
     public async Task LoadAsync()
@@ -268,8 +273,28 @@ public partial class HiitPlayerViewModel : ObservableObject, IQueryAttributable,
         catch { /* no TTS engine available on this platform/device — the countdown UI still works */ }
     }
 
+    /// <summary>Asks which day this run should count for, only once, right when the
+    /// workout actually finishes — not when it was started. No "cancel" option here
+    /// (unlike the Standard session's Finish button, this fires automatically once
+    /// the countdown ends, so there's no "back out of finishing" to offer).</summary>
+    private async Task ResolveBrowseDateAsync()
+    {
+        if (_browseDate is not DateOnly browseDate) return;
+        _browseDate = null;
+
+        if (Shell.Current?.CurrentPage is not Page page) return;
+        var browseDateLabel = browseDate.ToDateTime(TimeOnly.MinValue).ToString("MMM d");
+        var saveToBrowseDate = $"Save to {browseDateLabel}";
+        var choice = await page.DisplayActionSheetAsync(
+            "Save this workout to the day you were browsing from, or to today?",
+            "Cancel", null, saveToBrowseDate, "Save to today");
+        if (choice == saveToBrowseDate) _date = browseDate;
+    }
+
     private async Task SaveSessionAsync()
     {
+        await ResolveBrowseDateAsync();
+
         // Warm ups, rests, and cool downs are timing scaffolding, not logged
         // work — only the actual exercise/custom intervals go in the log.
         var entries = _flatSections

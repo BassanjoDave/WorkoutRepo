@@ -26,6 +26,7 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     private Guid _routineId;
     private TimeOnly _time;
     private DateOnly _date;
+    private DateOnly? _browseDate;
     private Guid _accountId;
     private Guid _memberId;
     private MemberData _memberData = new();
@@ -59,6 +60,10 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
         _routineId = Guid.Parse((string)query["routineId"]);
         _time = TimeOnly.ParseExact((string)query["time"], "HH:mm");
         _date = query.TryGetValue("date", out var d) ? DateOnly.Parse((string)d) : DateOnly.FromDateTime(DateTime.Today);
+        // Set only when this session was started via Home's "Browse Workouts" on a day
+        // other than today — see IHomeBrowseContext/WorkoutsView.OnRoutineTapped. Asked
+        // about at Finish time, not before, so starting the workout isn't held up by it.
+        _browseDate = query.TryGetValue("browseDate", out var bd) ? DateOnly.Parse((string)bd) : null;
     }
 
     public async Task LoadAsync()
@@ -168,6 +173,8 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
     [RelayCommand]
     private async Task Finish()
     {
+        if (!await ResolveBrowseDateAsync()) return;
+
         var pending = new List<ResolveItemViewModel>();
         foreach (var row in Rows.Where(r => r.Kind == SessionRowKind.Standard && r.IsDone))
         {
@@ -195,6 +202,25 @@ public partial class SessionViewModel : ObservableObject, IQueryAttributable, ID
         }
 
         await CompleteFinishAsync();
+    }
+
+    /// <summary>Asks which day this run should count for, only once, right when the
+    /// member actually finishes — not when they started browsing/picked the routine.
+    /// Returns false if they backed out of the prompt entirely (Finish should abort).</summary>
+    private async Task<bool> ResolveBrowseDateAsync()
+    {
+        if (_browseDate is not DateOnly browseDate) return true;
+        _browseDate = null; // ask at most once per Finish flow, even if Finish is retried after Cancel Resolve
+
+        if (Shell.Current?.CurrentPage is not Page page) return true;
+        var browseDateLabel = browseDate.ToDateTime(TimeOnly.MinValue).ToString("MMM d");
+        var saveToBrowseDate = $"Save to {browseDateLabel}";
+        var choice = await page.DisplayActionSheetAsync(
+            "Save this workout to the day you were browsing from, or to today?",
+            "Cancel", null, saveToBrowseDate, "Save to today");
+        if (choice is null || choice == "Cancel") return false;
+        if (choice == saveToBrowseDate) _date = browseDate;
+        return true;
     }
 
     [RelayCommand]

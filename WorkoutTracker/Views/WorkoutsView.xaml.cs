@@ -29,24 +29,15 @@ public partial class WorkoutsView : ContentView
         // Home slot) has no "assigned" time to carry over — use right now.
         var now = TimeOnly.FromDateTime(DateTime.Now);
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var date = today;
 
         // Reached here via Home's "Browse Workouts" on a day other than today —
-        // ask which date this run should actually count for, since the member
-        // opened this from that day's rest-day card, not from today's. See
-        // IHomeBrowseContext.
-        if (_viewModel.PendingBrowseDate is DateOnly browseDate && browseDate != today && Shell.Current?.CurrentPage is Page page)
-        {
-            var browseDateLabel = browseDate.ToDateTime(TimeOnly.MinValue).ToString("MMM d");
-            var saveToBrowseDate = $"Save to {browseDateLabel}";
-            var choice = await page.DisplayActionSheetAsync(
-                "Save this workout to the day you were browsing from, or to today?",
-                "Cancel", null, saveToBrowseDate, "Save to today");
-            if (choice is null || choice == "Cancel") return;
-            if (choice == saveToBrowseDate) date = browseDate;
-        }
+        // pass that day along as browseDate; the session/HIIT player asks which
+        // date this run should actually count for once the workout is actually
+        // finished, not before the member has even started it. See IHomeBrowseContext.
+        var browseDateParam = _viewModel.PendingBrowseDate is DateOnly browseDate && browseDate != today
+            ? $"&browseDate={browseDate:yyyy-MM-dd}" : "";
 
-        await Shell.Current!.GoToAsync($"{route}?routineId={routine.Id}&time={now:HH\\:mm}&date={date:yyyy-MM-dd}");
+        await Shell.Current.GoToAsync($"{route}?routineId={routine.Id}&time={now:HH\\:mm}&date={today:yyyy-MM-dd}{browseDateParam}");
     }
 
     private async void OnEditRoutineClicked(object? sender, EventArgs e)
