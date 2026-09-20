@@ -129,31 +129,34 @@
             <Button Grid.Column="1" Text="Manage Rigs" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding OpenEquipmentPreferencesCommand}" />
         </Grid>
 
-        <!-- Exercise rows -->
+        <!-- Exercise groups — one row per distinct exercise name, with a chip per
+             machine/equipment variant (see LibraryViewModel.Rebuild). Tapping a chip
+             either raises ExercisePicked (pick mode) or opens that specific variant's
+             detail page — same behavior the old flat per-exercise row used to have. -->
         <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Exercises}">
             <BindableLayout.ItemTemplate>
-                <DataTemplate x:DataType="vm:ExerciseRowViewModel">
+                <DataTemplate x:DataType="vm:ExerciseGroupViewModel">
                     <Border Style="{StaticResource CardBorder}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnExerciseTapped" />
-                        </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                <HorizontalStackLayout Spacing="6">
-                                    <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
-                                    <Border Style="{StaticResource TagAccentBorder}" IsVisible="{Binding OwnerBadge, Converter={StaticResource StringToBoolConverter}}">
-                                        <Label Text="{Binding OwnerBadge}" Style="{StaticResource TagAccentLabel}" FontSize="9" />
-                                    </Border>
-                                </HorizontalStackLayout>
-                                <Label Text="{Binding Muscles}" Style="{StaticResource MetaLabel}" />
-                            </VerticalStackLayout>
-                            <Button Grid.Column="1" Text="+ Add" Style="{StaticResource PrimaryOutlineButton}" FontSize="11" Padding="10,4"
-                                    Clicked="OnPickExerciseClicked"
-                                    IsVisible="{Binding ExercisePickMode, Source={RelativeSource AncestorType={x:Type views:LibraryView}}}" />
-                            <Label Grid.Column="1" Text="{StaticResource IconCaretRight}" FontFamily="{StaticResource FontPhosphorRegular}"
-                                   TextColor="{StaticResource ColorNeutral500}" VerticalOptions="Center"
-                                   IsVisible="{Binding ExercisePickMode, Source={RelativeSource AncestorType={x:Type views:LibraryView}}, Converter={StaticResource InvertedBoolConverter}}" />
-                        </Grid>
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
+                            <Label Text="{Binding Muscles}" Style="{StaticResource MetaLabel}" />
+                            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding Variants}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ExerciseRowViewModel">
+                                        <Border Style="{StaticResource SolidChip}" Margin="0,0,6,6">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnExerciseTapped" />
+                                            </Border.GestureRecognizers>
+                                            <HorizontalStackLayout Spacing="4">
+                                                <Label Text="+" FontSize="12" TextColor="{StaticResource ColorAccent}"
+                                                       IsVisible="{Binding ExercisePickMode, Source={RelativeSource AncestorType={x:Type views:LibraryView}}}" />
+                                                <Label Text="{Binding VariantLabel}" FontSize="12" />
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                        </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
             </BindableLayout.ItemTemplate>

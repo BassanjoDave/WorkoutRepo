@@ -118,14 +118,30 @@ public partial class ExerciseEditorViewModel : ObservableObject
         if (account is null || member is null) return;
 
         var shared = await _repo.GetSharedLibraryAsync(account.Id);
+        var manufacturer = await _repo.GetManufacturerLibraryAsync();
+        var trimmedName = Name.Trim();
+        var equipment = ParseEquipment(SelectedEquipment);
+
+        // Same exercise name is fine across different machines/equipment (that's exactly
+        // how the Library groups them — one name, several machine chips) — it's only a
+        // problem when both the name AND the machine/type match an exercise this member
+        // can already see, which would just produce two indistinguishable chips.
+        var collision = shared.Exercises.Concat(manufacturer.Exercises)
+            .Any(e => e.Equipment == equipment && string.Equals(e.Name, trimmedName, StringComparison.OrdinalIgnoreCase));
+        if (collision)
+        {
+            ErrorMessage = $"\"{trimmedName}\" already exists for {SelectedEquipment}. Give it a different name, or pick a different machine/type if this is meant to be a variant.";
+            return;
+        }
+
         var exercise = new Exercise
         {
             Id = Guid.NewGuid(),
             AccountId = account.Id,
             OwnerMemberId = member.Id,
-            Name = Name.Trim(),
+            Name = trimmedName,
             Category = ParseCategory(SelectedCategory),
-            Equipment = ParseEquipment(SelectedEquipment),
+            Equipment = equipment,
             Muscles = Muscles.Trim(),
             Tips = TipsText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
             Visibility = IsAccountShared ? Visibility.Account : Visibility.Private,

@@ -1,4 +1,5 @@
 using WorkoutTracker.Models;
+using Visibility = WorkoutTracker.Models.Visibility;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -42,6 +43,16 @@ public static class EquipmentCatalog
 
     public static string KeyFor(ExerciseEquipment eq) => eq.ToString();
     public static string KeyFor(CustomEquipmentType custom) => CustomKeyPrefix + custom.Id;
+
+    /// <summary>The specific machine an exercise runs on (e.g. "Bowflex Xceed"), looked
+    /// up from the real Rig catalog by equipment key — falls back to the equipment
+    /// type's generic label (e.g. "Kettlebell") when there's no matching Rig entry.
+    /// This is what distinguishes two same-named exercises on different equipment
+    /// (e.g. "Biceps Curl" on a Bowflex vs. as a Dumbbell exercise).</summary>
+    public static string MachineLabel(Exercise e, IEnumerable<Rig> rigs) =>
+        e.Visibility == Visibility.Manufacturer
+            ? rigs.FirstOrDefault(r => r.EquipmentKey == KeyFor(e))?.Name ?? Label(e.Equipment)
+            : Label(e.Equipment);
 
     /// <summary>Resolves an exercise's actual equipment key, handling the Custom case the same way IsExerciseEnabled does.</summary>
     public static string KeyFor(Exercise e) =>

@@ -39,6 +39,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     private ManufacturerLibrary _manufacturer = new();
     private MemberData _memberData = new();
     private List<Exercise> _allExercises = new();
+    private List<Rig> _rigs = new();
 
     /// <summary>The routine id being edited, if any — used by AddFromRitualPage to
     /// exclude this routine from its own "copy exercises from" list.</summary>
@@ -137,9 +138,13 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
         foreach (var e in filtered)
         {
             var kind = e.IsVibrationPlate ? SessionRowKind.Vibration : e.IsCardio ? SessionRowKind.Cardio : SessionRowKind.Standard;
-            AvailableExercises.Add(new ExercisePickerOption(e.Id, e.Name, e.Equipment is ExerciseEquipment.BowflexMachine or ExerciseEquipment.Kettlebell, kind));
+            // The same exercise name can exist on several machines/equipment types (e.g.
+            // "Biceps Curl" on a Bowflex vs. as a Dumbbell exercise) — the machine label
+            // disambiguates them in this flat dropdown, since a Picker can't group/nest.
+            AvailableExercises.Add(new ExercisePickerOption(e.Id, e.Name, e.Equipment is ExerciseEquipment.BowflexMachine or ExerciseEquipment.Kettlebell, kind,
+                EquipmentCatalog.MachineLabel(e, _rigs)));
         }
-        AvailableExercises.Add(new ExercisePickerOption(AddCustomExerciseSentinelId, "+ Add custom exercise…", false, SessionRowKind.Standard));
+        AvailableExercises.Add(new ExercisePickerOption(AddCustomExerciseSentinelId, "+ Add custom exercise…", false, SessionRowKind.Standard, null));
         SelectedExerciseToAdd = AvailableExercises.FirstOrDefault(o => o.Id == previousSelection);
     }
 
@@ -199,6 +204,7 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
 
             _shared = await _repo.GetSharedLibraryAsync(account.Id);
             _manufacturer = await _repo.GetManufacturerLibraryAsync();
+            _rigs = (await _repo.GetRigCatalogAsync()).Rigs;
             _allExercises = _shared.Exercises.Concat(_manufacturer.Exercises)
                 .Where(e => e.Visibility == Visibility.Manufacturer || e.OwnerMemberId == _memberId || e.Visibility == Visibility.Account)
                 .ToList();
@@ -580,9 +586,9 @@ public partial class StandardBuilderViewModel : ObservableObject, IQueryAttribut
     }
 }
 
-public record ExercisePickerOption(Guid Id, string Name, bool HasWeight, SessionRowKind Kind)
+public record ExercisePickerOption(Guid Id, string Name, bool HasWeight, SessionRowKind Kind, string? MachineLabel)
 {
-    public override string ToString() => Name;
+    public override string ToString() => MachineLabel is null ? Name : $"{Name} — {MachineLabel}";
 }
 
 public partial class StandardExerciseRowViewModel : ObservableObject

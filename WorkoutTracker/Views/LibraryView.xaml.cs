@@ -39,11 +39,6 @@ public partial class LibraryView : ContentView
         await Shell.Current.GoToAsync($"exerciseDetail?exerciseId={exercise.Id}");
     }
 
-    private void OnPickExerciseClicked(object? sender, EventArgs e)
-    {
-        if ((sender as Button)?.BindingContext is ExerciseRowViewModel exercise) ExercisePicked?.Invoke(exercise);
-    }
-
     private async void OnAddCustomExerciseClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync("exerciseEditor");
 }

@@ -27,7 +27,7 @@ public partial class LibraryViewModel : ObservableObject
     [ObservableProperty] public partial string SearchText { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<ChipOptionViewModel> CategoryChips { get; set; } = new();
     [ObservableProperty] public partial ObservableCollection<ChipOptionViewModel> EquipmentChips { get; set; } = new();
-    [ObservableProperty] public partial ObservableCollection<ExerciseRowViewModel> Exercises { get; set; } = new();
+    [ObservableProperty] public partial ObservableCollection<ExerciseGroupViewModel> Exercises { get; set; } = new();
 
     private static readonly string[] Categories = { "All", "Chest", "Shoulders", "Back", "Arms", "Abs", "Legs", "Full Body", "Cardio", "Vibration Plate" };
     private static readonly string[] EquipmentTypes =
@@ -125,16 +125,6 @@ public partial class LibraryViewModel : ObservableObject
         }
     }
 
-    /// <summary>The specific machine this exercise belongs to (e.g. "Bowflex Xceed"),
-    /// looked up from the real Rig catalog by equipment key — falls back to the equipment
-    /// type's generic label for manufacturer exercises with no matching Rig entry.</summary>
-    private string ManufacturerBadge(Exercise e)
-    {
-        var key = EquipmentCatalog.KeyFor(e);
-        var rig = _rigs.FirstOrDefault(r => r.EquipmentKey == key);
-        return rig?.Name ?? EquipmentCatalog.Label(e.Equipment);
-    }
-
     private bool VisibilityOk(Exercise e)
     {
         if (e.Visibility == Visibility.Manufacturer) return ShowManufacturer;
@@ -149,7 +139,6 @@ public partial class LibraryViewModel : ObservableObject
         // BindableLayout briefly seeing an empty source mid-rebuild — that transient
         // empty state crashes natively inside WinUI's own child-collection handling
         // (see the same fix in WorkoutsViewModel.Rebuild()).
-        var exercises = new ObservableCollection<ExerciseRowViewModel>();
         var needle = SearchText.Trim();
         var filtered = _allExercises
             .Where(VisibilityOk)
@@ -158,12 +147,22 @@ public partial class LibraryViewModel : ObservableObject
             .Where(e => _selectedEquipment == "All" || EquipmentLabel(e.Equipment) == _selectedEquipment)
             .Where(e => string.IsNullOrEmpty(needle) || e.Name.Contains(needle, StringComparison.OrdinalIgnoreCase));
 
-        foreach (var e in filtered)
+        // The same exercise name can exist on several machines/equipment types (e.g.
+        // "Biceps Curl" on a Bowflex vs. as a Dumbbell exercise) — group by name so the
+        // list shows one row per distinct exercise, with a chip per machine/type variant
+        // rather than a separate full row for every variant.
+        var groups = filtered
+            .GroupBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g.Key);
+
+        var exercises = new ObservableCollection<ExerciseGroupViewModel>();
+        foreach (var group in groups)
         {
-            string? ownerBadge = e.Visibility == Visibility.Manufacturer ? ManufacturerBadge(e)
-                : e.OwnerMemberId == _activeMemberId ? null
-                : e.Visibility == Visibility.Account ? "Account" : null;
-            exercises.Add(new ExerciseRowViewModel(e.Id, e.Name, e.Muscles, ownerBadge));
+            var variants = group
+                .OrderBy(e => EquipmentCatalog.MachineLabel(e, _rigs))
+                .Select(e => new ExerciseRowViewModel(e.Id, e.Name, e.Muscles, EquipmentCatalog.MachineLabel(e, _rigs)))
+                .ToList();
+            exercises.Add(new ExerciseGroupViewModel(group.Key, group.First().Muscles, variants));
         }
         Exercises = exercises;
     }
@@ -192,18 +191,36 @@ public class ChipOptionViewModel
     }
 }
 
+/// <summary>One row in the grouped Exercise Library — a distinct exercise name,
+/// shown once regardless of how many machines/equipment types it's available on.</summary>
+public class ExerciseGroupViewModel
+{
+    public string Name { get; }
+    public string Muscles { get; }
+    public List<ExerciseRowViewModel> Variants { get; }
+
+    public ExerciseGroupViewModel(string name, string muscles, List<ExerciseRowViewModel> variants)
+    {
+        Name = name;
+        Muscles = muscles;
+        Variants = variants;
+    }
+}
+
+/// <summary>One specific machine/equipment variant of an ExerciseGroupViewModel — a real
+/// Exercise record, rendered as a tappable chip labeled with its machine/type.</summary>
 public class ExerciseRowViewModel
 {
     public Guid Id { get; }
     public string Name { get; }
     public string Muscles { get; }
-    public string? OwnerBadge { get; }
+    public string VariantLabel { get; }
 
-    public ExerciseRowViewModel(Guid id, string name, string muscles, string? ownerBadge)
+    public ExerciseRowViewModel(Guid id, string name, string muscles, string variantLabel)
     {
         Id = id;
         Name = name;
         Muscles = muscles;
-        OwnerBadge = ownerBadge;
+        VariantLabel = variantLabel;
     }
 }
