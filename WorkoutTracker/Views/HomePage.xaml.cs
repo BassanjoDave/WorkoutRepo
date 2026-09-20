@@ -7,11 +7,12 @@ public partial class HomePage : ContentPage
 {
     private readonly HomeViewModel _viewModel;
     private readonly AppTabBar _appHeader;
+    private readonly IHomeBrowseContext _browseContext;
     private readonly Dictionary<string, (View View, Func<Task> Load)> _moduleCards;
     private readonly Dictionary<string, LockedModuleCardView> _lockedCards;
     private List<string> _displayedSignature = new();
 
-    public HomePage(HomeViewModel viewModel, AppTabBar appHeader, NutritionSummaryView nutritionSummary,
+    public HomePage(HomeViewModel viewModel, AppTabBar appHeader, IHomeBrowseContext browseContext, NutritionSummaryView nutritionSummary,
         MeasurementsSummaryView measurementsSummary, HistorySummaryView historySummary, StacksSummaryView stacksSummary)
     {
         InitializeComponent();
@@ -21,6 +22,7 @@ public partial class HomePage : ContentPage
         _appHeader = appHeader;
         _appHeader.ActiveRoute = "home";
         AppHeaderHost.Content = _appHeader;
+        _browseContext = browseContext;
 
         _moduleCards = new Dictionary<string, (View, Func<Task>)>
         {
@@ -114,6 +116,11 @@ public partial class HomePage : ContentPage
 
     private async void OnBrowseWorkoutsClicked(object? sender, EventArgs e)
     {
+        // Lets WorkoutsView ask "save to the day you were browsing from, or today?"
+        // when starting a routine from here on a day other than today — see
+        // IHomeBrowseContext (this is an absolute tab switch, no query-param path
+        // to carry SelectedDate along otherwise).
+        _browseContext.SetPendingDate(_viewModel.SelectedDate);
         await Shell.Current.GoToAsync("//exercise");
     }
 

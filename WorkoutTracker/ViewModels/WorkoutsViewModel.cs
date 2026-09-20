@@ -14,6 +14,13 @@ public partial class WorkoutsViewModel : ObservableObject
 {
     private readonly IActiveSessionService _session;
     private readonly IWorkoutRepository _repo;
+    private readonly IHomeBrowseContext _browseContext;
+
+    /// <summary>Set for the duration of this one visit to the Rituals tab when it
+    /// was reached via Home's "Browse Workouts" on a non-today day — see
+    /// IHomeBrowseContext. Consumed (not re-read) in LoadAsync so it only ever
+    /// applies to the visit it was set for, not some later unrelated one.</summary>
+    public DateOnly? PendingBrowseDate { get; private set; }
 
     private List<RoutineDefinition> _allRoutines = new();
     private List<Exercise> _allExercises = new();
@@ -33,14 +40,17 @@ public partial class WorkoutsViewModel : ObservableObject
     [ObservableProperty] public partial string SearchText { get; set; } = "";
     [ObservableProperty] public partial ObservableCollection<RoutineRowViewModel> Routines { get; set; } = new();
 
-    public WorkoutsViewModel(IActiveSessionService session, IWorkoutRepository repo)
+    public WorkoutsViewModel(IActiveSessionService session, IWorkoutRepository repo, IHomeBrowseContext browseContext)
     {
         _session = session;
         _repo = repo;
+        _browseContext = browseContext;
     }
 
     public async Task LoadAsync()
     {
+        PendingBrowseDate = _browseContext.ConsumePendingDate();
+
         var account = _session.ActiveAccount;
         var member = _session.ActiveMember;
         if (account is null || member is null)
