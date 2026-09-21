@@ -38,7 +38,6 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("progressPhotoViewer", typeof(ProgressPhotoViewerPage));
 		Routing.RegisterRoute("progressPhotoGallery", typeof(ProgressPhotoGalleryPage));
 		Routing.RegisterRoute("notifications", typeof(NotificationsPage));
-		Routing.RegisterRoute("legal", typeof(LegalPage));
 		Routing.RegisterRoute("standardAddExercise", typeof(StandardAddExercisePage));
 		Routing.RegisterRoute("hiitAddSection", typeof(HiitAddSectionPage));
 		Routing.RegisterRoute("browseExercises", typeof(BrowseExercisesPage));

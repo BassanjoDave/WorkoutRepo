@@ -64,11 +64,13 @@ public partial class ProfileGateViewModel : ObservableObject
     [RelayCommand]
     private void ToggleShowPassword() => PasswordHidden = !PasswordHidden;
 
+    // See HelpViewModel's matching commands for why these open the server-hosted
+    // pages directly rather than an in-app copy of the text.
     [RelayCommand]
-    private async Task OpenTerms() => await Shell.Current.GoToAsync("legal?doc=terms");
+    private async Task OpenTerms() => await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync($"{RemoteApiConfig.BaseUrl}terms");
 
     [RelayCommand]
-    private async Task OpenPrivacy() => await Shell.Current.GoToAsync("legal?doc=privacy");
+    private async Task OpenPrivacy() => await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync($"{RemoteApiConfig.BaseUrl}privacy");
 
     /// <summary>Shown at the top of a fresh-launch gate only when biometric unlock is
     /// turned on (Profile settings), the device actually has working biometric

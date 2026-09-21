@@ -1,18 +1,20 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkoutTracker.Services.Storage;
 
 namespace WorkoutTracker.ViewModels;
 
 /// <summary>
 /// Static Help/FAQ/Support/About page, reached from Profile → "Help &amp; Support".
-/// The support email is a placeholder — see the disclaimer on SupportEmail below,
-/// same "flag it, don't hide it" convention as LegalViewModel's placeholder ToS/Privacy text.
 /// </summary>
 public partial class HelpViewModel : ObservableObject
 {
-    /// <summary>PLACEHOLDER — replace with a real, monitored support address before real users rely on this.</summary>
-    public const string SupportEmail = "support@example.com";
+    /// <summary>The real address, but not yet live/monitored until rigritual.com's
+    /// email forwarding is set up (Dave's manual step — see the punch list). Keep
+    /// this in sync with Program.cs's contact links in PrivacyPolicyHtml/
+    /// TermsOfServiceHtml, which use the same address.</summary>
+    public const string SupportEmail = "support@rigritual.com";
 
     [ObservableProperty] public partial string AppVersionLabel { get; set; } = "";
     public ObservableCollection<FaqItemViewModel> FaqItems { get; }
@@ -56,11 +58,16 @@ public partial class HelpViewModel : ObservableObject
         }
     }
 
+    // Opens the same server-hosted pages Program.cs serves at /terms and /privacy —
+    // the single real, canonical copy of each (see Program.cs's TermsOfServiceHtml/
+    // PrivacyPolicyHtml), rather than a second in-app copy that could drift out of
+    // sync with it. Also means Dave can fix a typo or update a date without an app
+    // store release.
     [RelayCommand]
-    private async Task OpenTerms() => await Shell.Current.GoToAsync("legal?doc=terms");
+    private async Task OpenTerms() => await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync($"{RemoteApiConfig.BaseUrl}terms");
 
     [RelayCommand]
-    private async Task OpenPrivacy() => await Shell.Current.GoToAsync("legal?doc=privacy");
+    private async Task OpenPrivacy() => await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync($"{RemoteApiConfig.BaseUrl}privacy");
 }
 
 public class FaqItemViewModel
