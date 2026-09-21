@@ -9,10 +9,11 @@ namespace WorkoutTracker.Services;
 /// https://github.com/getsentry/sentry-dotnet/issues/3136 — so this app runs
 /// with crash reporting off until a real DSN is filled in here.
 ///
-/// Fill in once you've created a free project at sentry.io (Platform: .NET
-/// MAUI) — see the monetization/publish-prep plan's crash-reporting section.
+/// Sentry project: Rig Ritual (sentry.io), Error Monitoring only — no
+/// tracing/logging/metrics enabled there, matching what this app's Sentry.Maui
+/// integration actually sends (see MauiProgram.cs's UseSentry call).
 /// </summary>
 public static class SentryConfig
 {
-    public const string Dsn = "";
+    public const string Dsn = "https://0c6d607801fbf1677da0a5fefe515a3b@o4512126349803520.ingest.us.sentry.io/4512126365794304";
 }
