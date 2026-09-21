@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using WorkoutTracker.Resources.Styles;
 using WorkoutTracker.Services;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker;
 
@@ -30,7 +31,10 @@ public partial class App : Application
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		var window = new Window(new AppShell());
+		// Starts on SplashPage, not AppShell directly — it shows the full-bleed hero
+		// photo for a moment, then swaps itself out for a real AppShell. See
+		// SplashPage.xaml.cs.
+		var window = new Window(new SplashPage());
 
 #if WINDOWS
 		// The design's reference viewport is a 390x844 phone frame. Desktop windows
