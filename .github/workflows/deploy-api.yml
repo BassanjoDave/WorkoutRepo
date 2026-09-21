@@ -1,0 +1,40 @@
+name: Deploy API to Cloud Run
+
+# Only runs when server-side code actually changes — pushing client-only
+# (WorkoutTracker/**) changes to main doesn't need a new API deployment.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "WorkoutTracker.Api/**"
+      - "WorkoutTracker.Shared/**"
+      - "Dockerfile"
+      - ".github/workflows/deploy-api.yml"
+
+permissions:
+  contents: read
+  # Required for GitHub's OIDC token, which Workload Identity Federation
+  # exchanges for a short-lived GCP credential — no stored key needed.
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/400830965498/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions-deployer@workout-tracker-507101.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy workout-tracker-api \
+            --source . \
+            --region us-central1 \
+            --project workout-tracker-507101 \
+            --quiet
