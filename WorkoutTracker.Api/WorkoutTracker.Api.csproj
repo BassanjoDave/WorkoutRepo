@@ -11,11 +11,25 @@
     <PackageReference Include="FirebaseAdmin" Version="3.1.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.75.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.75.0.4218" />
+    <!-- Server-side verification for Android purchases (Purchases.Subscriptionsv2.Get)
+         and decoding Real-time Developer Notifications — see GooglePlayPurchaseVerifier. -->
+    <PackageReference Include="Google.Apis.AndroidPublisher.v3" Version="1.75.0.4246" />
+    <!-- Server-side verification for iOS purchases and App Store Server Notifications V2 —
+         see AppleAppStoreVerifier. Unofficial but mirrors Apple's own official server
+         libraries' shape (the same pattern Apple ships for Java/Node/Python/Swift). -->
+    <PackageReference Include="Mimo.AppStoreServerLibrary" Version="0.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WorkoutTracker.Shared\WorkoutTracker.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Apple's own public Root CA — a trust anchor, not a secret — needed by
+         AppleAppStoreVerifier's SignedDataVerifier to check the JWS signatures
+         on everything the App Store Server API/notifications return. -->
+    <EmbeddedResource Include="AppleCertificates\AppleRootCA-G3.cer" />
   </ItemGroup>
 
 </Project>

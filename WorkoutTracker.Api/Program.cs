@@ -1,6 +1,9 @@
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
+using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2;
 using WorkoutTracker.Api.Services;
 using WorkoutTracker.Models;
@@ -48,7 +51,7 @@ app.Use(async (context, next) =>
     // screen (Branding) requires to be publicly reachable before the app can leave
     // "Testing" mode — they have to load with no API key, since nothing but a plain
     // browser (or Google's own verification check) ever requests them.
-    var isPublicPage = context.Request.Path.Value is "/" or "/privacy";
+    var isPublicPage = context.Request.Path.Value is "/" or "/privacy" or "/terms";
     if (isPublicPage || string.IsNullOrEmpty(apiKey) || context.Request.Headers["X-Api-Key"] == apiKey)
     {
         await next();
@@ -59,6 +62,7 @@ app.Use(async (context, next) =>
 
 app.MapGet("/", () => Results.Content(HomepageHtml, "text/html"));
 app.MapGet("/privacy", () => Results.Content(PrivacyPolicyHtml, "text/html"));
+app.MapGet("/terms", () => Results.Content(TermsOfServiceHtml, "text/html"));
 
 app.MapGet("/library/manufacturer", async (IDriveDocumentStore store) =>
     Results.Ok(await store.GetAsync<ManufacturerLibrary>("library/manufacturer.json") ?? new ManufacturerLibrary()));
@@ -87,6 +91,96 @@ app.MapPut("/library/rigs", async (RigCatalog body, IDriveDocumentStore store) =
 // email/password sign-in, and eventually a phone sign-in all verify the same way,
 // unlike the raw-Google-OAuth-token approach this replaced (which needed a separate
 // accepted audience per platform's OAuth client).
+// Same value as WorkoutTracker.csproj's <ApplicationId> — one identifier used
+// for both the Android package name (Google Play Billing) and, unless Dave's
+// App Store Connect setup ends up using a different bundle id, the iOS bundle
+// id (Apple App Store Server API) too.
+const string AppPackageName = "com.davidsworkoutapp.tracker";
+
+// Google/Apple's own webhook and Pub/Sub payloads are camelCase and outside
+// our own ConfigureHttpJsonOptions (that only covers ASP.NET's own request/
+// response model binding) — a separate options instance for the manual
+// JsonSerializer calls in the two webhook handlers below.
+var externalJsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+// Built lazily (not at startup, unlike FirebaseApp.Create) so the API can still
+// start and serve every other endpoint before Dave has finished the Play
+// Console/Secret Manager setup described in the monetization plan — only a
+// purchase-verify or webhook call actually needs these secrets to exist.
+GooglePlayPurchaseVerifier? googlePlayVerifier = null;
+GooglePlayPurchaseVerifier GetGooglePlayVerifier()
+{
+    if (googlePlayVerifier is not null) return googlePlayVerifier;
+    var serviceAccountJson = app.Configuration["GooglePlayServiceAccountJson"]
+        ?? throw new InvalidOperationException("GooglePlayServiceAccountJson is not configured.");
+    return googlePlayVerifier = new GooglePlayPurchaseVerifier(serviceAccountJson, AppPackageName);
+}
+
+AppleAppStoreVerifier? appleVerifier = null;
+AppleAppStoreVerifier GetAppleVerifier()
+{
+    if (appleVerifier is not null) return appleVerifier;
+    var privateKey = app.Configuration["AppleAppStoreConnectPrivateKey"]
+        ?? throw new InvalidOperationException("AppleAppStoreConnectPrivateKey is not configured.");
+    var keyId = app.Configuration["AppleAppStoreConnectKeyId"]
+        ?? throw new InvalidOperationException("AppleAppStoreConnectKeyId is not configured.");
+    var issuerId = app.Configuration["AppleAppStoreConnectIssuerId"]
+        ?? throw new InvalidOperationException("AppleAppStoreConnectIssuerId is not configured.");
+    var sandbox = app.Configuration["AppleAppStoreEnvironment"] != "Production";
+    return appleVerifier = new AppleAppStoreVerifier(privateKey, keyId, issuerId, AppPackageName, sandbox);
+}
+
+// Shared by /purchases/verify and both webhooks below — the one place a
+// verified (status, expiresAt, autoRenewing) result gets folded into
+// Account.Purchases and Entitlements/PlanId/etc. get recomputed from it.
+void UpsertPurchase(Account account, string productId, string platform, string purchaseToken, string status, DateTimeOffset expiresAt, bool autoRenewing)
+{
+    var purchase = account.Purchases.FirstOrDefault(p => p.PurchaseToken == purchaseToken)
+        ?? account.Purchases.FirstOrDefault(p => p.ProductId == productId && p.Platform == platform);
+    if (purchase is null)
+    {
+        purchase = new PurchaseRecord { ProductId = productId, Platform = platform };
+        account.Purchases.Add(purchase);
+    }
+    purchase.PurchaseToken = purchaseToken;
+    purchase.ExpiresAt = expiresAt;
+    purchase.AutoRenewing = autoRenewing;
+    purchase.Status = status;
+    EntitlementCalculator.Recompute(account);
+}
+
+// Used by both renewal/cancellation webhooks: a notification only ever carries
+// a purchase token, never an accountId, so this resolves the account via the
+// purchase-tokens/ lookup, re-verifies the token's REAL current state against
+// the store (never trusts the notification payload's own claimed status), and
+// saves. Silently returns if the token is unknown (not ours / not verified
+// yet) or re-verification fails — webhooks retry on non-2xx, but a permanently
+// unverifiable token isn't worth holding up delivery for.
+async Task ApplyPurchaseUpdateAsync(string purchaseToken, string platform, IDriveDocumentStore store)
+{
+    var lookup = await store.GetAsync<PurchaseTokenLookup>(PurchaseTokenLookup.DocumentPath(purchaseToken));
+    if (lookup is null) return;
+
+    var index = await store.GetAsync<AccountIndex>($"accounts/{lookup.AccountId}/index.json");
+    if (index is null) return;
+
+    bool success; string status; DateTimeOffset expiresAt; bool autoRenewing;
+    if (platform == "android")
+    {
+        var result = await GetGooglePlayVerifier().VerifyAsync(purchaseToken);
+        (success, status, expiresAt, autoRenewing) = (result.Success, result.Status, result.ExpiresAt, result.AutoRenewing);
+    }
+    else
+    {
+        var result = await GetAppleVerifier().VerifyAsync(purchaseToken);
+        (success, status, expiresAt, autoRenewing) = (result.Success, result.Status, result.ExpiresAt, result.AutoRenewing);
+    }
+    if (!success) return;
+
+    UpsertPurchase(index.Account, lookup.ProductId, platform, purchaseToken, status, expiresAt, autoRenewing);
+    await store.SaveAsync($"accounts/{lookup.AccountId}/index.json", index);
+}
+
 async Task<FirebaseToken?> VerifyFirebaseIdToken(string idToken)
 {
     try
@@ -387,6 +481,107 @@ app.MapPost("/identities/claim", async (IdentityClaimRequest body, IDriveDocumen
     return Results.NoContent();
 });
 
+// Real billing, phase 1 (Full Access only — see the monetization plan). The
+// client never gets to just claim it bought something: it hands over the raw
+// store purchase token, and this endpoint is the only place that decides
+// whether Account.Entitlements actually changes, by verifying that token
+// against Google/Apple's own servers. Returns the updated Account so the
+// client can fold the same fields into its own locally-cached AccountIndex
+// (this call goes straight to the server, bypassing the normal sync-outbox —
+// see RemoteApiWorkoutRepository.VerifyPurchaseAsync's doc comment — so unlike
+// every other account write, nothing else will push this change into the
+// client's local copy for it).
+app.MapPost("/accounts/{accountId:guid}/purchases/verify", async (Guid accountId, VerifyPurchaseRequest body, HttpContext ctx, IDriveDocumentStore store) =>
+{
+    var (index, _, error) = await AuthorizeAccountAsync(accountId, ctx, store);
+    if (error is not null) return error;
+
+    string status; DateTimeOffset expiresAt; bool autoRenewing;
+    if (string.Equals(body.Platform, "android", StringComparison.OrdinalIgnoreCase))
+    {
+        var result = await GetGooglePlayVerifier().VerifyAsync(body.PurchaseToken);
+        if (!result.Success) return Results.BadRequest(new VerifyPurchaseResponse(false, result.Error, null));
+        (status, expiresAt, autoRenewing) = (result.Status, result.ExpiresAt, result.AutoRenewing);
+    }
+    else if (string.Equals(body.Platform, "ios", StringComparison.OrdinalIgnoreCase))
+    {
+        var result = await GetAppleVerifier().VerifyAsync(body.PurchaseToken);
+        if (!result.Success) return Results.BadRequest(new VerifyPurchaseResponse(false, result.Error, null));
+        (status, expiresAt, autoRenewing) = (result.Status, result.ExpiresAt, result.AutoRenewing);
+    }
+    else
+    {
+        return Results.BadRequest(new VerifyPurchaseResponse(false, $"Unknown platform '{body.Platform}'.", null));
+    }
+
+    UpsertPurchase(index!.Account, body.ProductId, body.Platform, body.PurchaseToken, status, expiresAt, autoRenewing);
+    await store.SaveAsync($"accounts/{accountId}/index.json", index);
+    // So the renewal/cancellation webhooks below can resolve "whose account is
+    // this?" later — they only ever receive the raw token, never an accountId.
+    await store.SaveAsync(PurchaseTokenLookup.DocumentPath(body.PurchaseToken),
+        new PurchaseTokenLookup { AccountId = accountId, ProductId = body.ProductId, Platform = body.Platform });
+
+    return Results.Ok(new VerifyPurchaseResponse(true, null, index.Account));
+});
+
+// Google Play Real-time Developer Notifications, delivered as a Pub/Sub push
+// request (set up in Play Console → Monetization → a Pub/Sub topic → a push
+// subscription pointed at this URL — see the monetization plan's manual
+// prerequisites). Authenticity comes from Pub/Sub's own push authentication
+// (an OIDC ID token in the Authorization header) — never from the notification
+// payload's own claims, which anyone could POST here directly.
+app.MapPost("/webhooks/google-play", async (HttpContext ctx, IDriveDocumentStore store) =>
+{
+    var expectedAudience = app.Configuration["GooglePlayPubSubAudience"];
+    var authHeader = ctx.Request.Headers.Authorization.ToString();
+    if (string.IsNullOrEmpty(expectedAudience) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        return Results.Unauthorized();
+
+    try
+    {
+        await GoogleJsonWebSignature.ValidateAsync(authHeader["Bearer ".Length..].Trim(),
+            new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { expectedAudience } });
+    }
+    catch (Exception)
+    {
+        return Results.Unauthorized();
+    }
+
+    PubSubEnvelope? envelope;
+    try { envelope = await JsonSerializer.DeserializeAsync<PubSubEnvelope>(ctx.Request.Body, externalJsonOptions); }
+    catch (JsonException) { return Results.BadRequest(); }
+
+    // Pub/Sub retries on anything but a 2xx, so an envelope/notification shape
+    // we don't recognize (a future notificationType, a test notification) is
+    // acked and ignored rather than retried forever.
+    if (envelope?.Message?.Data is not string data) return Results.Ok();
+    var notification = JsonSerializer.Deserialize<DeveloperNotification>(Encoding.UTF8.GetString(Convert.FromBase64String(data)), externalJsonOptions);
+    if (notification?.SubscriptionNotification?.PurchaseToken is not string purchaseToken) return Results.Ok();
+
+    await ApplyPurchaseUpdateAsync(purchaseToken, "android", store);
+    return Results.Ok();
+});
+
+// Apple App Store Server Notifications V2 — registered in App Store Connect →
+// your app → General → App Store Server Notifications, for both Sandbox and
+// Production (see the monetization plan's manual prerequisites). Apple POSTs
+// straight here (no separate pub/sub layer); authenticity comes from the JWS
+// signature on signedPayload itself, verified against Apple's published root
+// certificates by AppleAppStoreVerifier.DecodeNotificationAsync.
+app.MapPost("/webhooks/apple", async (HttpContext ctx, IDriveDocumentStore store) =>
+{
+    AppleNotificationEnvelope? envelope;
+    try { envelope = await JsonSerializer.DeserializeAsync<AppleNotificationEnvelope>(ctx.Request.Body, externalJsonOptions); }
+    catch (JsonException) { return Results.BadRequest(); }
+    if (envelope?.SignedPayload is not string signedPayload) return Results.BadRequest();
+
+    var (success, _, decoded) = await GetAppleVerifier().DecodeNotificationAsync(signedPayload);
+    // Acked either way — an unverifiable/unrecognized payload isn't something
+    // retrying will fix, same reasoning as the Google webhook above.
+    if (success && decoded is not null) await ApplyPurchaseUpdateAsync(decoded.PurchaseToken, "ios", store);
+    return Results.Ok();
+});
+
 app.Run();
 
 record IdentityLookupRequest(string IdToken);
@@ -395,29 +590,68 @@ record IdentityClaimRequest(string IdToken, Guid AccountId);
 record ProvisionCredentialRequest(string Email, string Password);
 record ProvisionCredentialResponse(string Uid);
 
+record VerifyPurchaseRequest(string ProductId, string Platform, string PurchaseToken);
+record VerifyPurchaseResponse(bool Success, string? Error, Account? Account);
+
+// Google Pub/Sub push delivery envelope — see
+// https://cloud.google.com/pubsub/docs/push#receive_push. `Data` is the
+// developer notification JSON, base64-encoded.
+record PubSubEnvelope(PubSubMessage? Message, string? Subscription);
+record PubSubMessage(string? Data, string? MessageId, string? PublishTime);
+// Google Play Real-time Developer Notifications' own JSON shape — see
+// https://developer.android.com/google/play/billing/rtdn-reference.
+record DeveloperNotification(int Version, string? PackageName, long EventTimeMillis, SubscriptionNotification? SubscriptionNotification);
+record SubscriptionNotification(int Version, int NotificationType, string PurchaseToken, string? SubscriptionId);
+
+record AppleNotificationEnvelope(string? SignedPayload);
+
 partial class Program
 {
-    // Both pages exist to satisfy Google's OAuth consent screen requirements (a
-    // reachable homepage + privacy policy URL) as much as to inform an actual
-    // visitor — this API has no other public-facing surface.
+    // All three pages exist to satisfy Google's OAuth consent screen requirements
+    // (a reachable homepage + privacy policy URL) and Apple/Google's subscription
+    // disclosure requirements (a Terms of Use link reachable from the purchase
+    // screen — see UpgradePage.xaml) as much as to inform an actual visitor — this
+    // API has no other public-facing surface. Once rigritual.com is registered and
+    // mapped to this Cloud Run service (Dave's manual step), this same page serves
+    // at the real domain — no separate marketing site/hosting needed for this
+    // "coming soon" pass. A fuller landing page (screenshots, feature pitch,
+    // download buttons) is a deliberately separate, later build.
     public const string HomepageHtml = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Rig Ritual</title>
         <style>
-            body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1c1d26; line-height: 1.6; }
-            h1 { margin-bottom: 4px; }
-            a { color: #5d5294; }
+            :root { color-scheme: dark; }
+            body {
+                font-family: system-ui, sans-serif; margin: 0; min-height: 100vh;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                background: #06233C; color: #E6F1FB; line-height: 1.6; padding: 20px; box-sizing: border-box;
+            }
+            h1 { font-size: 40px; margin: 0; color: #ffffff; letter-spacing: 0.5px; }
+            .tagline { color: #85B7EB; max-width: 420px; text-align: center; margin: 12px 0 0; }
+            .badge {
+                margin-top: 28px; font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+                text-transform: uppercase; color: #06233C; background: #00ADFE;
+                padding: 6px 16px; border-radius: 999px;
+            }
+            .links { margin-top: 48px; font-size: 13px; color: #85B7EB; }
+            a { color: #85B7EB; }
+            a:hover { color: #ffffff; }
         </style>
         </head>
         <body>
             <h1>Rig Ritual</h1>
-            <p>A personal workout, nutrition, and measurement tracking app for families —
-            schedule workouts, log sets and meals, and track progress over time, synced
-            across your own devices.</p>
-            <p><a href="/privacy">Privacy Policy</a></p>
+            <p class="tagline">A personal workout, nutrition, and measurement tracking app for
+            families — schedule workouts, log sets and meals, and track progress over time,
+            synced across your own devices.</p>
+            <span class="badge">Coming soon</span>
+            <p class="links">
+                <a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy Policy</a> ·
+                <a href="mailto:support@rigritual.com">support@rigritual.com</a>
+            </p>
         </body>
         </html>
         """;
@@ -445,10 +679,33 @@ partial class Program
             or an email address and password you choose. We also store the workout,
             nutrition, and measurement data you log while using the app.</p>
 
+            <h2>Children's profiles</h2>
+            <p>An account holder (a parent or guardian) may add a Child profile for a family
+            member under their management. We do not collect a Child profile's sign-in
+            identity or contact information beyond what the account holder chooses to enter,
+            and a Child profile is only ever reachable through the account holder's own
+            account unless the holder chooses to provision that dependent an independent
+            sign-in. By creating a Child profile, the account holder confirms they are that
+            child's parent or guardian and consents to this policy on the child's behalf.</p>
+
+            <h2>Subscriptions and purchases</h2>
+            <p>If you buy a paid plan, the purchase itself is handled entirely by the Google
+            Play Store or Apple App Store — we never receive or store your payment card
+            details. We do receive a purchase token/receipt from Google or Apple, which we
+            use only to verify the purchase and determine which features it unlocks.</p>
+
             <h2>How we use it</h2>
             <p>This data is used solely to provide the app's own functionality: saving your
             information and syncing it across your own devices when you sign in. We do not
-            sell your data, share it with third parties, or use it for advertising.</p>
+            sell your data or use it for advertising, and the only third-party sharing that
+            happens is the crash/error diagnostics described below.</p>
+
+            <h2>Crash and error reports</h2>
+            <p>If the app crashes or encounters an error, technical diagnostic information
+            (such as a stack trace, device/OS version, and app version) is sent to Sentry, a
+            crash-reporting service, so we can identify and fix the problem. These reports do
+            not include your workout, nutrition, or measurement data, and do not include a
+            screenshot of the screen you were using.</p>
 
             <h2>Where it's stored</h2>
             <p>Your data is stored in a private, app-specific storage area (not a regular
@@ -467,7 +724,108 @@ partial class Program
             <p>If this policy changes, the update will be posted here.</p>
 
             <h2>Contact</h2>
-            <p><a href="mailto:bmiceelfagain@gmail.com">bmiceelfagain@gmail.com</a></p>
+            <p><a href="mailto:support@rigritual.com">support@rigritual.com</a></p>
+
+            <p><a href="/terms">Terms of Service</a></p>
+        </body>
+        </html>
+        """;
+
+    // Dev note: the "Governing law" section below is deliberately generic (United
+    // States, no specific state) since Dave hasn't confirmed which state's law he
+    // wants this tied to (relevant once/if the business is formally incorporated
+    // somewhere specific) — tighten it to a specific state if that ever matters.
+    public const string TermsOfServiceHtml = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <title>Rig Ritual Terms of Service</title>
+        <style>
+            body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1c1d26; line-height: 1.6; }
+            h1 { margin-bottom: 4px; }
+            h2 { margin-top: 32px; }
+        </style>
+        </head>
+        <body>
+            <h1>Terms of Service</h1>
+            <p>Last updated: September 2026</p>
+
+            <h2>Acceptance of terms</h2>
+            <p>By creating an account or using Rig Ritual, you agree to these Terms of
+            Service and to the <a href="/privacy">Privacy Policy</a>. If you don't agree,
+            don't use the app.</p>
+
+            <h2>The service</h2>
+            <p>Rig Ritual is a personal workout, nutrition, and measurement tracking app for
+            you and the family members you manage, with data synced across your own
+            devices. It is not a medical device and does not provide medical advice — see
+            "Health and fitness disclaimer" below.</p>
+
+            <h2>Accounts and family members</h2>
+            <p>You must provide accurate information when creating an account. An account
+            holder may add dependent family member profiles, including Child profiles, and
+            is responsible for all activity under every profile on their account, including
+            any independent sign-in they choose to grant a dependent. You're responsible for
+            keeping your sign-in credentials secure.</p>
+
+            <h2>Subscriptions and billing</h2>
+            <p>Some features require a paid subscription. Subscriptions are billed through
+            the Google Play Store or Apple App Store, at the price and billing period shown
+            at the time of purchase. Subscriptions renew automatically at the end of each
+            billing period unless canceled at least 24 hours before renewal. You can manage
+            or cancel a subscription anytime in your Google Play or App Store account
+            settings — we can't process cancellations or refunds directly, since we never
+            receive your payment details (see the Privacy Policy's "Subscriptions and
+            purchases" section). Refunds are subject to Google's and Apple's own refund
+            policies.</p>
+
+            <h2>Acceptable use</h2>
+            <p>Use the app only for its intended purpose of tracking workouts, nutrition, and
+            related fitness data for yourself and the family members you manage. Don't
+            attempt to disrupt the service, access another account without authorization, or
+            use the app for anything unlawful.</p>
+
+            <h2>Your content</h2>
+            <p>You keep ownership of the data and photos you log. You're solely responsible
+            for what you upload, and you confirm you have the right to upload any photo you
+            add (including a family member's progress photo, which you confirm you're
+            authorized to store on their behalf).</p>
+
+            <h2>Health and fitness disclaimer</h2>
+            <p>Rig Ritual is not a substitute for professional medical, nutritional, or
+            fitness advice. Consult a qualified professional before starting a new exercise,
+            nutrition, or supplement program, especially if you have an existing health
+            condition. You use any workout, nutrition, or supplement information in the app
+            at your own risk.</p>
+
+            <h2>Termination</h2>
+            <p>You can delete your account at any time from the app's settings, which
+            permanently deletes its data as described in the Privacy Policy. We may suspend
+            or terminate access to the service if these terms are violated.</p>
+
+            <h2>Disclaimer of warranties</h2>
+            <p>The app is provided "as is," without warranties of any kind, express or
+            implied, including that it will be uninterrupted, error-free, or fit for a
+            particular purpose.</p>
+
+            <h2>Limitation of liability</h2>
+            <p>To the fullest extent permitted by law, Rig Ritual's total liability for any
+            claim relating to the app is limited to the amount you paid us in the 12 months
+            before the claim arose, or $100 if you haven't paid us anything.</p>
+
+            <h2>Governing law</h2>
+            <p>These terms are governed by the laws of the United States, without regard to
+            its conflict-of-law provisions.</p>
+
+            <h2>Changes to these terms</h2>
+            <p>We may update these terms from time to time; continued use of the app after a
+            change constitutes acceptance of the updated terms.</p>
+
+            <h2>Contact</h2>
+            <p><a href="mailto:support@rigritual.com">support@rigritual.com</a></p>
+
+            <p><a href="/privacy">Privacy Policy</a></p>
         </body>
         </html>
         """;

@@ -49,7 +49,14 @@
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<!-- Google Play Billing Library (pulled in by Plugin.InAppBilling, see
+		     IBillingService) hard-requires API 23 — billing.aar's own manifest
+		     declares minSdkVersion 23, and the manifest merger fails the build
+		     below that. Raising the floor from 21 doesn't affect the Galaxy A11
+		     compatibility fix above (that's Android 10 / API 29) or any other
+		     real device at this point — API 21/22 (Lollipop) is negligible and
+		     couldn't use Play Billing at all regardless of what this app does. -->
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">23.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 
 		<!-- .NET-for-Android's default Debug build only includes arm64-v8a + x86_64 (real
@@ -66,11 +73,25 @@
 		<MauiIcon Include="Resources\AppIcon\appicon.png" ForegroundFile="Resources\AppIcon\appicon-foreground.png" Color="#06233C" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<!-- The brief native-OS splash shown before SplashPage.xaml can even mount —
+		     just the RR mark (reusing the adaptive icon's foreground layer, which is
+		     already a clean inset transparent logo) on the same navy as the app icon,
+		     instead of the stock MAUI purple/robot. The full-bleed hero photo lives in
+		     SplashPage.xaml, not here — this mechanism can only center a small image. -->
+		<!-- A copy of appicon-foreground.png under a valid Android resource name —
+		     resizetizer's splash-screen validation rejects hyphens in the source
+		     filename (unlike the MauiIcon pipeline, which remaps the output name
+		     itself), so the original hyphenated file can't be used here directly. -->
+		<MauiSplashScreen Include="Resources\Splash\splash_logo.png" Color="#06233C" BaseSize="180,180" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+
+		<!-- Full-bleed hero photo for SplashPage (see App.xaml.cs/SplashPage.xaml) —
+		     separate from the small native-OS splash logo below, since MauiSplashScreen
+		     can only center a small image on a solid color, not fill the screen. -->
+		<MauiImage Include="Resources\Splash\splash_full.png" />
 		
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
@@ -79,11 +100,17 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<PackageReference Include="Plugin.LocalNotification" Version="14.1.1" />
+		<!-- Real in-app purchases (IBillingService) — Google Play Billing on Android,
+		     StoreKit on iOS. No real implementation on Windows/MacCatalyst; IsSupported
+		     is false there and this package's plain reference assembly is never called
+		     into on those platforms. -->
+		<PackageReference Include="Plugin.InAppBilling" Version="10.0.0" />
 		<!-- Pinned to the newest 1.8.x patch, matching the Windows App Runtime version
 		     installed system-wide on this dev machine: isolating an intermittent native
 		     crash in Microsoft.UI.Xaml.dll's Application.Start that may be caused by the
@@ -97,6 +124,11 @@
 		     MIT-licensed at any scale, unlike ImageSharp's Split License — chosen
 		     deliberately for a monetized app. -->
 		<PackageReference Include="SkiaSharp" Version="4.152.0" />
+		<!-- Remote crash/error reporting (see SentryConfig, MauiProgram.cs) — a
+		     real, disclosed-in-Privacy-Policy replacement for CrashLogger's
+		     local-only last-crash-to-file capture, which stays in place as an
+		     offline-safe fallback (see its own doc comment). -->
+		<PackageReference Include="Sentry.Maui" Version="6.11.0" />
 	</ItemGroup>
 
 	<ItemGroup>

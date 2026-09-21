@@ -1,3 +1,4 @@
+using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.ViewModels;
 

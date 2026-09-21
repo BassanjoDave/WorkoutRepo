@@ -48,3 +48,16 @@ public class PurchaseRecord
     public bool AutoRenewing { get; set; }
     public string Status { get; set; } = "active"; // "active" / "expired" / "grace" / "canceled"
 }
+
+/// <summary>Page-tag constants, so call sites never hand-type the raw strings. Lives
+/// in Shared (not the client-only IEntitlementService.cs it used to live in) so the
+/// server's purchase-verification code computes Account.Entitlements from the exact
+/// same strings the client's gating checks compare against.</summary>
+public static class PageEntitlements
+{
+    public const string Nutrition = "nutrition";
+    public const string Stacks = "stacks";
+    public const string Measurements = "measurements";
+    public const string FullAccess = "fullaccess";
+    public const string NoAds = "noads";
+}

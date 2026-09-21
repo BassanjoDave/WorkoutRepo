@@ -21,6 +21,23 @@ public static class MauiProgram
 #else
 			.UseLocalNotification()
 #endif
+			// Empty Dsn (the default until SentryConfig.Dsn is filled in) safely
+			// disables the SDK entirely rather than throwing — see SentryConfig's
+			// own doc comment. Deliberately conservative on data collection to
+			// match the Privacy Policy's minimal-collection stance: no
+			// TracesSampleRate (no performance/APM tracing, just error capture)
+			// and no AttachScreenshot (this app's on-screen data is workout/
+			// nutrition/measurement data, not something to upload on every crash).
+			.UseSentry(options =>
+			{
+				options.Dsn = SentryConfig.Dsn;
+#if DEBUG
+				options.Debug = true;
+				options.Environment = "development";
+#else
+				options.Environment = "production";
+#endif
+			})
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("Inter-Regular.ttf", "InterRegular");
@@ -66,6 +83,7 @@ public static class MauiProgram
 		services.AddSingleton<IAppBootstrapper, AppBootstrapper>();
 		services.AddSingleton<IHiitSoundService, HiitSoundService>();
 		services.AddSingleton<IWorkoutReminderService, WorkoutReminderService>();
+		services.AddSingleton<IBillingService, BillingService>();
 		services.AddSingleton<IStackReminderService, StackReminderService>();
 		services.AddSingleton<IBiometricAuthService, BiometricAuthService>();
 		services.AddSingleton<IProgressPhotoCaptureService, ProgressPhotoCaptureService>();
@@ -177,8 +195,6 @@ public static class MauiProgram
 		services.AddTransient<NotificationsPage>();
 		services.AddTransient<UpgradeViewModel>();
 		services.AddTransient<UpgradePage>();
-		services.AddTransient<LegalViewModel>();
-		services.AddTransient<LegalPage>();
 		services.AddTransient<HelpViewModel>();
 		services.AddTransient<HelpPage>();
 	}

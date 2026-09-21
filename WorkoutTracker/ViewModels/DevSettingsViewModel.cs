@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Services.Storage;
 

@@ -34,13 +34,3 @@ public class EntitlementService : IEntitlementService
     private static bool IsPremiumSeat(Account account, Guid memberId) =>
         account.PremiumMemberIds.Contains(memberId);
 }
-
-/// <summary>Page-tag constants, so call sites never hand-type the raw strings.</summary>
-public static class PageEntitlements
-{
-    public const string Nutrition = "nutrition";
-    public const string Stacks = "stacks";
-    public const string Measurements = "measurements";
-    public const string FullAccess = "fullaccess";
-    public const string NoAds = "noads";
-}

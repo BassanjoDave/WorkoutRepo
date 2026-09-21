@@ -7,6 +7,10 @@ using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services.Storage;
 
+/// <summary>Result of RemoteApiWorkoutRepository.VerifyPurchaseAsync — mirrors
+/// Program.cs's VerifyPurchaseResponse. Account is only populated on success.</summary>
+public record VerifyPurchaseResult(bool Success, string? Error, Account? Account);
+
 /// <summary>
 /// Calls the deployed thin API instead of local disk. This is the entire
 /// swap the repository interface was built for — no view model or service
@@ -149,6 +153,25 @@ public class RemoteApiWorkoutRepository : IWorkoutRepository
     {
         using var response = await SendAsync(HttpMethod.Delete, $"accounts/{accountId}/members/{memberId}/identity");
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Sends a raw store purchase token to the server to be verified against
+    /// Google/Apple's own servers — see Program.cs's POST .../purchases/verify.
+    /// Direct-to-server like ProvisionDependentCredentialAsync above: a purchase
+    /// confirmation must report real success/failure immediately, never sit in
+    /// SyncingWorkoutRepository's best-effort outbox. On success, returns the
+    /// server's recomputed Account so the caller (UpgradeViewModel) can fold those
+    /// same fields into its own locally-cached AccountIndex and save it the normal
+    /// way — this call bypasses that local cache entirely, so nothing else will
+    /// do that for it.</summary>
+    public async Task<VerifyPurchaseResult> VerifyPurchaseAsync(Guid accountId, string productId, string platform, string purchaseToken)
+    {
+        using var response = await SendAsync(HttpMethod.Post, $"accounts/{accountId}/purchases/verify",
+            new { ProductId = productId, Platform = platform, PurchaseToken = purchaseToken });
+        var result = await response.Content.ReadFromJsonAsync<VerifyPurchaseResult>(JsonOptions);
+        if (result is not null) return result;
+        var message = await response.Content.ReadAsStringAsync();
+        return new VerifyPurchaseResult(false, string.IsNullOrWhiteSpace(message) ? response.ReasonPhrase : message, null);
     }
 
     public async Task<ManufacturerLibrary> GetManufacturerLibraryAsync()

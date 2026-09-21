@@ -17,7 +17,7 @@
             <Button Text="‹ Back" Style="{StaticResource GhostButton}" FontSize="12"
                     Command="{Binding BackCommand}" HorizontalOptions="Start" />
             <Label Text="{Binding ReasonLabel}" FontSize="18" FontAttributes="Bold" />
-            <Label Text="Purchasing isn't wired up yet — this is a preview of the pricing while billing is being built."
+            <Label Text="Full Access is available now — the other plans below are a preview of pricing while billing for them is still being built."
                    Style="{StaticResource MetaLabel}" />
 
             <Border Style="{StaticResource CardBorder}">
@@ -27,9 +27,17 @@
                 </VerticalStackLayout>
             </Border>
             <Border Style="{StaticResource CardBorder}">
-                <VerticalStackLayout Spacing="4">
+                <VerticalStackLayout Spacing="8">
                     <Label Text="Full Access" FontAttributes="Bold" FontSize="14" />
                     <Label Text="$4.99/mo · $39.99/yr — ad-free access to every page, 1 seat" Style="{StaticResource MetaLabel}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="Monthly — $4.99" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding PurchaseFullAccessCommand}" CommandParameter="full_access_monthly"
+                                IsEnabled="{Binding IsPurchasing, Converter={StaticResource InvertedBoolConverter}}" />
+                        <Button Grid.Column="1" Text="Yearly — $39.99" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding PurchaseFullAccessCommand}" CommandParameter="full_access_yearly"
+                                IsEnabled="{Binding IsPurchasing, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
             <Border Style="{StaticResource CardBorder}">
@@ -60,7 +68,35 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Button Text="Coming soon" Style="{StaticResource SecondaryButton}" IsEnabled="False" />
+            <Label Text="{Binding PurchaseStatus}" Style="{StaticResource MetaLabel}"
+                   IsVisible="{Binding PurchaseStatus, Converter={StaticResource StringToBoolConverter}}" />
+            <ActivityIndicator IsRunning="{Binding IsPurchasing}" IsVisible="{Binding IsPurchasing}" />
+
+            <Button Text="Restore Purchases" Style="{StaticResource GhostButton}"
+                    Command="{Binding RestorePurchasesCommand}"
+                    IsEnabled="{Binding IsPurchasing, Converter={StaticResource InvertedBoolConverter}}" />
+
+            <!-- Required by both app stores' subscription review guidelines: the
+                 auto-renewal terms and Terms of Use/Privacy Policy links must be
+                 reachable from the purchase screen itself, not just elsewhere in
+                 the app. -->
+            <Label Text="Subscriptions auto-renew unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in your Google Play or App Store account settings."
+                   Style="{StaticResource MetaLabel}" FontSize="11" />
+            <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Label Text="Terms of Service" Style="{StaticResource MetaLabel}" FontSize="11" TextDecorations="Underline">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenTermsCommand}" />
+                    </Label.GestureRecognizers>
+                </Label>
+                <Label Text="·" Style="{StaticResource MetaLabel}" FontSize="11" />
+                <Label Text="Privacy Policy" Style="{StaticResource MetaLabel}" FontSize="11" TextDecorations="Underline">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenPrivacyCommand}" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </HorizontalStackLayout>
+
+            <Button Text="Other plans coming soon" Style="{StaticResource SecondaryButton}" IsEnabled="False" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
