@@ -5,6 +5,10 @@ using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Services.Storage;
 using Visibility = WorkoutTracker.Models.Visibility;
+// Sentry.Maui (see MauiProgram.cs) adds an implicit global `using Sentry;`,
+// which otherwise collides with this app's own MeasurementUnit (vs.
+// Sentry.MeasurementUnit) — same fix as the Visibility alias above.
+using MeasurementUnit = WorkoutTracker.Models.MeasurementUnit;
 
 namespace WorkoutTracker.ViewModels;
 

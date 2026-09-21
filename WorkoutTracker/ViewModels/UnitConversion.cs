@@ -1,6 +1,10 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using WorkoutTracker.Models;
+// Sentry.Maui (see MauiProgram.cs) adds an implicit global `using Sentry;`,
+// which otherwise collides with this app's own MeasurementUnit (vs.
+// Sentry.MeasurementUnit) — same fix as RecipeBuilderViewModel.cs's Visibility alias.
+using MeasurementUnit = WorkoutTracker.Models.MeasurementUnit;
 
 namespace WorkoutTracker.ViewModels;
 
